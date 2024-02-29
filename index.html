@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
-<!-- Load d3.js -->
-<script src="https://d3js.org/d3.v6.js"></script>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 
 <style>
     body, html {
@@ -10,123 +10,76 @@
         padding: 0;
         width: 100%;
         height: 100%;
-        overflow: hidden;
     }
-    #my_dataviz {
+    #cy {
         width: 100%;
         height: 100%;
+        position: absolute;
     }
 </style>
+</head>
 
-<!-- Create a div where the graph will take place -->
-<div id="my_dataviz"></div>
+<body>
+
+<button id="fetchButton">Fetch Data</button>
+<div id="cy"></div>
 
 <script>
-    const svgContainer = d3.select("#my_dataviz");
 
-    const svgWidth = 600;
-    const svgHeight = 400;
-
-    const svg = svgContainer.append("svg")
-        .attr("width", svgWidth)
-        .attr("height", svgHeight)
-        .append("g");
-
-    const zoomGroup = svg.append("g");
-
-    const drawingGroup = zoomGroup.append("g");
-
-    const rect = svg.append("rect")
-        .attr("width", svgWidth)
-        .attr("height", svgHeight)
-        .style("fill", "none")
-        .style("pointer-events", "all");
-
-    d3.json('/data').then(function(data) {
-
-        const simulation = d3.forceSimulation(data.nodes)
-            .force("link", d3.forceLink()
-                .id(function(d) { return d.id; })
-                .links(data.links)
-            )
-            .force("charge", d3.forceManyBody().strength(-400))
-            .force("center", d3.forceCenter(svgWidth / 2, svgHeight / 2))
-            .on("tick", ticked);
-
-        const link = drawingGroup.selectAll("line")
-            .data(data.links)
-            .join("line")
-            .style("stroke", "#aaa");
-
-        const node = drawingGroup.selectAll("image")
-            .data(data.nodes)
-            .join("image")
-            .attr('xlink:href', function(d) { return d.img })
-            .attr("x", function(d) { return d.x - 10; })
-            .attr("y", function(d) { return d.y - 10; })
-            .attr("width", 20)
-            .attr("height", 20)
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended)
-            );
-
-        const label = svg.append("g")
-            .attr("class", "labels")
-            .selectAll("text")
-            .data(data.nodes)
-            .enter().append("text")
-            .attr("class", "label")
-            .text(function(d) { return d.name; })
-            .style("text-anchor", "middle")
-            .style("font-size", "8px")
-            .style("fill", "#4393c3")
-            .style("user-select", "none");
-
-        function ticked() {
-            link
-                .attr("x1", function(d) { return d.source.x; })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
-
-            node
-                .attr("x", function(d) { return d.x-10; })
-                .attr("y", function(d) { return d.y-10; });
-
-            label
-                .attr("x", function(d) { return d.x; })
-                .attr("y", function(d) { return d.y+25; });
+var cy = window.cy = cytoscape({
+    container: document.getElementById('cy'), // container to render in
+    
+    // layout: {
+    //     name: 'cose',
+    // },
+    
+    style: [
+        {
+            selector: 'node',
+            style: {
+                'width': 20,
+                'height': 20,
+                'background-fit': 'contain',
+                'background-image': 'data(img)',
+                'label': 'data(name)',
+                'background-image-crossorigin': "null",
+            }
+        },
+        {
+            selector: 'edge',
+            style: {
+                'width': 3,
+            }
         }
 
-        function dragstarted(event) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-        }
+    ]
+});
 
-        function dragged(event) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-        }
-
-        function dragended(event) {
-            if (!event.active) simulation.alphaTarget(0);
-            event.subject.fx = null;
-            event.subject.fy = null;
-        }
-
-        svg.call(
-            d3.zoom()
-                .scaleExtent([0.01, 10])
-                .on('zoom', zoomed)
-        );
-
-        function zoomed(event) {
-            zoomGroup.attr('transform', event.transform);
-        }
-
-    });
+const fetchButton = document.getElementById('fetchButton');
+fetchButton.addEventListener('click', async () => {
+    try {
+        const response = await fetch('/data', {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        cy.add(data);
+        cy.layout({
+            // cose ---
+            name: 'cose',
+            animate: 'false',
+            nodeOverlap: 1,
+            nodeRepulsion: function( node ){ return 1e7; },
+            // cola ---
+            // name: 'cola',
+            // animate: false,
+        }).run();
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+});
 
 </script>
+
+</body>
