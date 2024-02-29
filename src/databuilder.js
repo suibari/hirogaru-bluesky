@@ -1,16 +1,45 @@
 async function getNodesAndLinks(myself, follows, followers) {
   let elements = [];
 
-  // nodes
-  const personArray = [myself].concat(follows, followers);
-  for (const person of personArray) {
+  // nodes  
+  elements.push({
+    data: {
+      id: myself.did,
+      name: myself.displayName,
+      img: myself.avatar,
+      handle: myself.handle,
+      level: 3,
+      rank: getRank(myself),
+    },
+    group: 'nodes',
+    // grabbable: false,
+  });
+  for (const follow of follows) {
     elements.push({
       data: {
-        id: person.did,
-        name: person.displayName,
-        img: person.avatar
+        id: follow.did,
+        name: follow.displayName,
+        img: follow.avatar,
+        handle: follow.handle,
+        level: (follow.mutual ? 2 : 1),
+        rank: getRank(follow),
       },
-      group: 'nodes'
+      group: 'nodes',
+      // grabbable: false,
+    });
+  };
+  for (const follower of followers) {
+    elements.push({
+      data: {
+        id: follower.did,
+        name: follower.displayName,
+        img: follower.avatar,
+        handle: follower.handle,
+        level: (follower.mutual ? 2 : 1),
+        rank: getRank(follower),
+      },
+      group: 'nodes',
+      // grabbable: false,
     });
   };
   console.log("complete nodes");
@@ -19,9 +48,8 @@ async function getNodesAndLinks(myself, follows, followers) {
   for (const follow of follows) {
     elements.push({
       data: {
-        // id: myself.did+follow.did,
         source: myself.did,
-        target: follow.did
+        target: follow.did,
       },
       group: 'edges'
     });
@@ -31,9 +59,8 @@ async function getNodesAndLinks(myself, follows, followers) {
   for (const follower of followers) {
     elements.push({
       data: {
-        // id: follower.did+myself.did,
         source: follower.did,
-        target: myself.did
+        target: myself.did,
       },
       group: 'edges'
     });
@@ -41,12 +68,13 @@ async function getNodesAndLinks(myself, follows, followers) {
   console.log("complete links: follower");
 
   return elements;
+
+  function getRank(actor) {
+    const rank = Math.log10(actor.postsCount * actor.followersCount)
+    const correctedRank = (rank === -Infinity) ? 0 : rank;
+    return ((1+follows.length+followers.length) * correctedRank);
+  }
 }
-
-// 相互フォローのクラス付け
-// function setClassMutualFF() {
-
-// }
 
 function removeInvalidLinks(elements) {
   const validEdges = []; // 有効なエッジを格納する配列

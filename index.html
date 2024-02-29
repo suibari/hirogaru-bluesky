@@ -4,6 +4,7 @@
 <head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 <style>
     body, html {
         margin: 0;
@@ -16,32 +17,43 @@
         height: 100%;
         position: absolute;
     }
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+    }
 </style>
 </head>
 
 <body>
 
+<input type="text" id="fetchInput" placeholder="Enter @handle">
 <button id="fetchButton">Fetch Data</button>
 <div id="cy"></div>
+<div id="loading" style="display: none;"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i></div>
 
 <script>
 
-var cy = window.cy = cytoscape({
+const fetchButton = document.getElementById('fetchButton');
+const fetchInput = document.getElementById('fetchInput');
+
+var cy = cytoscape({
     container: document.getElementById('cy'), // container to render in
-    
-    // layout: {
-    //     name: 'cose',
-    // },
-    
+
+    elements: [],
+
     style: [
         {
             selector: 'node',
             style: {
-                'width': 20,
-                'height': 20,
+                'width': 'data(rank)',
+                'height': 'data(rank)',
                 'background-fit': 'contain',
                 'background-image': 'data(img)',
                 'label': 'data(name)',
+                'font-size': (ele) => {return ele.data('rank')/2},
                 'background-image-crossorigin': "null",
             }
         },
@@ -51,14 +63,24 @@ var cy = window.cy = cytoscape({
                 'width': 3,
             }
         }
-
     ]
 });
 
-const fetchButton = document.getElementById('fetchButton');
+// Enterキーが押されたときにfetch処理を実行
+fetchInput.addEventListener('keyup', function(event) {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        fetchButton.click();
+    }
+});
+
 fetchButton.addEventListener('click', async () => {
     try {
-        const response = await fetch('/data', {
+        const handle = fetchInput.value.trim();
+        document.getElementById('loading').style.display = 'block'; // くるくる表示開始
+        var elm = cy.$('cy');
+        cy.remove(elm);
+        const response = await fetch(`/data?handle=${handle}`, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -67,17 +89,36 @@ fetchButton.addEventListener('click', async () => {
         cy.add(data);
         cy.layout({
             // cose ---
-            name: 'cose',
-            animate: 'false',
-            nodeOverlap: 1,
-            nodeRepulsion: function( node ){ return 1e7; },
+            // name: 'cose',
+            // animate: false,
+            // nodeOverlap: 1,
+            // nodeRepulsion: function( node ){ return 1e7; },
             // cola ---
             // name: 'cola',
             // animate: false,
+            // concentric ---
+            name: 'concentric',
+            animate: true,
+            concentric: function(node) {
+                return node.data('level');
+            },
+            levelWidth: function( nodes ){
+                return 1;
+            },
+            stop: function() {
+                document.getElementById('loading').style.display = 'none'; // くるくる表示終了
+            },
         }).run();
+
     } catch (error) {
         console.error('Error fetching data:', error);
     }
+});
+
+cy.on('tap', 'node', function(evt){
+    var node = evt.target;
+    var url = "https://bsky.app/profile/" + node.data('handle');
+    window.open(url, '_blank').focus(); // 新しいウィンドウでリンクを開く
 });
 
 </script>

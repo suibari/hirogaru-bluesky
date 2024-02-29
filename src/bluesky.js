@@ -1,4 +1,4 @@
-const { BskyAgent } = require('@atproto/api');
+const { BskyAgent, default: AtpAgent } = require('@atproto/api');
 // const { getHalfLength , getRandomWord }  = require('./util');
 const service = 'https://bsky.social';
 
@@ -173,6 +173,47 @@ class MyBskyAgent extends BskyAgent {
     }
     console.log(uriArray);
     return uriArray;
+  }
+
+  async getConcatProfiles(actors) {
+    const batchSize = 25;
+    let didArray = [];
+    let actorsWithProf = [];
+
+    for (const actor of actors) {
+      didArray.push(actor.did);
+    };
+    for (let i = 0; i < didArray.length; i += batchSize) {
+      const batch = didArray.slice(i, i + batchSize);
+      const profiles = await this.getProfiles({actors: batch});
+      actorsWithProf = actorsWithProf.concat(profiles.data.profiles);
+    };
+    return actorsWithProf;
+  }
+  
+  async setMutual(myself, follows, followers) {
+    // 自分がフォローしている人が自分をフォローしていたらmutualをtrueに、そうでなければfalseにする
+    for (const follow of follows) {
+      const response = await this.getFollows({actor: follow.did});
+      const followsOfFollows = response.data.follows;
+      follow.mutual = false;
+      for (const followOfFollows of followsOfFollows) {
+        if (myself.did == followOfFollows.did) {
+          follow.mutual = true;
+          break;
+        };
+      };
+    };
+    // 自分がフォロワーをフォローしていたらmutualをtrueに、そうでなければfalseにする
+    for (const follower of followers) {
+      follower.mutual = false;
+      for (const follow of follows) {
+        if (follow.did == follower.did) {
+          follower.mutual = true;
+          break;
+        };
+      };
+    };
   }
 }
 
