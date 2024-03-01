@@ -2,6 +2,7 @@ const MyBskyAgent = require('./src/bluesky');
 const databuilder = require('./src/databuilder');
 const express = require('express');
 const fs = require('fs');
+const agent = new MyBskyAgent();
 
 const app = express();
 const port = 3000;
@@ -12,36 +13,49 @@ app.get('/data', async (req, res) => {
     const handle = req.query.handle;
     const data = await getData(handle);
     res.json(data);
-    console.log("send data to client.")
+    console.log("[INFO] send data to client.")
   } catch (e) {
     res.status(500);
   }
 })
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`[INFO] Server is running on http://localhost:${port}`);
 })
 
 async function getData(handle) {
-  const FF_THRESHOLD = 1000;
-  const NODE_LIMIT = 10000;
-
-  const agent = new MyBskyAgent();
-
   try {
-    await agent.login({
-      identifier: process.env.BSKY_IDENTIFIER,
-      password: process.env.BSKY_APP_PASSWORD
-    });
-    // 1st depth
+    await agent.createOrRefleshSession();
+    
+    // 自分のプロフィール
     const response = await agent.getProfile({actor: handle});
-    const myself = response.data;
+    const myselfWithProf = response.data;
+    console.log("[INFO] got profile " + handle);
+    // フォロイーのプロフィール
     const follows = await agent.getConcatFollows(handle);
     const followsWithProf = await agent.getConcatProfiles(follows); // post数とfollower数を取得するため
-    const followers = await agent.getConcatFollowers(handle);
-    const followersWithProf = await agent.getConcatProfiles(followers); // post数とfollower数を取得するため
-    await agent.setMutual(myself, followsWithProf, followersWithProf); // 相互フォローチェックにmutualプロパティを付与
-    let elements = await databuilder.getNodesAndLinks(myself, followsWithProf, followersWithProf);
-    console.log("complete myself");
+    await agent.setMutual(myselfWithProf, followsWithProf); // 相互フォローチェック
+    console.log("[INFO] got profiles " + followsWithProf.length + " about follows of " + handle);
+    // フォロイーのフォロイーのプロフィール
+    // {
+    //   follow.did: [prof, prof, ...],
+    //   ...
+    // }
+    let followsOfFollowsWithProf = {};
+    for (const follow of follows) {
+      const followsOfFollow = await agent.getConcatFollows(follow.did);
+      const followsOfFollowWithProf = await agent.getConcatProfiles(followsOfFollow);
+      await agent.setMutual(follow, followsOfFollowWithProf); // 相互フォローチェック
+      followsOfFollowsWithProf[follow.did] = followsOfFollowWithProf;
+      console.log("[INFO] got profiles " + followsOfFollowsWithProf[follow.did].length + " about follows of " + follow.handle);
+    };
+    // node, edge取得
+    console.log(followsOfFollowsWithProf)
+    let elements = await databuilder.getElements(myselfWithProf, followsWithProf, followsOfFollowsWithProf);
+    
+    // const followers = await agent.getConcatFollowers(handle);
+    // const followersWithProf = await agent.getConcatProfiles(followers); // post数とfollower数を取得するため
+    // await agent.setMutual(myselfWithProf, followsWithProf, followersWithProf); // 相互フォローチェックにmutualプロパティを付与
+    
     // // 2nd~ depth
     // for (const follow of follows) {
     //   const response = await agent.getProfile({actor: follow.did});
@@ -79,11 +93,12 @@ async function getData(handle) {
     // }
     // fs.writeFileSync(("data.json", JSON.stringify(elements, null, '    ')));
 
-    elements = databuilder.removeDuplicateAndLimitNodes(elements, NODE_LIMIT);
+    elements = databuilder.removeDuplicateNodes(elements);
+    elements.forEach(element => {if (element.data.id == "did:plc:6qbevqze2tlxtrhfisjpve6e") console.log("さざんか発見")});
     console.log(elements.length);
 
-    databuilder.removeInvalidLinks(elements);
-    console.log(elements.length);
+    // databuilder.removeInvalidLinks(elements);
+    // console.log(elements.length);
     // console.log(elements);
     
     return elements;

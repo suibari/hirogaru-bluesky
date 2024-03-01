@@ -1,49 +1,27 @@
-async function getNodesAndLinks(myself, follows, followers) {
+async function getElements(myself, follows, followsOfFollows) {
   let elements = [];
 
   // nodes  
-  elements.push({
-    data: {
-      id: myself.did,
-      name: myself.displayName,
-      img: myself.avatar,
-      handle: myself.handle,
-      level: 3,
-      rank: getRank(myself),
-    },
-    group: 'nodes',
-    // grabbable: false,
-  });
+  pushActorToNodes(myself, elements, 5);
+  // follow
   for (const follow of follows) {
-    elements.push({
-      data: {
-        id: follow.did,
-        name: follow.displayName,
-        img: follow.avatar,
-        handle: follow.handle,
-        level: (follow.mutual ? 2 : 1),
-        rank: getRank(follow),
-      },
-      group: 'nodes',
-      // grabbable: false,
-    });
+    if (follow.mutual) {
+      pushActorToNodes(follow, elements, 4);
+    } else {
+      pushActorToNodes(follow, elements, 3);
+    }
+    // follow of follows
+    if (followsOfFollows[follow.did].length > 0) {
+      for (const followOfFollows of followsOfFollows[follow.did]) {
+        if (follow.mutual) {
+          pushActorToNodes(followOfFollows, elements, 2);
+        } else {
+          pushActorToNodes(followOfFollows, elements, 1);
+        };
+      };
+    };
   };
-  for (const follower of followers) {
-    elements.push({
-      data: {
-        id: follower.did,
-        name: follower.displayName,
-        img: follower.avatar,
-        handle: follower.handle,
-        level: (follower.mutual ? 2 : 1),
-        rank: getRank(follower),
-      },
-      group: 'nodes',
-      // grabbable: false,
-    });
-  };
-  console.log("complete nodes");
-  // links
+  // edges
   // * follow (myself -> follow)
   for (const follow of follows) {
     elements.push({
@@ -53,27 +31,47 @@ async function getNodesAndLinks(myself, follows, followers) {
       },
       group: 'edges'
     });
+    // * follow of follows (follows -> followsOfFollows)
+    if (followsOfFollows[follow.did].length > 0) {
+      for (const followOfFollows of followsOfFollows[follow.did]) {
+        elements.push({
+          data: {
+            source: follow.did,
+            target: followOfFollows.did,
+          },
+          group: 'edges'
+        });
+      };
+    };
   };
-  console.log("complete links: follow");
-  // * followers (followers -> myself)
-  for (const follower of followers) {
-    elements.push({
-      data: {
-        source: follower.did,
-        target: myself.did,
-      },
-      group: 'edges'
-    });
-  }
-  console.log("complete links: follower");
+  // console.log("complete links: follows");
+  // console.log("complete links: follows of Followss");
 
+  // nodes (rank)
+  // const totalNodes = elements.filter(element => element.group === "nodes").length;
+  
   return elements;
+}
 
-  function getRank(actor) {
-    const rank = Math.log10(actor.postsCount * actor.followersCount)
-    const correctedRank = (rank === -Infinity) ? 0 : rank;
-    return ((1+follows.length+followers.length) * correctedRank);
-  }
+function pushActorToNodes(actor, elements, level) {
+  elements.push({
+    data: {
+      id: actor.did,
+      name: actor.displayName,
+      img: actor.avatar,
+      handle: actor.handle,
+      level: level,
+      rank: getRank(actor), 
+    },
+    group: 'nodes',
+    // grabbable: false,
+  });
+}
+
+function getRank(actor) {
+  const rank = Math.log10(actor.postsCount * actor.followersCount)
+  const correctedRank = (rank === -Infinity) ? 0 : rank;
+  return correctedRank;
 }
 
 function removeInvalidLinks(elements) {
@@ -95,43 +93,45 @@ function removeInvalidLinks(elements) {
 
   // 元の配列を有効なエッジとノードの配列で置き換える
   elements.length = 0;
-  elements.push(...validEdges, ...validNodes);
+  elements.push(...validNodes, ...validEdges);
 }
 
-function removeDuplicateAndLimitNodes(elements, NODE_LIMIT) {
-  const nodeCounts = {}; // ノードの出現回数を管理するオブジェクト
-  let totalNodeCount = 0; // 全ノードの累計数
+function removeDuplicateNodes(elements) {
+  const nodeMap = {}; // ノードの情報を格納するマップ
 
-  // ノードの重複を削除
-  const filteredNodes = elements.filter(element => {
+  // ノードの情報をマップに格納
+  elements.forEach(element => {
     if (element.group === 'nodes') {
       const nodeId = element.data.id;
-      if (!nodeCounts[nodeId]) {
-        nodeCounts[nodeId] = 0;
+      const nodeLevel = element.data.level;
+
+      // すでに同じIDのノードが存在する場合、レベルを比較して高い方を残す
+      if (nodeMap[nodeId]) {
+        const existingLevel = nodeMap[nodeId].data.level;
+        if (nodeLevel > existingLevel) {
+          // 既存のノードよりもレベルが高い場合、要素を置き換える
+          nodeMap[nodeId] = element;
+        }
+      } else {
+        // まだ同じIDのノードが存在しない場合、そのまま追加
+        nodeMap[nodeId] = element;
       }
-      nodeCounts[nodeId]++;
-      totalNodeCount++;
-      return nodeCounts[nodeId] === 1; // 重複していないノードのみを残す
     }
-    return true; // エッジの場合はフィルタしない
   });
 
-  // 全ノードの累計がNODE_LIMITを超えた場合は超過分を削除する
-  if (totalNodeCount > NODE_LIMIT) {
-    const excess = totalNodeCount - NODE_LIMIT; // 超過分の数
-    let removedCount = 0; // 削除したノードの数
-    for (let i = filteredNodes.length - 1; i >= 0; i--) {
-      if (filteredNodes[i].group === 'nodes') {
-        filteredNodes.splice(i, 1);
-        removedCount++;
-        if (removedCount === excess) {
-          break; // 超過分をすべて削除したらループを終了
-        }
-      }
+  // 新しい要素配列を構築
+  const newElements = [];
+  elements.forEach(element => {
+    // グループがノードの場合、マップに含まれている要素のみを追加
+    if (element.group === 'nodes' && nodeMap[element.data.id]) {
+      newElements.push(nodeMap[element.data.id]);
+    } else if (element.group === 'edges') {
+      // グループがエッジの場合、そのまま追加
+      newElements.push(element);
     }
-  }
+  });
 
-  return filteredNodes;
+  return newElements;
 }
 
 // const testData = {
@@ -153,6 +153,6 @@ function removeDuplicateAndLimitNodes(elements, NODE_LIMIT) {
 // removeInvalidLinks(testData);
 // console.log("削除後:", testData.links);
 
-module.exports.getNodesAndLinks = getNodesAndLinks;
+module.exports.getElements = getElements;
 module.exports.removeInvalidLinks = removeInvalidLinks;
-module.exports.removeDuplicateAndLimitNodes = removeDuplicateAndLimitNodes;
+module.exports.removeDuplicateNodes = removeDuplicateNodes;

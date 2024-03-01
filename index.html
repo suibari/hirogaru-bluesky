@@ -24,6 +24,14 @@
       transform: translate(-50%, -50%);
       z-index: 9999;
     }
+    #popupNode {
+        position: absolute;
+        background-color: white;
+        padding: 10px;
+        border: 1px solid black;
+        border-radius: 5px;
+        z-index: 9999;
+    }
 </style>
 </head>
 
@@ -117,8 +125,28 @@ fetchButton.addEventListener('click', async () => {
 
 cy.on('tap', 'node', function(evt){
     var node = evt.target;
-    var url = "https://bsky.app/profile/" + node.data('handle');
-    window.open(url, '_blank').focus(); // 新しいウィンドウでリンクを開く
+    var text = node.data("level");
+
+    var popup = document.createElement("div");
+    popup.id = "popupNode";
+    popup.textContent = text;
+    
+    document.body.appendChild(popup);
+
+    function updatePopupPosition() {
+        var position = node.renderedPosition();
+        popup.style.top = position.y + "px";
+        popup.style.left = position.x + "px";
+    }
+    
+    updatePopupPosition();
+    cy.on("pan zoom resize", updatePopupPosition);
+
+    // event.stopPropagation();
+
+    cy.on("tap", function(event) {
+        popup.remove();
+    })
 });
 
 </script>

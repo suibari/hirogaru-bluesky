@@ -3,6 +3,9 @@ const { BskyAgent, default: AtpAgent } = require('@atproto/api');
 const service = 'https://bsky.social';
 
 class MyBskyAgent extends BskyAgent {
+  static accessJwt;
+  static refreshJwt;
+
   constructor() {
     super({service: service});
     return this;
@@ -188,14 +191,14 @@ class MyBskyAgent extends BskyAgent {
       const profiles = await this.getProfiles({actors: batch});
       actorsWithProf = actorsWithProf.concat(profiles.data.profiles);
     };
+    // console.log(actorsWithProf)
     return actorsWithProf;
   }
   
-  async setMutual(myself, follows, followers) {
+  async setMutual(myself, follows) {
     // 自分がフォローしている人が自分をフォローしていたらmutualをtrueに、そうでなければfalseにする
     for (const follow of follows) {
-      const response = await this.getFollows({actor: follow.did});
-      const followsOfFollows = response.data.follows;
+      const followsOfFollows = await this.getConcatFollows(follow.did);
       follow.mutual = false;
       for (const followOfFollows of followsOfFollows) {
         if (myself.did == followOfFollows.did) {
@@ -204,15 +207,36 @@ class MyBskyAgent extends BskyAgent {
         };
       };
     };
-    // 自分がフォロワーをフォローしていたらmutualをtrueに、そうでなければfalseにする
-    for (const follower of followers) {
-      follower.mutual = false;
-      for (const follow of follows) {
-        if (follow.did == follower.did) {
-          follower.mutual = true;
-          break;
-        };
-      };
+    // // 自分がフォロワーをフォローしていたらmutualをtrueに、そうでなければfalseにする
+    // for (const follower of followers) {
+    //   follower.mutual = false;
+    //   for (const follow of follows) {
+    //     if (follow.did == follower.did) {
+    //       follower.mutual = true;
+    //       break;
+    //     };
+    //   };
+    // };
+  }
+
+  async createOrRefleshSession() {
+    if ((!this.accessJwt) && (!this.refreshJwt)) {
+      // 初回起動時にaccsessJwt取得
+      const response = await this.login({
+        identifier: process.env.BSKY_IDENTIFIER,
+        password: process.env.BSKY_APP_PASSWORD
+      });
+      this.accessJwt = response.data.accessJwt;
+      this.refreshJwt = response.data.refreshJwt;
+      console.log("[INFO] created new session.");
+    };
+    const response = await this.getTimeline();
+    if ((response.status == 400) && (response.data.error == "ExpiredToken")) {
+      // accsessJwt期限切れ
+      const response = await this.refreshSession();
+      this.accessJwt = response.data.accessJwt;
+      this.refreshJwt = response.data.refreshJwt;
+      console.log("[INFO] token was expired, so refleshed the session.");
     };
   }
 }
