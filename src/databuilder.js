@@ -1,4 +1,5 @@
-const {fileTypeFromFile} = require('file-type');
+const FileType  = require('file-type');
+const fs = require('fs');
 
 async function getElements(myself, followsandfollowers) {
   let elements = [];
@@ -7,7 +8,7 @@ async function getElements(myself, followsandfollowers) {
   // * myself
   await pushActorToNodes(myself, elements, 5);
   // * follow and followers
-  followsandfollowers.forEach(async (followandfollower, i) => {
+  for (const [i, followandfollower] of followsandfollowers.entries()) {
     console.log(followandfollower.handle+","+i)
     let n = 0;
     if (i >= 0 && i < 6) {
@@ -32,7 +33,7 @@ async function getElements(myself, followsandfollowers) {
     //     };
     //   };
     // };
-  });
+  };
   // edges
   // * follow (myself -> follow)
   for (const followandfollower of followsandfollowers) {
@@ -165,12 +166,16 @@ async function imageUrlToBase64(imageUrl) {
   const buffer = await imageBlob.arrayBuffer();
 
   // バッファからファイルタイプを取得する
-  const fileType = await fileTypeFromFile(buffer);
+  const fileType = await FileType.fromBuffer(buffer);
   
   // BufferをBase64に変換
   const base64String = Buffer.from(buffer).toString('base64');
 
-  return "url(data:" + fileType.mime + ";base64," + base64String + ")";
+  const base64StringWithMime = "url(data:" + fileType.mime + ";base64," + base64String + ")";
+  // fs.writeFileSync('temp_image.jpg', base64StringWithMime);
+
+  // console.log(base64StringWithMime);
+  return base64StringWithMime;
 }
 
 // const testData = {

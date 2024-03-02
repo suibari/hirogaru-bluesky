@@ -1,4 +1,4 @@
-const { BskyAgent, default: AtpAgent } = require('@atproto/api');
+const { BskyAgent } = require('@atproto/api');
 const service = 'https://bsky.social';
 
 class MyBskyAgent extends BskyAgent {
@@ -305,3 +305,5 @@ async function setScore(followorfollower, func) {
     };
   }
 }
+
+module.exports = MyBskyAgent;

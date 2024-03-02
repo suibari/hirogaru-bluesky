@@ -108,6 +108,7 @@ fetchButton.addEventListener('click', async () => {
             }
         });
         const data = await response.json();
+        console.log(data);
         cy.add(data);
         cy.layout({
             // cose ---
@@ -163,9 +164,13 @@ cy.on('tap', 'node', function(evt){
 
 async function shareGraph() {
     var text = "\n#ひろがるBluesky!";
-    var imageUris = await cy.png({full: true});
+    var imageUris = await cy.png({
+        full: true,
+        scale: 0.5
+    });
 
     var url = "https://bsky.app/intent/compose?text" + encodeURIComponent(text) + "&imageUris=" + imageUris;
+    console.log(url)
     window.open(url);
 }
 
