@@ -1,7 +1,6 @@
-const MyBskyAgent = require('./src/bluesky');
-const databuilder = require('./src/databuilder');
+const MyBskyAgent = require('./src/bluesky.js');
+const { getElements, removeInvalidLinks } = require('./src/databuilder.js');
 const express = require('express');
-const fs = require('fs');
 const agent = new MyBskyAgent();
 
 const app = express();
@@ -23,6 +22,8 @@ app.listen(port, () => {
 })
 
 async function getData(handle) {
+  const SCORE_THRESHOLD = 100;
+
   try {
     await agent.createOrRefleshSession();
     
@@ -31,26 +32,40 @@ async function getData(handle) {
     const myselfWithProf = response.data;
     console.log("[INFO] got profile " + handle);
     // フォロイーのプロフィール
+    // const filteredFollows = await agent.filterFollowsByRepliedCount(myselfWithProf, REPLYRANK_THRESHOLD_FOLLOW)
     const follows = await agent.getConcatFollows(handle);
     const followsWithProf = await agent.getConcatProfiles(follows); // post数とfollower数を取得するため
-    await agent.setMutual(myselfWithProf, followsWithProf); // 相互フォローチェック
+    // await agent.setMutual(myselfWithProf, filteredFollows); // 相互フォローチェック
     console.log("[INFO] got profiles " + followsWithProf.length + " about follows of " + handle);
+    // フォロワーのプロフィール
+    const followers = await agent.getConcatFollowers(handle);
+    let followersWithProf = await agent.getConcatProfiles(followers); // post数とfollower数を取得するため
+    // await agent.setMutual(myselfWithProf, followsWithProf, followersWithProf); // 相互フォローチェックにmutualプロパティを付与
+    console.log("[INFO] got profiles " + followersWithProf.length + " about followers of " + handle);
+    // フォロイー、フォロワーを得点順ソートし、フォロワーの重複除去し、スレッショルドで切る
+    await agent.filterFollowsByInteractScore(myselfWithProf, followsWithProf);
+    followersWithProf = followersWithProf.filter(follower => !followsWithProf.some(follow => follow.did === follower.did));
+    let followsandfollowersWithProf = followsWithProf.concat(followersWithProf);
+    followsandfollowersWithProf = followsandfollowersWithProf.slice(0, SCORE_THRESHOLD);
+    console.log("[INFO] sorted and filterd about follows and followers of " + handle);
     // フォロイーのフォロイーのプロフィール
     // {
     //   follow.did: [prof, prof, ...],
     //   ...
     // }
-    let followsOfFollowsWithProf = {};
-    for (const follow of follows) {
-      const followsOfFollow = await agent.getConcatFollows(follow.did);
-      const followsOfFollowWithProf = await agent.getConcatProfiles(followsOfFollow);
-      await agent.setMutual(follow, followsOfFollowWithProf); // 相互フォローチェック
-      followsOfFollowsWithProf[follow.did] = followsOfFollowWithProf;
-      console.log("[INFO] got profiles " + followsOfFollowsWithProf[follow.did].length + " about follows of " + follow.handle);
-    };
+    // let followsOfFollowsWithProf = {};
+    // for (const follow of filteredFollows) {
+    //   const filteredFollowsOfFollow = await agent.filterFollowsByRepliedCount(follow, REPLYRANK_THRESHOLD_FOLLOWOFFOLLOW);
+    //   // const followsOfFollow = await agent.getConcatFollows(follow.did);
+    //   // const followsOfFollowWithProf = await agent.getConcatProfiles(filteredFollowsOfFollow);
+    //   if (filteredFollowsOfFollow.length > 0) {
+    //     await agent.setMutual(follow, filteredFollowsOfFollow); // 相互フォローチェック
+    //     followsOfFollowsWithProf[follow.did] = filteredFollowsOfFollow;
+    //     console.log("[INFO] got profiles " + followsOfFollowsWithProf[follow.did].length + " about follows of " + follow.handle);
+    //   }
+    // };
     // node, edge取得
-    console.log(followsOfFollowsWithProf)
-    let elements = await databuilder.getElements(myselfWithProf, followsWithProf, followsOfFollowsWithProf);
+    let elements = await getElements(myselfWithProf, followsandfollowersWithProf);
     
     // const followers = await agent.getConcatFollowers(handle);
     // const followersWithProf = await agent.getConcatProfiles(followers); // post数とfollower数を取得するため
@@ -93,11 +108,11 @@ async function getData(handle) {
     // }
     // fs.writeFileSync(("data.json", JSON.stringify(elements, null, '    ')));
 
-    elements = databuilder.removeDuplicateNodes(elements);
-    elements.forEach(element => {if (element.data.id == "did:plc:6qbevqze2tlxtrhfisjpve6e") console.log("さざんか発見")});
-    console.log(elements.length);
+    // elements = databuilder.removeDuplicateNodes(elements);
+    // elements.forEach(element => {if (element.data.id == "did:plc:6qbevqze2tlxtrhfisjpve6e") console.log("さざんか発見")});
+    // console.log(elements.length);
 
-    // databuilder.removeInvalidLinks(elements);
+    removeInvalidLinks(elements);
     // console.log(elements.length);
     // console.log(elements);
     

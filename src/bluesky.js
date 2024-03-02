@@ -1,5 +1,4 @@
 const { BskyAgent, default: AtpAgent } = require('@atproto/api');
-// const { getHalfLength , getRandomWord }  = require('./util');
 const service = 'https://bsky.social';
 
 class MyBskyAgent extends BskyAgent {
@@ -228,6 +227,7 @@ class MyBskyAgent extends BskyAgent {
       });
       this.accessJwt = response.data.accessJwt;
       this.refreshJwt = response.data.refreshJwt;
+      // console.log(this.accessJwt)
       console.log("[INFO] created new session.");
     };
     const response = await this.getTimeline();
@@ -239,6 +239,69 @@ class MyBskyAgent extends BskyAgent {
       console.log("[INFO] token was expired, so refleshed the session.");
     };
   }
+
+  async filterFollowsByInteractScore(actor, follows) {
+    const REPLY_SCORE = 3;
+    const LIKE_SCORE = 1;
+
+    for (const follow of follows) {
+      follow.score = 0; // 初期化
+
+      // actorへのリプライ回数をカウント
+      const responseReply = await this.getAuthorFeed({
+        actor: follow.did,
+        limit: 50,
+        // filter: 'posts_with_replies',
+      });
+      const feeds = responseReply.data.feed;
+      for (const feed of feeds) {
+        const actorDid = actor.did;
+        const replyDid = feed.reply?.parent?.author?.did;
+        if (actorDid == replyDid) {
+          // 自分へのリプライである
+          follow.score = follow.score + REPLY_SCORE;
+        };
+      };
+
+      // actorへのいいね数をカウント
+      // const responseLikes = await this.getActorLikes({
+      //   actor: followorfollower.did,
+      //   limit: 100,
+      // });
+    };
+
+    // プロパティの値が大きい順にソート
+    follows.sort((a, b) => b.score - a.score);
+    // const sortedDid = Object.keys(countMap).sort((a, b) => countMap[b] - countMap[a]);
+    // console.log(sortedDid);
+
+    // threshold までの actorDid を抜き出す
+    // followsandfollowers = followsandfollowers.slice(0, threshold);
+    // console.log(filteredDid);
+
+    // let profiles = [];
+    // if (filteredDid.length > 0) {
+    //   // Profile配列にして返す
+    //   const response = await this.getProfiles({actors: filteredDid});
+    //   profiles = response.data.profiles;
+    // }
+
+    return follows;
+  }
 }
 
-module.exports = MyBskyAgent;
+async function setScore(followorfollower, func) {
+  const response = await func({
+    actor: followorfollower.did,
+    limit: 100,
+  });
+  const feeds = response.data.feed;
+  for (const feed of feeds) {
+    const actorDid = actor.did;
+    const replyDid = feed.reply?.parent?.author?.did;
+    if (actorDid == replyDid) {
+      // 自分へのリプライである
+      countMap[followorfollower.did] = (countMap[followorfollower.did] || 0) + REPLY_SCORE;
+    };
+  }
+}

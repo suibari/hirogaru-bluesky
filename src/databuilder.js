@@ -1,48 +1,60 @@
-async function getElements(myself, follows, followsOfFollows) {
+const {fileTypeFromFile} = require('file-type');
+
+async function getElements(myself, followsandfollowers) {
   let elements = [];
 
-  // nodes  
-  pushActorToNodes(myself, elements, 5);
-  // follow
-  for (const follow of follows) {
-    if (follow.mutual) {
-      pushActorToNodes(follow, elements, 4);
+  // nodes
+  // * myself
+  await pushActorToNodes(myself, elements, 5);
+  // * follow and followers
+  followsandfollowers.forEach(async (followandfollower, i) => {
+    console.log(followandfollower.handle+","+i)
+    let n = 0;
+    if (i >= 0 && i < 6) {
+      n = 4;
+    } else if (i >= 6 && i < 18) {
+      n = 3;
+    } else if (i >= 18 && i < 36) {
+      n = 2;
     } else {
-      pushActorToNodes(follow, elements, 3);
+      n = 1;
     }
-    // follow of follows
-    if (followsOfFollows[follow.did].length > 0) {
-      for (const followOfFollows of followsOfFollows[follow.did]) {
-        if (follow.mutual) {
-          pushActorToNodes(followOfFollows, elements, 2);
-        } else {
-          pushActorToNodes(followOfFollows, elements, 1);
-        };
-      };
-    };
-  };
+    if (n > 0) {
+      await pushActorToNodes(followandfollower, elements, n);
+    }
+    // // follow of follows
+    // if (followsOfFollows[follow.did].length > 0) {
+    //   for (const followOfFollows of followsOfFollows[follow.did]) {
+    //     if (follow.mutual) {
+    //       pushActorToNodes(followOfFollows, elements, 2);
+    //     } else {
+    //       pushActorToNodes(followOfFollows, elements, 1);
+    //     };
+    //   };
+    // };
+  });
   // edges
   // * follow (myself -> follow)
-  for (const follow of follows) {
+  for (const followandfollower of followsandfollowers) {
     elements.push({
       data: {
         source: myself.did,
-        target: follow.did,
+        target: followandfollower.did,
       },
       group: 'edges'
     });
-    // * follow of follows (follows -> followsOfFollows)
-    if (followsOfFollows[follow.did].length > 0) {
-      for (const followOfFollows of followsOfFollows[follow.did]) {
-        elements.push({
-          data: {
-            source: follow.did,
-            target: followOfFollows.did,
-          },
-          group: 'edges'
-        });
-      };
-    };
+    // // * follow of follows (follows -> followsOfFollows)
+    // if (followsOfFollows[follow.did].length > 0) {
+    //   for (const followOfFollows of followsOfFollows[follow.did]) {
+    //     elements.push({
+    //       data: {
+    //         source: follow.did,
+    //         target: followOfFollows.did,
+    //       },
+    //       group: 'edges'
+    //     });
+    //   };
+    // };
   };
   // console.log("complete links: follows");
   // console.log("complete links: follows of Followss");
@@ -53,15 +65,21 @@ async function getElements(myself, follows, followsOfFollows) {
   return elements;
 }
 
-function pushActorToNodes(actor, elements, level) {
+async function pushActorToNodes(actor, elements, level) {
+  if (!actor.avatar) {
+    actor.avatar = "https://knsoza1.com/wp-content/uploads/2020/07/70b3dd52350bf605f1bb4078ef79c9b9.png";
+  };
+  const img = await imageUrlToBase64(actor.avatar);
+  // console.log(img)
   elements.push({
     data: {
       id: actor.did,
       name: actor.displayName,
-      img: actor.avatar,
+      // img: actor.avatar,
+      img: img,
       handle: actor.handle,
       level: level,
-      rank: getRank(actor), 
+      rank: level*20, 
     },
     group: 'nodes',
     // grabbable: false,
@@ -132,6 +150,27 @@ function removeDuplicateNodes(elements) {
   });
 
   return newElements;
+}
+
+async function imageUrlToBase64(imageUrl) {
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+      throw new Error('Failed to fetch image');
+  }
+
+  // 画像をBlobとして取得
+  const imageBlob = await response.blob();
+        
+  // BlobをBufferに変換
+  const buffer = await imageBlob.arrayBuffer();
+
+  // バッファからファイルタイプを取得する
+  const fileType = await fileTypeFromFile(buffer);
+  
+  // BufferをBase64に変換
+  const base64String = Buffer.from(buffer).toString('base64');
+
+  return "url(data:" + fileType.mime + ";base64," + base64String + ")";
 }
 
 // const testData = {
