@@ -5,18 +5,28 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 
 <link rel ="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <style>
     body, html {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(-225deg, #2CD8D5 0%, #C5C1FF 56%, #FFBAC3 100%);
     }
     #cy {
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
+        position: fixed;
+        background: linear-gradient(-225deg, #2CD8D5 0%, #C5C1FF 56%, #FFBAC3 100%);
+        z-index: 1;
+    }
+    #inputbuttonContainer {
         position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 2;
     }
     #loading {
         position: absolute;
@@ -25,13 +35,16 @@
         transform: translate(-50%, -50%);
         z-index: 9999;
     }
-    #popupNode {
+    .node-tooltip {
         position: absolute;
         background-color: white;
         padding: 10px;
-        border: 1px solid black;
+        /* border: 1px solid black; */
         border-radius: 5px;
         z-index: 9999;
+        display: none;
+        line-height: 1.2; /* 行間を調整 */
+        text-align: left; /* テキストを左揃え */
     }
     #shareButton {
         position: fixed;
@@ -40,140 +53,81 @@
         z-index: 9999;
         cursor: pointer;
     }
+    #popupOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    #popupContainer {
+        overflow: hidden;
+    }
+    #popupShare {
+        background-color: transparent;
+        border: none;
+        padding: 20px;
+        max-width: 80%;
+        max-height: 80%;
+        overflow: hidden;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    #popupImageShare {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+    #closeButtonShare {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        border: none;
+        background-color: transparent;
+        font-size: 20px;
+        cursor: pointer;
+    }
 </style>
 </head>
 
 <body>
 
-<input type="text" id="fetchInput" placeholder="handle.bsky.social">
-<button id="fetchButton">Generate!</button>
+<div id="cy"></div>
+<div id="inputbuttonContainer">
+    <input type="text" id="fetchInput" placeholder="handle.bsky.social">
+    <button id="fetchButton">Generate!</button>
+</div>
 <div id="shareButton" onclick="shareGraph()">   
     <i class="fas fa-share-alt"></i>
 </div>
-<div id="cy"></div>
 <div id="loading" style="display: none;"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i></div>
+<!-- Node Tooltip -->
+<div id="nodeTooltip" class="node-tooltip">
+    <div id="tooltipContent" class="text-center"></div>
+    <button id="regenerateButton" class="btn btn-primary">この人を中心にグラフを再生成</button>
+</div>
+<!-- Share Popup -->
+<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <img id="popupImageShare" src="" class="img-fluid mb-3" alt="Share Image">
+                <p>画像をコピーしてBlueskyにペーストすればシェアできます！</p>
+            </div>
+        </div>
+    </div>
+</div>  
 
-<script>
-
-const fetchButton = document.getElementById('fetchButton');
-const fetchInput = document.getElementById('fetchInput');
-
-var cy = cytoscape({
-    container: document.getElementById('cy'), // container to render in
-
-    elements: [],
-
-    style: [
-        {
-            selector: 'node',
-            style: {
-                'width': 'data(rank)',
-                'height': 'data(rank)',
-                'background-fit': 'contain',
-                'background-image': 'data(img)',
-                // 'background-image': async (ele) => {    
-                //     var base64uri = ele.data('img');
-                //     return "url(image/" + base64uri + ")";
-                // },
-                'background-image-crossorigin': "null",
-            },
-        },
-        {
-            selector: 'edge',
-            style: {
-                'width': 3,
-                'display': 'none',
-            }
-        }
-    ]
-});
-
-// Enterキーが押されたときにfetch処理を実行
-fetchInput.addEventListener('keyup', function(event) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        fetchButton.click();
-    }
-});
-
-fetchButton.addEventListener('click', async () => {
-    try {
-        const handle = fetchInput.value.trim();
-        document.getElementById('loading').style.display = 'block'; // くるくる表示開始
-        var elm = cy.$('cy');
-        cy.remove(elm);
-        const response = await fetch(`/data?handle=${handle}`, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await response.json();
-        console.log(data);
-        cy.add(data);
-        cy.layout({
-            // cose ---
-            // name: 'cose',
-            // animate: false,
-            // nodeOverlap: 1,
-            // nodeRepulsion: function( node ){ return 1e7; },
-            // cola ---
-            // name: 'cola',
-            // animate: false,
-            // concentric ---
-            name: 'concentric',
-            animate: true,
-            concentric: function(node) {
-                return node.data('level');
-            },
-            levelWidth: function( nodes ){
-                return 1;
-            },
-            stop: function() {
-                document.getElementById('loading').style.display = 'none'; // くるくる表示終了
-            },
-        }).run();
-
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
-});
-
-cy.on('tap', 'node', function(evt){
-    var node = evt.target;
-    var text = node.data("level");
-
-    var popup = document.createElement("div");
-    popup.id = "popupNode";
-    popup.textContent = text;
-    
-    document.body.appendChild(popup);
-
-    function updatePopupPosition() {
-        var position = node.renderedPosition();
-        popup.style.top = position.y + "px";
-        popup.style.left = position.x + "px";
-    }
-    
-    updatePopupPosition();
-    cy.on("pan zoom resize", updatePopupPosition);
-
-    cy.on("tap", function(event) {
-        popup.remove();
-    })
-});
-
-async function shareGraph() {
-    var text = "\n#ひろがるBluesky!";
-    var imageUris = await cy.png({
-        full: true,
-        scale: 0.5
-    });
-
-    var url = "https://bsky.app/intent/compose?text" + encodeURIComponent(text) + "&imageUris=" + imageUris;
-    console.log(url)
-    window.open(url);
-}
-
-</script>
+<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="client.js"></script>
 
 </body>

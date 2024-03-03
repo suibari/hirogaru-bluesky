@@ -9,7 +9,7 @@ async function getElements(myself, followsandfollowers) {
   await pushActorToNodes(myself, elements, 5);
   // * follow and followers
   for (const [i, followandfollower] of followsandfollowers.entries()) {
-    console.log(followandfollower.handle+","+i)
+    // console.log(followandfollower.handle+","+i)
     let n = 0;
     if (i >= 0 && i < 6) {
       n = 4;
@@ -83,7 +83,7 @@ async function pushActorToNodes(actor, elements, level) {
       rank: level*20, 
     },
     group: 'nodes',
-    // grabbable: false,
+    grabbable: false,
   });
 }
 

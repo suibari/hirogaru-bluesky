@@ -1,28 +1,39 @@
 const MyBskyAgent = require('./src/bluesky.js');
 const { getElements, removeInvalidLinks } = require('./src/databuilder.js');
 const express = require('express');
+const multer  = require('multer');
+const upload = multer();
 const agent = new MyBskyAgent();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.static('./'));
-app.get('/data', async (req, res) => {
+app.get('/generate', async (req, res) => {
   try {
     const handle = req.query.handle;
     const data = await getData(handle);
     res.json(data);
-    console.log("[INFO] send data to client.")
+    console.log("[INFO] send data to client. total elements: "+data.length);
   } catch (e) {
     res.status(500);
   }
-})
+});
+app.post('/upload', upload.single('image'), async (req, res) => {
+  const blob = req.file.buffer;
+  // console.log(blob)
+  const uint8Array = new Uint8Array(blob);
+  // console.log(uint8Array)
+  const response = await agent.uploadBlob(uint8Array, {encoding: 'image/png'});
+
+  res.json({uri: response.data.blob});
+});
 app.listen(port, () => {
   console.log(`[INFO] Server is running on http://localhost:${port}`);
 })
 
 async function getData(handle) {
-  const SCORE_THRESHOLD = 100;
+  const SCORE_THRESHOLD = 36;
 
   try {
     await agent.createOrRefleshSession();
@@ -97,7 +108,7 @@ async function getData(handle) {
     //     console.log("complete follow: "+follower.displayName);
     //   }
     // };
-    console.log(elements.length);
+    // console.log(elements.length);
     
     // ファイル保存
     // for (const element of elements) {
@@ -112,7 +123,7 @@ async function getData(handle) {
     // elements.forEach(element => {if (element.data.id == "did:plc:6qbevqze2tlxtrhfisjpve6e") console.log("さざんか発見")});
     // console.log(elements.length);
 
-    removeInvalidLinks(elements);
+    // removeInvalidLinks(elements);
     // console.log(elements.length);
     // console.log(elements);
     
