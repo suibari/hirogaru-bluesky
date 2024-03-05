@@ -19,6 +19,7 @@
         padding: 0;
         width: 100%;
         height: 100%;
+        overflow: hidden;
     }
     #cy {
         top: 0;
@@ -34,6 +35,11 @@
         top: 10px;
         left: 10px;
         z-index: 10;
+        display: flex;
+        align-items: center;
+    }
+    #inputbuttonContainer input {
+        margin-right: 10px;
     }
     #loading {
         position: absolute;
@@ -41,17 +47,6 @@
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 9999;
-    }
-    .node-tooltip {
-        position: absolute;
-        background-color: white;
-        padding: 10px;
-        /* border: 1px solid black; */
-        border-radius: 5px;
-        z-index: 9999;
-        display: none;
-        line-height: 1.2; /* 行間を調整 */
-        text-align: left; /* テキストを左揃え */
     }
     #shareButton {
         position: fixed;
@@ -76,6 +71,9 @@
         z-index: 10;
         cursor: pointer;
     }
+    #helpModal {
+        z-index: 8888;
+    }
     .github-icon {
         font-size: 20px;
         color: black; /* 黒色に設定 */
@@ -92,7 +90,7 @@
         left: 10px;
         display: none;
         width: 300px;
-        z-index: 9999;
+        z-index: 7777;
     }
 </style>
 </head>
@@ -128,7 +126,7 @@
         <div class="modal-content">
             <div class="modal-body text-center">
                 <img id="popupImageShare" src="" class="img-fluid mb-3" alt="Share Image">
-                <p>画像をコピーしてBlueskyにペーストすればシェアできます！</p>
+                <p>画像をコピーして<a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky" target="_blank">Bluesky</a>にペーストすればシェアできます！</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -151,24 +149,28 @@
             <div class="modal-body">
                 <h6>使い方</h6>
                     <ul>
-                        <li><a href="https://bsky.app/" target="_blank">Bluesky</a>の名前(～.bsky.social)を入れてGenerate!を押してください</li>
-                        <li>その人の相関図を作成します</li>
+                        <li><a href="https://bsky.app/" target="_blank">Bluesky</a>の名前(～.bsky.social)を入れて<b>Generate!</b>を押してください</li>
+                        <li>その人の<b>相関図</b>を作成します</li>
                         <li>相関図の中心が自分、そこに近づくほど仲良しの人です</li>
-                        <li>直近のポストによって結果が変わるかも？</li>
+                        <li>仲良し度はリプライやいいねの頻度で変わるので、しばらくしたら結果が変わるかも？</li>
+                        <li>普通のアカウントなら<b>5～20秒</b>ほどで生成できるはずです</li>
                     </ul>
                 <h6>TIPS</h6>
                     <ul>
                         <li>各ユーザのアイコンをクリックするとメニューが出ます</li>
                         <li>メニュー選択でプロフィールに飛んだり、その人を中心に相関図を再生成できます</li>
                         <li>右上のシェアボタンで相関図を画像として表示します。コピペしてBlueskyに投稿！</li>
+                        <li>生成時間はポスト数、フォロー数で変わってきますが、30秒はかからないはず。生成時間が長すぎる時はリロードしてみてください</li>
+                        </li>
                     </ul>
                 <h6>免責事項</h6>
                     <ul>
+                        <li>本サービスによって生じた損害について開発者は責任を負いません</li>
                         <li>本サービスは予告なく停止する可能性があります</li>
                     </ul>
                 <h6>その他</h6>
                     <ul>
-                        <li>ご意見ご要望は開発者までお気軽にどうぞ！</li>
+                        <li>ご意見ご要望は<a href="https://bsky.app/profile/suibari-cha.bsky.social" target="_blank">開発者</a>までお気軽にどうぞ！</li>
                     </ul>
             </div>
             <div class="modal-footer d-flex justify-content-center">
@@ -182,8 +184,7 @@
 <div id="card" class="card">
     <div class="card-body">
         <h5 class="card-title" id="cardTitle"></h5>
-        <h6 class="card-subtitle mb-2 text-muted" id="cardSubtitle"></h6>
-        <a href="#" id="cardLink" class="card-link">Link</a>
+        <a href="#" id="cardLink" class="card-link" target="_blank"><h6 class="card-subtitle mb-2 text-muted" id="cardSubtitle"></h6></a>
         <button id="regenerateButton" class="btn btn-primary">この人を中心に相関図を再生成</button>
     </div>
 </div>

@@ -8,7 +8,7 @@ const agent = new MyBskyAgent();
 const logger = new Logger();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 7860;
 
 app.use(express.static('./'));
 app.get('/generate', async (req, res) => {
@@ -19,7 +19,8 @@ app.get('/generate', async (req, res) => {
     res.json(data);
     console.log("[INFO] send data to client. total elements: "+data.length);
   } catch (e) {
-    res.status(500);
+    console.log("[ERROR] An error occured: ", e);
+    res.status(500).send({error: "Internal Server Error", message: e.message});
   }
 });
 // app.post('/upload', upload.single('image'), async (req, res) => {
@@ -46,9 +47,6 @@ async function getData(handle) {
     await agent.createOrRefleshSession();
 
     let response = await agent.getProfile({actor: handle});
-    if ((response.status == 400) && (response.data.message == "Profile not found")) {
-      throw new Error('profile-not-found');
-    }
     const myselfWithProf = response.data;
 
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
@@ -68,6 +66,6 @@ async function getData(handle) {
     return elements;
 
   } catch(e) {
-    console.error(e);
+    throw e;
   }
 }

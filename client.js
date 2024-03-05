@@ -1,6 +1,8 @@
 const fetchButton = document.getElementById('fetchButton');
 const fetchInput = document.getElementById('fetchInput');
 
+var cyrunflag = false;
+
 var cy = cytoscape({
     container: document.getElementById('cy'), // container to render in
 
@@ -40,19 +42,22 @@ fetchInput.addEventListener('keyup', function(event) {
 });
 
 fetchButton.addEventListener('click', (event) => {
-  fetchData();
+  handle = fetchInput.value.trim();
+  
+  // エラー検査
+  if (!handle) {
+    showAlert("テキストが入力されていません");
+    return;
+  } else if (!/\./.test(handle)) {
+    showAlert("有効なhandleではありません");
+    return;
+  }
+  
+  fetchData(handle);
 });
 
 async function fetchData(handle) {
   try {
-    console.log(handle)
-    if (!handle) {
-      handle = fetchInput.value.trim();
-      if (!handle) {
-        showAlert();
-        return;
-      }
-    }
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('cy');
     cy.remove(elm);
@@ -61,6 +66,16 @@ async function fetchData(handle) {
         'Content-Type': 'application/json'
       }
     });
+
+    // エラー処理
+    if (!response.ok) {
+      const errorData = await response.json();
+      showAlert("サーバエラーが発生しました: " + errorData.message);
+      document.getElementById('loading').style.display = 'none'; // くるくる表示終了
+      cyrunflag = false;
+      return;
+    }
+
     const data = await response.json();
     // console.log(data);
     cy.add(data);
@@ -86,23 +101,26 @@ async function fetchData(handle) {
         document.getElementById('loading').style.display = 'none'; // くるくる表示終了
       },
     }).run();
+    cyrunflag = true;
 
   } catch (error) {
     console.error('Error fetching data:', error);
+    showAlert("ブラウザでエラーが発生しました");
   }
 }
 
 // どこかをクリックしたときの処理
-$(document).on('mousedown', function(evt) {
-  // アラートが表示されているかつ、クリックした場所がアラートの外側である場合、またはクリックした場所がアラート内である場合
+cy.on('tap', (evt) => {
+  // console.log("tap")
   if ($('#alert').is(':visible')) {
-    // アラートを非表示にする
+  // アラートを非表示にする
     hideAlert();
   }
-});
+})
 
 // アラートが表示されるときの処理
-function showAlert() {
+function showAlert(text) {
+  $('#alert').text(text);
   $('#alert').fadeIn();
 }
 
@@ -135,14 +153,12 @@ cy.on('tap', 'node', function(evt){
   });
 });
 
-$(document).ready(function() {
-  $(document).on('click', function(evt) {
-    if ($('#card').is(':visible') && !$(evt.target).closest('#card').length && !tappingCard) {
-      $('#card').fadeOut();
-    }
-    tappingCard = false;
-  });
-});
+cy.on('tap', (evt) => {
+  if ($('#card').is(':visible') && !$(evt.target).closest('#card').length && !tappingCard) {
+    $('#card').fadeOut();
+  }
+  tappingCard = false;
+})
 
 // // カード以外の領域をクリックしたときの処理
 // $(document).on('click', function(e) {
@@ -153,11 +169,13 @@ $(document).ready(function() {
 // });
 
 async function shareGraph() {
-    // var text = "\n#ひろがるBluesky";
+  if (cyrunflag) {
+    // bg
+
     var base64uri = await cy.png({
-        output: "base64uri",
-        bg: "skyblue",
-        full: true,
+      output: "base64uri",
+      bg: "lightskyblue",
+      full: true,
     });
 
     // Set image source
@@ -165,6 +183,9 @@ async function shareGraph() {
 
     // Show Bootstrap modal
     $('#shareModal').modal('show');
+  } else {
+    showAlert("相関図を生成後、画像シェアができます");
+  }
     
     // サーバにblobを投げ、返ってきたuriをintentに投げる(未実装API)
     // var formData = new FormData();
