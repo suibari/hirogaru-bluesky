@@ -1,4 +1,5 @@
 const { BskyAgent } = require('@atproto/api');
+const { response } = require('express');
 const service = 'https://bsky.social';
 
 class MyBskyAgent extends BskyAgent {
@@ -177,13 +178,14 @@ class MyBskyAgent extends BskyAgent {
     return uriArray;
   }
 
+  // input: array[] of did; output: array of profile;
   async getConcatProfiles(actors) {
     const batchSize = 25;
     let didArray = [];
     let actorsWithProf = [];
 
     for (const actor of actors) {
-      didArray.push(actor.did);
+      didArray.push(actor);
     };
     for (let i = 0; i < didArray.length; i += batchSize) {
       const batch = didArray.slice(i, i + batchSize);
@@ -287,6 +289,106 @@ class MyBskyAgent extends BskyAgent {
     // }
 
     return follows;
+  }
+
+  async getConcatAuthorFeed(handleordid, threshold_tl) {
+    let feeds = [];
+    let cursor;
+    let response;
+
+    response = await this.getAuthorFeed({actor: handleordid, limit: 100});
+    feeds = feeds.concat(response.data.feed);
+    cursor = response.data.cursor;
+    while ((cursor) && (threshold_tl > feeds.length)) {
+      response = await this.getAuthorFeed({actor: handleordid, limit: 100, cursor: cursor});
+      feeds = feeds.concat(response.data.feed);
+      cursor = response.data.cursor;
+    };
+    return feeds;
+  }
+
+  async getConcatActorLikes(handleordid, threshold_like) {
+    let likes = [];
+    let cursor;
+
+    try {
+      let response = await this.getActorLikes({actor: handleordid, limit: 100});
+      likes = likes.concat(response.data.feed);
+      cursor = response.data.cursor;
+      while ((cursor) && (response.data.feed.length > 0) && (threshold_like > likes.length)) {
+        response = await this.getActorLikes({actor: handleordid, limit: 100, cursor: cursor});
+        likes = likes.concat(response.data.feed);
+        cursor = response.data.cursor;
+      };
+      return likes;
+    } catch(e) {
+      return [];
+    }
+  }
+
+  async getArraySortedReplyToAndLikeCount(handle, threshold_nodes, threshold_tl, threshold_like) {
+    const SCORE_REPLY = 3;
+    const SCORE_LIKE = 1;
+    let resultArray = [];
+    let didArray = [];
+
+    const feeds = await this.getConcatAuthorFeed(handle, threshold_tl);
+    console.log("[INFO] got " + feeds.length + " posts by " + handle);
+    const likes = await this.getConcatActorLikes(handle, threshold_like); // 現状、likeがとれるのはログインユーザだけ
+    console.log("[INFO] got " + likes.length + " likes by " + handle);
+  
+    // for feeds[]
+    for (const feed of feeds) {
+      if (feed.reply) {
+        if (handle != feed.reply.parent.author.handle) { // 自分に対するリプライは除外
+          const replyTo = feed.reply.parent.author.did;
+          let flagFound = false;
+          for (const node of resultArray) {
+            if (replyTo == node.did) {
+              node.score = node.score + SCORE_REPLY;
+              flagFound = true;
+              break;
+            };
+          };
+          if (!flagFound) {
+            resultArray.push({did: replyTo, score: SCORE_REPLY});
+          };
+        };
+      };
+    };
+    // for likes[]
+    for (const like of likes) {
+      const likeTo = like.post.author.did;
+      let flagFound = false;
+      for (const node of resultArray) {
+        if (likeTo == node.did) {
+          node.score = node.score + SCORE_LIKE;
+          flagFound = true;
+          break;
+        };
+      };
+      if (!flagFound) {
+        resultArray.push({did: likeTo, score: SCORE_LIKE});
+      };
+    };
+    // scoreで降順ソート
+    resultArray.sort((a, b) => b.score - a.score);
+    // オブジェクト配列からdidキーのみ抜いて配列化する
+    didArray = resultArray.map(obj => obj.did);
+    // 上位のみ抜き取る
+    didArray = didArray.slice(0, threshold_nodes);
+    // Profiles配列取得
+    let friendsWithProf = [];
+    if (didArray.length > 0) { // 誰にもリプライしてない人は実行しない
+      friendsWithProf = await this.getConcatProfiles(didArray);
+    }
+    // いいね集計ができないと表示人数が少なく見栄えが悪い。FFを加えておく
+    const follows = await this.getConcatFollows(handle);
+    friendsWithProf = friendsWithProf.concat(follows);
+    const followers = await this.getConcatFollowers(handle);
+    friendsWithProf = friendsWithProf.concat(followers);
+
+    return friendsWithProf;
   }
 }
 

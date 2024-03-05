@@ -1,62 +1,40 @@
 const FileType  = require('file-type');
 const fs = require('fs');
 
-async function getElements(myself, followsandfollowers) {
+async function getElements(allWithProf) {
   let elements = [];
 
   // nodes
-  // * myself
-  await pushActorToNodes(myself, elements, 5);
-  // * follow and followers
-  for (const [i, followandfollower] of followsandfollowers.entries()) {
+  for (const [i, friend] of allWithProf.entries()) {
     // console.log(followandfollower.handle+","+i)
     let n = 0;
-    if (i >= 0 && i < 6) {
+    if (i == 0) {
+      n = 5;
+    } else if (i >= 1 && i < 7) {
       n = 4;
-    } else if (i >= 6 && i < 18) {
+    } else if (i >= 7 && i < 19) {
       n = 3;
-    } else if (i >= 18 && i < 36) {
+    } else if (i >= 19 && i < 37) {
       n = 2;
-    } else {
-      n = 1;
     }
+    // } else {
+    //   n = 1;
+    // }
     if (n > 0) {
-      await pushActorToNodes(followandfollower, elements, n);
+      await pushActorToNodes(friend, elements, n);
     }
-    // // follow of follows
-    // if (followsOfFollows[follow.did].length > 0) {
-    //   for (const followOfFollows of followsOfFollows[follow.did]) {
-    //     if (follow.mutual) {
-    //       pushActorToNodes(followOfFollows, elements, 2);
-    //     } else {
-    //       pushActorToNodes(followOfFollows, elements, 1);
-    //     };
-    //   };
-    // };
   };
-  // edges
-  // * follow (myself -> follow)
-  for (const followandfollower of followsandfollowers) {
-    elements.push({
-      data: {
-        source: myself.did,
-        target: followandfollower.did,
-      },
-      group: 'edges'
-    });
-    // // * follow of follows (follows -> followsOfFollows)
-    // if (followsOfFollows[follow.did].length > 0) {
-    //   for (const followOfFollows of followsOfFollows[follow.did]) {
-    //     elements.push({
-    //       data: {
-    //         source: follow.did,
-    //         target: followOfFollows.did,
-    //       },
-    //       group: 'edges'
-    //     });
-    //   };
-    // };
-  };
+  // // edges
+  // // * follow (myself -> follow)
+  // for (const friend of friends) {
+  //   elements.push({
+  //     data: {
+  //       source: myself.did,
+  //       target: friend.did,
+  //     },
+  //     group: 'edges'
+  //   });
+  // };
   // console.log("complete links: follows");
   // console.log("complete links: follows of Followss");
 
@@ -115,42 +93,14 @@ function removeInvalidLinks(elements) {
   elements.push(...validNodes, ...validEdges);
 }
 
-function removeDuplicateNodes(elements) {
-  const nodeMap = {}; // ノードの情報を格納するマップ
+function removeDuplicatesNodes(headElement, otherElements) {
+  const elements = [headElement].concat(otherElements);
 
-  // ノードの情報をマップに格納
-  elements.forEach(element => {
-    if (element.group === 'nodes') {
-      const nodeId = element.data.id;
-      const nodeLevel = element.data.level;
-
-      // すでに同じIDのノードが存在する場合、レベルを比較して高い方を残す
-      if (nodeMap[nodeId]) {
-        const existingLevel = nodeMap[nodeId].data.level;
-        if (nodeLevel > existingLevel) {
-          // 既存のノードよりもレベルが高い場合、要素を置き換える
-          nodeMap[nodeId] = element;
-        }
-      } else {
-        // まだ同じIDのノードが存在しない場合、そのまま追加
-        nodeMap[nodeId] = element;
-      }
-    }
-  });
-
-  // 新しい要素配列を構築
-  const newElements = [];
-  elements.forEach(element => {
-    // グループがノードの場合、マップに含まれている要素のみを追加
-    if (element.group === 'nodes' && nodeMap[element.data.id]) {
-      newElements.push(nodeMap[element.data.id]);
-    } else if (element.group === 'edges') {
-      // グループがエッジの場合、そのまま追加
-      newElements.push(element);
-    }
-  });
-
-  return newElements;
+  const uniqueObjects = {};
+  for (const obj of elements) {
+    uniqueObjects[obj.did] = obj;
+  }
+  return Object.values(uniqueObjects);
 }
 
 async function imageUrlToBase64(imageUrl) {
@@ -178,25 +128,6 @@ async function imageUrlToBase64(imageUrl) {
   return base64StringWithMime;
 }
 
-// const testData = {
-//   nodes: [
-//     { id: 1 },
-//     { id: 2 },
-//     { id: 3 }
-//   ],
-//   links: [
-//     { source: 1, target: 2 }, // 有効なリンク
-//     { source: 2, target: 4 }, // 無効なリンク (targetが存在しない)
-//     { source: 3, target: 2 }, // 無効なリンク (sourceが存在しない)
-//     { source: 1, target: 3 }  // 有効なリンク
-//   ]
-// };
-// // テストケース
-// console.log("テストケース1:");
-// console.log("削除前:", testData.links);
-// removeInvalidLinks(testData);
-// console.log("削除後:", testData.links);
-
 module.exports.getElements = getElements;
 module.exports.removeInvalidLinks = removeInvalidLinks;
-module.exports.removeDuplicateNodes = removeDuplicateNodes;
+module.exports.removeDuplicatesNodes = removeDuplicatesNodes;
