@@ -1,9 +1,11 @@
 const MyBskyAgent = require('./src/bluesky.js');
 const { getElements, removeInvalidLinks, removeDuplicatesNodes } = require('./src/databuilder.js');
+const Logger = require('./src/logger.js');
 const express = require('express');
 const multer  = require('multer');
 const upload = multer();
 const agent = new MyBskyAgent();
+const logger = new Logger();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,9 +38,11 @@ app.listen(port, () => {
 async function getData(handle) {
   const THRESHOLD_NODES = 36
   const THRESHOLD_TL = 1000;
-  const THRESHOLD_LIKES = 100;
+  const THRESHOLD_LIKES = 20;
 
   try {
+    logger.tic();
+
     await agent.createOrRefleshSession();
 
     let response = await agent.getProfile({actor: handle});
@@ -55,6 +59,11 @@ async function getData(handle) {
 
     // node, edge取得
     let elements = await getElements(allWithProf);
+
+    logger.incExecCount();
+    const elapsedTime = logger.tac();
+    const execCount = logger.getExecCount();
+    console.log("[INFO] exec time was " + elapsedTime + " [sec], total exec count is " + execCount + ".");
     
     return elements;
 

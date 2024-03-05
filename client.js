@@ -48,6 +48,10 @@ async function fetchData(handle) {
     console.log(handle)
     if (!handle) {
       handle = fetchInput.value.trim();
+      if (!handle) {
+        showAlert();
+        return;
+      }
     }
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('cy');
@@ -88,34 +92,65 @@ async function fetchData(handle) {
   }
 }
 
+// どこかをクリックしたときの処理
+$(document).on('mousedown', function(evt) {
+  // アラートが表示されているかつ、クリックした場所がアラートの外側である場合、またはクリックした場所がアラート内である場合
+  if ($('#alert').is(':visible')) {
+    // アラートを非表示にする
+    hideAlert();
+  }
+});
+
+// アラートが表示されるときの処理
+function showAlert() {
+  $('#alert').fadeIn();
+}
+
+// アラートを非表示にする処理
+function hideAlert() {
+  $('#alert').fadeOut();
+}
+
+var tappingCard = false; // ノードタップ時のフラグ
+
 cy.on('tap', 'node', function(evt){
   var node = evt.target;
-  var name = node.data("name");
-  var handle = node.data("handle");
-  var href = "https://bsky.app/profile/" + handle;
-  // console.log(handle);
+  var handle = node.data('handle');
 
-  // ツールチップの位置を設定
-  var tooltip = document.getElementById('nodeTooltip');
-  tooltip.style.top = node.position().y + 10 + 'px'; // パンとズームに追従
-  tooltip.style.left = node.position().x + 10 + 'px'; // パンとズームに追従
+  $('#cardTitle').text(node.data('name'));
+  $('#cardSubtitle').text("@"+handle);
+  $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
 
-  // ツールチップのコンテンツを設定
-  document.getElementById('tooltipContent').innerHTML = `
-    <p style="margin-bottom"><strong>${name}</strong></p>
-    <p style="margin-bottom"><a href="${href}" target=”_blank”>@${handle}</a></p>
-  `;
+  if (!$('#card').is(':visible') || $('#card').data('nodeId') !== node.id()) {
+    $('#card').data('nodeId', node.id());
+    $('#card').fadeIn();
+    tappingCard = true;
+  }
 
-  // ツールチップを表示
-  tooltip.style.display = 'block';
-
-  // 「再生成」ボタンのクリックイベントを設定
-  document.getElementById('regenerateButton').onclick = function() {
-    // console.log(handle);
+  $('#regenerateButton').off('click').click(function(evt) {
+    evt.stopPropagation();
     fetchData(handle);
-    tooltip.style.display = 'none';
-  };
+    $('#card').fadeOut();
+    tappingCard = false;
+  });
 });
+
+$(document).ready(function() {
+  $(document).on('click', function(evt) {
+    if ($('#card').is(':visible') && !$(evt.target).closest('#card').length && !tappingCard) {
+      $('#card').fadeOut();
+    }
+    tappingCard = false;
+  });
+});
+
+// // カード以外の領域をクリックしたときの処理
+// $(document).on('click', function(e) {
+//   if (!$(e.target).closest('#card').length && ($('#card').is(':visible'))) {
+//     // カードが表示されている場合のみ非表示にする
+//     $('#card').fadeOut();
+//   }
+// });
 
 async function shareGraph() {
     // var text = "\n#ひろがるBluesky";
@@ -154,18 +189,18 @@ async function shareGraph() {
 
 // ズームやパンの変更時にもツールチップの位置を更新
 // パンとズームにツールチップを追従させる
-cy.on('pan zoom', function(evt) {
-    var nodes = cy.nodes();
-    for (var i = 0; i < nodes.length; i++) {
-        var node = nodes[i];
-        var tooltip = document.getElementById('nodeTooltip');
-        var position = node.renderedPosition(); // レンダリング位置を取得
-        if (tooltip.style.display === 'block') {
-            // パンとズームを考慮して位置を設定
-            var x = position.x * cy.zoom() + cy.pan().x;
-            var y = position.y * cy.zoom() + cy.pan().y;
-            tooltip.style.top = y + 10 + 'px'; 
-            tooltip.style.left = x + 10 + 'px';
-        }
-    }
-});
+// cy.on('pan zoom', function(evt) {
+//     var nodes = cy.nodes();
+//     for (var i = 0; i < nodes.length; i++) {
+//         var node = nodes[i];
+//         var tooltip = document.getElementById('nodeTooltip');
+//         var position = node.renderedPosition(); // レンダリング位置を取得
+//         if (tooltip.style.display === 'block') {
+//             // パンとズームを考慮して位置を設定
+//             var x = position.x * cy.zoom() + cy.pan().x;
+//             var y = position.y * cy.zoom() + cy.pan().y;
+//             tooltip.style.top = y + 10 + 'px'; 
+//             tooltip.style.left = x + 10 + 'px';
+//         }
+//     }
+// });

@@ -334,11 +334,11 @@ class MyBskyAgent extends BskyAgent {
 
     const feeds = await this.getConcatAuthorFeed(handle, threshold_tl);
     console.log("[INFO] got " + feeds.length + " posts by " + handle);
-    const likes = await this.getConcatActorLikes(handle, threshold_like); // 現状、likeがとれるのはログインユーザだけ
-    console.log("[INFO] got " + likes.length + " likes by " + handle);
+    // const likes = await this.getConcatActorLikes(handle, threshold_like); // 現状、likeがとれるのはログインユーザだけ
+    // console.log("[INFO] got " + likes.length + " likes by " + handle);
   
-    // for feeds[]
-    for (const feed of feeds) {
+    // 誰に対してリプライしたかをカウント
+    for (const [index, feed] of Object.entries(feeds)) {
       if (feed.reply) {
         if (handle != feed.reply.parent.author.handle) { // 自分に対するリプライは除外
           const replyTo = feed.reply.parent.author.did;
@@ -355,22 +355,42 @@ class MyBskyAgent extends BskyAgent {
           };
         };
       };
-    };
-    // for likes[]
-    for (const like of likes) {
-      const likeTo = like.post.author.did;
-      let flagFound = false;
-      for (const node of resultArray) {
-        if (likeTo == node.did) {
-          node.score = node.score + SCORE_LIKE;
-          flagFound = true;
-          break;
+      // 誰からいいねされたかをカウント
+      if (threshold_like > index) { // 直近threshold_like件のfeedに対して
+        const response = await this.getLikes({uri: feed.post.uri});
+        const likes = response.data.likes;
+        for (const like of likes) {
+          const likeBy = like.actor.did;
+          let flagFound = false;
+          for (const node of resultArray) {
+            if (likeBy == node.did) {
+              node.score = node.score + SCORE_LIKE;
+              flagFound = true;
+              break;
+            };
+          };
+          if (!flagFound) {
+            resultArray.push({did: likeBy, score: SCORE_LIKE});
+          };
         };
       };
-      if (!flagFound) {
-        resultArray.push({did: likeTo, score: SCORE_LIKE});
-      };
     };
+    console.log("[INFO] got likes in " + threshold_like + " post.");
+    // // for likes[]
+    // for (const like of likes) {
+    //   const likeTo = like.post.author.did;
+    //   let flagFound = false;
+    //   for (const node of resultArray) {
+    //     if (likeTo == node.did) {
+    //       node.score = node.score + SCORE_LIKE;
+    //       flagFound = true;
+    //       break;
+    //     };
+    //   };
+    //   if (!flagFound) {
+    //     resultArray.push({did: likeTo, score: SCORE_LIKE});
+    //   };
+    // };
     // scoreで降順ソート
     resultArray.sort((a, b) => b.score - a.score);
     // オブジェクト配列からdidキーのみ抜いて配列化する
@@ -382,12 +402,12 @@ class MyBskyAgent extends BskyAgent {
     if (didArray.length > 0) { // 誰にもリプライしてない人は実行しない
       friendsWithProf = await this.getConcatProfiles(didArray);
     }
-    // いいね集計ができないと表示人数が少なく見栄えが悪い。FFを加えておく
+    // いいね集計ができないと表示人数が少なく見栄えが悪い。FFを加えておく(要検討)
     const follows = await this.getConcatFollows(handle);
     friendsWithProf = friendsWithProf.concat(follows);
-    const followers = await this.getConcatFollowers(handle);
-    friendsWithProf = friendsWithProf.concat(followers);
-
+    // const followers = await this.getConcatFollowers(handle); // フォロワーを含めるとインフルエンサー実行時に終わらない
+    // friendsWithProf = friendsWithProf.concat(followers);
+    
     return friendsWithProf;
   }
 }
