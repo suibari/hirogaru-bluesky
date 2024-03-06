@@ -49,7 +49,7 @@ fetchButton.addEventListener('click', (event) => {
     showAlert("テキストが入力されていません");
     return;
   } else if (!/\./.test(handle)) {
-    showAlert("有効なhandleではありません");
+    showAlert("有効なhandleではありません。もしかして", handle);
     return;
   }
   
@@ -61,6 +61,7 @@ async function fetchData(handle) {
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('cy');
     cy.remove(elm);
+    handle = encodeURIComponent(handle);
     const response = await fetch(`/generate?handle=${handle}`, {
       headers: {
         'Content-Type': 'application/json'
@@ -70,7 +71,7 @@ async function fetchData(handle) {
     // エラー処理
     if (!response.ok) {
       const errorData = await response.json();
-      showAlert("サーバエラーが発生しました: " + errorData.message);
+      showAlert("サーバでエラーが発生しました: " + errorData.message);
       document.getElementById('loading').style.display = 'none'; // くるくる表示終了
       cyrunflag = false;
       return;
@@ -119,9 +120,19 @@ cy.on('tap', (evt) => {
 })
 
 // アラートが表示されるときの処理
-function showAlert(text) {
-  $('#alert').text(text);
-  $('#alert').fadeIn();
+function showAlert(text, handle) {
+  if (handle) {
+    // console.log("detect")
+    $('#alert').html(text + ` <a id="handleLink" href="#" class="link-underline-primary">${handle}.bsky.social</a> ？`);
+    $('#alert').fadeIn();
+    $('#handleLink').one('click', function() {
+      hideAlert();
+      fetchData(handle + ".bsky.social");
+    });
+  } else {
+    $('#alert').text(text);
+    $('#alert').fadeIn();
+  };
 }
 
 // アラートを非表示にする処理
