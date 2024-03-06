@@ -2,6 +2,7 @@ const MyBskyAgent = require('./src/bluesky.js');
 const { getElements, removeInvalidLinks, removeDuplicatesNodes } = require('./src/databuilder.js');
 const Logger = require('./src/logger.js');
 const express = require('express');
+const path = require('path');
 const multer  = require('multer');
 const upload = multer();
 const agent = new MyBskyAgent();
@@ -10,7 +11,7 @@ const logger = new Logger();
 const app = express();
 const port = process.env.PORT || 7860;
 
-app.use(express.static('./'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('/generate', async (req, res) => {
   try {
     const handle = req.query.handle;
