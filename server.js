@@ -1,4 +1,4 @@
-const MyBskyAgent = require('./src/bluesky.js');
+const { MyBskyAgent } = require('blueskyer');
 const { getElements, removeInvalidLinks, removeDuplicatesNodes } = require('./src/databuilder.js');
 const Logger = require('./src/logger.js');
 const express = require('express');
