@@ -7,11 +7,14 @@
   },
   "name": "bsky_ff_connect",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "suibari",
   "license": "MIT",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.2"
+  }
 }
