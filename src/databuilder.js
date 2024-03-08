@@ -1,5 +1,6 @@
 const FileType  = require('file-type');
 const fs = require('fs');
+const defaultImageUrl = "https://knsoza1.com/wp-content/uploads/2020/07/70b3dd52350bf605f1bb4078ef79c9b9.png";
 
 async function getElements(allWithProf) {
   let elements = [];
@@ -46,7 +47,7 @@ async function getElements(allWithProf) {
 
 async function pushActorToNodes(actor, elements, level) {
   if (!actor.avatar) {
-    actor.avatar = "https://knsoza1.com/wp-content/uploads/2020/07/70b3dd52350bf605f1bb4078ef79c9b9.png";
+    actor.avatar = defaultImageUrl;
   };
   const img = await imageUrlToBase64(actor.avatar);
   // console.log(img)
@@ -104,9 +105,11 @@ function removeDuplicatesNodes(headElement, otherElements) {
 }
 
 async function imageUrlToBase64(imageUrl) {
-  const response = await fetch(imageUrl);
+  let response = await fetch(imageUrl);
   if (!response.ok) {
-      throw new Error('Failed to fetch image');
+      // throw new Error('Failed to fetch image');
+      console.error("[ERROR] failed to fetch image, so attach default image.")
+      response = await fetch(defaultImageUrl);
   }
 
   // 画像をBlobとして取得

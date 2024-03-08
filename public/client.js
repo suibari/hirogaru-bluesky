@@ -103,6 +103,9 @@ async function fetchData(handle) {
       },
     }).run();
     cyrunflag = true;
+    window.setTimeout(() => {  // cy.run()と同時に表示させるとfadeInが効かないので時間差をつける
+      $('#shareButton').fadeIn();
+    }, 1000);
 
   } catch (error) {
     console.error('Error fetching data:', error);

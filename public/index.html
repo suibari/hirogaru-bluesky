@@ -6,8 +6,8 @@
 
 <meta property="og:title" content="ひろがるBluesky!">
 <meta property="og:description" content="Blueskyの相関図を作成して遊べるアプリです">
-<meta property="og:image" content="https://bsky-hirogaru-bluesky.fly.dev/ogp.jpg">
-<meta property="og:url" content="https://bsky-hirogaru-bluesky.fly.dev/">
+<meta property="og:image" content="https://hirogaru-bluesky.fly.dev/ogp.jpg">
+<meta property="og:url" content="https://hirogaru-bluesky.fly.dev/">
 <meta property="og:type" content="website">
 
 <title>ひろがるBluesky!</title>
@@ -19,8 +19,8 @@
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-<link rel="icon" type="image/x-icon" href="favicon.ico" sizes="256x256">
-<link rel="icon" type="image/x-icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="256x256">
+<link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="32x32">
 <style>
     /* body, html {
         margin: 0;
@@ -55,7 +55,7 @@
         height: 100%;
         position: fixed;
         /* background: linear-gradient(-225deg, #2CD8D5 0%, #C5C1FF 56%, #FFBAC3 100%); */
-        z-index: 1;
+        z-index: 0;
     }
     #inputbuttonContainer {
         position: absolute;
@@ -75,11 +75,17 @@
         transform: translate(-50%, -50%);
         z-index: 9999;
     }
+    .custom-spinner {
+        width: 100px;
+        height: 100px;
+        color: #333333;
+        border-width: 1rem;
+    }
     #shareButton {
         position: fixed;
         top: 10px;
         right: 10px;
-        font-size: 24px;
+        font-size: 40px;
         z-index: 10;
         cursor: pointer;
     }
@@ -94,7 +100,7 @@
         position: fixed;
         bottom: 10px;
         right: 10px;
-        font-size: 24px;
+        font-size: 40px;
         z-index: 10;
         cursor: pointer;
     }
@@ -142,12 +148,12 @@
 <!-- alert -->
 <div id="alert" class="alert alert-danger" role="alert" style="z-index: 9999; display: none;">テキストが入力されていません</div>
 <!-- Share Button -->
-<div id="shareButton" onclick="shareGraph()">   
-    <i class="bi bi-share-fill"></i>
+<div id="shareButton" style="display: none;" onclick="shareGraph()">
+    <i class="bi bi-camera-fill"></i>
 </div>
 <!-- Loading Spinner -->
 <div id="loading" style="display: none;">
-    <div class="spinner-border text-secondary" role="status">
+    <div class="spinner-border custom-spinner" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
 </div>
@@ -160,9 +166,12 @@
 <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-body text-center">
+            <div class="modal-body">
                 <img id="popupImageShare" src="" class="img-fluid mb-3" alt="Share Image">
-                <p>画像をコピーして<a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky" target="_blank">Bluesky</a>にペーストすればシェアできます！</p>
+                <ol>
+                    <li>画像を右クリックか長押しでコピーしてください</li>
+                    <li><a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky" target="_blank">こちら</a>をクリックして、開いたポスト画面に画像をペーストしてシェア！</li>
+                </ol>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -172,7 +181,7 @@
 </div>
 <!-- Help Icon -->
 <div id="helpButton" data-bs-toggle="modal" data-bs-target="#helpModal">
-    <i class="bi bi-question-circle" style="font-size: 32px;"></i>
+    <i class="bi bi-question-circle"></i>
 </div>
 <!-- Help Popup -->
 <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
