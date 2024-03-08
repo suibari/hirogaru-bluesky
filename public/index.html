@@ -54,19 +54,15 @@
         width: 100%;
         height: 100%;
         position: fixed;
-        /* background: linear-gradient(-225deg, #2CD8D5 0%, #C5C1FF 56%, #FFBAC3 100%); */
         z-index: 0;
     }
     #inputbuttonContainer {
         position: absolute;
-        top: 10px;
+        top: 20px;
         left: 10px;
-        z-index: 10;
-        display: flex;
-        align-items: center;
     }
     #inputbuttonContainer input {
-        margin-right: 10px;
+        margin-bottom: 10px;
     }
     #loading {
         position: absolute;
@@ -76,14 +72,14 @@
         z-index: 9999;
     }
     .custom-spinner {
-        width: 100px;
-        height: 100px;
+        width: 70px;
+        height: 70px;
         color: #333333;
         border-width: 1rem;
     }
     #shareButton {
         position: fixed;
-        top: 10px;
+        top: 8px;
         right: 10px;
         font-size: 40px;
         z-index: 10;
@@ -141,16 +137,18 @@
 
 <div id="cy"></div>
 <!-- Input & Nutton -->
-<div id="inputbuttonContainer">
-    <input type="text" id="fetchInput" placeholder="handle.bsky.social">
-    <button id="fetchButton">Generate!</button>
+<div id="containerWrapper">
+    <div id="inputbuttonContainer">
+        <input type="text" id="fetchInput" placeholder="handle.bsky.social">
+        <button id="fetchButton" type="button" class="btn btn-dark btn-sm">Generate!</button>
+    </div>
+    <!-- Share Button -->
+    <div id="shareButton" style="display: none;" onclick="shareGraph()">
+        <i class="bi bi-camera-fill"></i>
+    </div>
 </div>
 <!-- alert -->
 <div id="alert" class="alert alert-danger" role="alert" style="z-index: 9999; display: none;">テキストが入力されていません</div>
-<!-- Share Button -->
-<div id="shareButton" style="display: none;" onclick="shareGraph()">
-    <i class="bi bi-camera-fill"></i>
-</div>
 <!-- Loading Spinner -->
 <div id="loading" style="display: none;">
     <div class="spinner-border custom-spinner" role="status">

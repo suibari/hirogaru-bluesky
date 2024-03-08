@@ -48,7 +48,15 @@ fetchButton.addEventListener('click', (event) => {
   if (!handle) {
     showAlert("テキストが入力されていません");
     return;
+  } else if (!/\./.test(handle) && /@/.test(handle)) {
+    handle = handle.replace("@", "") + ".bsky.social";
+    showAlert("有効なhandleではありません。もしかして", handle);
+    return;
   } else if (!/\./.test(handle)) {
+    showAlert("有効なhandleではありません。もしかして", handle+".bsky.social");
+    return;
+  } else if (/@/.test(handle)) {
+    handle = handle.replace("@", "");
     showAlert("有効なhandleではありません。もしかして", handle);
     return;
   }
@@ -126,11 +134,11 @@ cy.on('tap', (evt) => {
 function showAlert(text, handle) {
   if (handle) {
     // console.log("detect")
-    $('#alert').html(text + ` <a id="handleLink" class="link-underline-primary" style="cursor: pointer;">${handle}.bsky.social</a> ？`);
+    $('#alert').html(text + ` <a id="handleLink" class="link-underline-primary" style="cursor: pointer;">${handle}</a> ？`);
     $('#alert').fadeIn();
     $('#handleLink').one('click', function() {
       hideAlert();
-      fetchData(handle + ".bsky.social");
+      fetchData(handle);
     });
   } else {
     $('#alert').text(text);
@@ -174,14 +182,6 @@ cy.on('tap', (evt) => {
   tappingCard = false;
 })
 
-// // カード以外の領域をクリックしたときの処理
-// $(document).on('click', function(e) {
-//   if (!$(e.target).closest('#card').length && ($('#card').is(':visible'))) {
-//     // カードが表示されている場合のみ非表示にする
-//     $('#card').fadeOut();
-//   }
-// });
-
 async function shareGraph() {
   if (cyrunflag) {
     // bg
@@ -210,21 +210,3 @@ function generateRandomColor() {
   var lightness = Math.floor(Math.random() * 21) + 60; // 明度を40から80の間でランダムに選択
   return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)'; // HSLカラーモデルで色を返す
 }
-
-// ズームやパンの変更時にもツールチップの位置を更新
-// パンとズームにツールチップを追従させる
-// cy.on('pan zoom', function(evt) {
-//     var nodes = cy.nodes();
-//     for (var i = 0; i < nodes.length; i++) {
-//         var node = nodes[i];
-//         var tooltip = document.getElementById('nodeTooltip');
-//         var position = node.renderedPosition(); // レンダリング位置を取得
-//         if (tooltip.style.display === 'block') {
-//             // パンとズームを考慮して位置を設定
-//             var x = position.x * cy.zoom() + cy.pan().x;
-//             var y = position.y * cy.zoom() + cy.pan().y;
-//             tooltip.style.top = y + 10 + 'px'; 
-//             tooltip.style.left = x + 10 + 'px';
-//         }
-//     }
-// });
