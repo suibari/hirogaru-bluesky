@@ -64,6 +64,19 @@
     #inputbuttonContainer input {
         margin-bottom: 10px;
     }
+    #fetchButton {
+        width: auto; /* ボタンの幅はテキストの幅に合わせます */
+    }
+    @media screen and (max-width: 600px) {
+        #inputbuttonContainer {
+            position: absolute;
+            top: 20px;
+            left: 10px;
+        }
+        #fetchButton {
+            display: block;
+        }
+    }
     #loading {
         position: absolute;
         top: 50%;
@@ -136,7 +149,7 @@
 <body>
 
 <div id="cy"></div>
-<!-- Input & Nutton -->
+<!-- Input & Button -->
 <div id="containerWrapper">
     <div id="inputbuttonContainer">
         <input type="text" id="fetchInput" placeholder="handle.bsky.social">
