@@ -210,3 +210,8 @@ function generateRandomColor() {
   var lightness = Math.floor(Math.random() * 21) + 60; // 明度を40から80の間でランダムに選択
   return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)'; // HSLカラーモデルで色を返す
 }
+
+// テキストボックスオートフォーカス
+window.onload = function() {
+  fetchInput.focus();
+};
