@@ -1,11 +1,11 @@
-const { MyBskyAgent } = require('blueskyer');
+const { Blueskyer } = require('blueskyer');
 const { getElements, removeInvalidLinks, removeDuplicatesNodes } = require('./src/databuilder.js');
 const Logger = require('./src/logger.js');
 const express = require('express');
 const path = require('path');
 const multer  = require('multer');
 const upload = multer();
-const agent = new MyBskyAgent();
+const agent = new Blueskyer();
 const logger = new Logger();
 
 const app = express();
@@ -41,6 +41,8 @@ async function getData(handle) {
   const THRESHOLD_NODES = 36
   const THRESHOLD_TL = 1000;
   const THRESHOLD_LIKES = 20;
+  const SCORE_REPLY = 5;
+  const SCORE_LIKE = 1;
 
   try {
     logger.tic();
@@ -51,19 +53,21 @@ async function getData(handle) {
     const myselfWithProf = response.data;
 
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-    const friendsWithProf = await agent.getArraySortedReplyToAndLikeCount(handle, THRESHOLD_NODES, THRESHOLD_TL, THRESHOLD_LIKES);
+    const friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_NODES, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
+    const follows = await agent.getConcatFollows(handle);
 
     // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
     const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
     // node, edge取得
-    let elements = await getElements(allWithProf);
+    let elements = await getElements(allWithProf, follows);
 
     logger.incExecCount();
     const elapsedTime = logger.tac();
     const execCount = logger.getExecCount();
     console.log("[INFO] exec time was " + elapsedTime + " [sec], total exec count is " + execCount + ".");
     
+    // console.log(elements);
     return elements;
 
   } catch(e) {

@@ -134,6 +134,9 @@
         width: 300px;
         z-index: 7777;
     }
+    .card-title {
+        margin-top: 10px; /* 任意の値を指定 */
+    }
     #bottom-left {
         position: fixed; /* ページスクロールに関係なく固定 */
         bottom: 10px; /* 下からの位置調整 */
@@ -242,6 +245,7 @@
         <a href="#" id="cardLink" class="card-link" target="_blank"><h6 class="card-subtitle mb-2 text-muted" id="cardSubtitle"></h6></a>
         <button id="regenerateButton" class="btn btn-primary">この人を中心に相関図を再生成</button>
     </div>
+    <span id="card-badge" class="badge position-absolute top-0 end-0 mt-1 me-1"></span>
 </div>
 <!-- Logo -->
 <div id="bottom-left"> <!-- 右下に表示する要素 -->
