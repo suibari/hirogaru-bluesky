@@ -1,32 +1,37 @@
 const fetchButton = document.getElementById('fetchButton');
 const fetchInput = document.getElementById('fetchInput');
 
-var cyrunflag = false; // cy.run()実行中かのフラグ
+var cyFirstRunFlag = false; // cy.run()が1度実行完了したら(相関図が出てる状態になったらtrue)
+var cyRunningFlag = false; // cy.run()実行中かのフラグ
 var tappingCard = false; // ノードタップ時のフラグ
+var resizeEventFlag = false; // リサイズイベントの処理フラグ
+var resizeTimer; // リサイズイベントを適切に制御するためのタイマー
 
+// Cytoscape.js
 var cy = cytoscape({
-    container: document.getElementById('cy'), // container to render in
+  container: document.getElementById('cy'), // container to render in
 
-    elements: [],
+  elements: [],
 
-    style: [
-        {
-            selector: 'node',
-            style: {
-                'width': 'data(rank)',
-                'height': 'data(rank)',
-                'background-fit': 'contain',
-                'background-image': 'data(img)',
-            },
-        },
-        {
-            selector: 'edge',
-            style: {
-                'width': 3,
-                'display': 'none',
-            }
-        }
-    ]
+  style: [
+    {
+      selector: 'node',
+      style: {
+        'width': 'data(rank)',
+        'height': 'data(rank)',
+        'background-fit': 'contain',
+        'background-image': 'data(img)',
+      },
+      grabbable: false,
+    },
+    {
+      selector: 'edge',
+      style: {
+        'width': 3,
+        'display': 'none',
+      },
+    }
+  ]
 });
 
 // Enterキーが押されたときにfetch処理を実行
@@ -62,10 +67,10 @@ fetchButton.addEventListener('click', (event) => {
 
 async function fetchData(handle) {
   try {
-    cyrunflag = true;
+    cyRunningFlag = true;
 
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
-    var elm = cy.$('cy');
+    var elm = cy.$('node, edge');
     cy.remove(elm);
     handle = encodeURIComponent(handle);
     const response = await fetch(`/generate?handle=${handle}`, {
@@ -79,7 +84,7 @@ async function fetchData(handle) {
       const errorData = await response.json();
       showAlert("サーバでエラーが発生しました: " + errorData.message);
       document.getElementById('loading').style.display = 'none'; // くるくる表示終了
-      cyrunflag = false;
+      cyRunningFlag = false;
       return;
     }
 
@@ -98,6 +103,7 @@ async function fetchData(handle) {
       // concentric ---
       name: 'concentric',
       animate: true,
+      padding: 10,
       concentric: function(node) {
         return node.data('level');
       },
@@ -108,7 +114,10 @@ async function fetchData(handle) {
         document.getElementById('loading').style.display = 'none'; // くるくる表示終了
       },
     }).run();
-    cyrunflag = false;
+    cy.userPanningEnabled(false);
+    cy.boxSelectionEnabled(false);
+    cyFirstRunFlag = true;
+    cyRunningFlag = false;
     window.setTimeout(() => {  // cy.run()と同時に表示させるとfadeInが効かないので時間差をつける
       $('#shareButton').fadeIn();
     }, 1000);
@@ -118,15 +127,6 @@ async function fetchData(handle) {
     showAlert("ブラウザでエラーが発生しました");
   }
 }
-
-// どこかをクリックしたときの処理
-cy.on('tap', (evt) => {
-  // console.log("tap")
-  if ($('#alert').is(':visible')) {
-  // アラートを非表示にする
-    hideAlert();
-  }
-})
 
 // アラートが表示されるときの処理
 function showAlert(text, handle) {
@@ -149,62 +149,8 @@ function hideAlert() {
   $('#alert').fadeOut();
 }
 
-// カード表示
-cy.on('tap', 'node', function(evt){
-  var node = evt.target;
-  var handle = node.data('handle');
-
-  $('#cardTitle').text(node.data('name'));
-  $('#cardSubtitle').text("@"+handle);
-  $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
-  
-  // フォローバッジ変更
-  $('#card-badge').removeClass('bg-success');
-  $('#card-badge').removeClass('bg-danger');
-  if (node.data('level') == 5) {
-    // 中心ノードなら
-    $('#card-badge').text("");
-  } else if (JSON.parse(node.data('followed'))) {
-    $('#card-badge').text("Followed");
-    $('#card-badge').addClass('bg-success');
-  } else {
-    $('#card-badge').text("Not Followed");
-    $('#card-badge').addClass('bg-danger');
-  };
-
-  if (!$('#card').is(':visible') || $('#card').data('nodeId') !== node.id()) {
-    $('#card').data('nodeId', node.id());
-    $('#card').fadeIn();
-    tappingCard = true;
-  }
-
-  $('#regenerateButton').off('click').click(function(evt) {
-    evt.stopPropagation();
-    fetchData(handle);
-    $('#card').fadeOut();
-    tappingCard = false;
-  });
-});
-
-cy.on('tap', (evt) => {
-  if ($('#card').is(':visible') && !$(evt.target).closest('#card').length && !tappingCard) {
-    $('#card').fadeOut();
-  }
-  tappingCard = false;
-})
-
-// ノードマウスオーバーで半透明
-cy.on('mouseover', 'node', function(event){
-  var node = event.target;
-  node.style('opacity', '0.5');
-});
-cy.on('mouseout', 'node', function(event){
-  var node = event.target;
-  node.style('opacity', '1');
-});
-
 async function shareGraph() {
-  if (!cyrunflag) {
+  if (!cyRunningFlag) {
     // bg
     var randomColor = generateRandomColor();
 
@@ -236,3 +182,107 @@ function generateRandomColor() {
 window.onload = function() {
   fetchInput.focus();
 };
+
+$(document).ready(() => {
+  // どこかをクリックしたときの処理
+  cy.on('tap', (evt) => {
+    // console.log("tap")
+    if ($('#alert').is(':visible')) {
+    // アラートを非表示にする
+      hideAlert();
+    }
+  });
+  
+  // カード表示
+  cy.on('tap', 'node', function(evt){
+    var node = evt.target;
+    var handle = node.data('handle');
+
+    $('#cardTitle').text(node.data('name'));
+    $('#cardSubtitle').text("@"+handle);
+    $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
+    
+    // フォローバッジ変更
+    $('#card-badge').removeClass('bg-success');
+    $('#card-badge').removeClass('bg-danger');
+    if (node.data('level') == 5) {
+      // 中心ノードなら
+      $('#card-badge').text("");
+    } else if (JSON.parse(node.data('followed'))) {
+      $('#card-badge').text("Followed");
+      $('#card-badge').addClass('bg-success');
+    } else {
+      $('#card-badge').text("Not Followed");
+      $('#card-badge').addClass('bg-danger');
+    };
+
+    if (!$('#card').is(':visible') || $('#card').data('nodeId') !== node.id()) {
+      $('#card').data('nodeId', node.id());
+      $('#card').fadeIn();
+      tappingCard = true;
+    }
+
+    $('#regenerateButton').off('click').click(function(evt) {
+      evt.stopPropagation();
+      fetchData(handle);
+      $('#card').fadeOut();
+      tappingCard = false;
+    });
+  });
+
+  // カード消す
+  cy.on('tap', (evt) => {
+    if ($('#card').is(':visible') && !$(evt.target).closest('#card').length && !tappingCard) {
+      $('#card').fadeOut();
+    }
+    tappingCard = false;
+  })
+
+  // ノードマウスオーバーで半透明
+  cy.on('mouseover', 'node', function(event){
+    var node = event.target;
+    node.style('opacity', '0.5');
+  });
+  cy.on('mouseout', 'node', function(event){
+    var node = event.target;
+    node.style('opacity', '1');
+  });
+
+  // パーティクル
+  cy.on('tap', 'node', function(event){
+    var centerNode = cy.$('node[level=5]');
+    var node = event.target;
+    var engagement = node.data('engagement');
+
+    // Create particles
+    for (var i = 0; i < engagement; i++) {
+      particles.push(new Particle(centerNode.renderedPosition().x, centerNode.renderedPosition().y+20)); // なんかずれるので+20px
+    }
+  });
+
+  // ウィンドウのリサイズイベントを検知して、グラフをフィットさせる
+  cy.on('resize', function() {
+    if (!resizeEventFlag) {
+      clearTimeout(resizeTimer); // タイマーをクリアして連続しての実行を防ぐ
+      resizeTimer = setTimeout(function() {
+        // グラフをフィットさせる前に中心ノードの位置を取得
+        var centerNode = cy.$('node[level=5]'); // 中心ノードのIDを適切に指定
+        if (centerNode.length > 0) {
+          var centerNodePosition = centerNode.renderedPosition(); // cytoscape.jsの座標系での中心ノードの位置を取得
+          // キャンバスの中心に移動
+          centerNodePosition.x += windowWidth / 2;
+          centerNodePosition.y += windowHeight / 2;
+        }
+
+        cy.resize(); // 描画領域のサイズをウィンドウのサイズに合わせる
+        cy.fit('node, edge', 10); // グラフをフィットさせる
+
+        // パーティクルの位置を更新
+        updateParticlePositions(centerNodePosition);
+
+        resizeEventFlag = false;
+      }, 200); // イベントが一定時間後に発火するように遅延を設定する
+      resizeEventFlag = true; // フラグをセット
+    };
+  });
+});
