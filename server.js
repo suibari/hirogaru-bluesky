@@ -41,6 +41,7 @@ async function getData(handle) {
   const THRESHOLD_NODES = 36
   const THRESHOLD_TL = 1000;
   const THRESHOLD_LIKES = 20;
+  const THRESHOLD_FOLLOWS = 1000;
   const SCORE_REPLY = 5;
   const SCORE_LIKE = 1;
 
@@ -54,7 +55,7 @@ async function getData(handle) {
 
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
     const friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_NODES, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
-    const follows = await agent.getConcatFollows(handle);
+    const follows = await agent.getConcatFollows(handle, THRESHOLD_FOLLOWS);
 
     // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
     const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);

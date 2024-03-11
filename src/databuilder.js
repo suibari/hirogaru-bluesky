@@ -2,7 +2,7 @@ const FileType  = require('file-type');
 const fs = require('fs');
 const defaultImageUrl = "https://knsoza1.com/wp-content/uploads/2020/07/70b3dd52350bf605f1bb4078ef79c9b9.png";
 
-async function getElements(allWithProf, follows) {
+async function getElements(allWithProf) {
   let elements = [];
 
   // nodes
@@ -22,7 +22,7 @@ async function getElements(allWithProf, follows) {
     //   n = 1;
     // }
     if (n > 0) {
-      await pushActorToNodes(friend, elements, n, follows);
+      await pushActorToNodes(friend, elements, n);
     }
   };
   // // edges
@@ -45,21 +45,12 @@ async function getElements(allWithProf, follows) {
   return elements;
 }
 
-async function pushActorToNodes(actor, elements, level, follows) {
+async function pushActorToNodes(actor, elements, level) {
   if (!actor.avatar) {
     actor.avatar = defaultImageUrl;
   };
   const img = await imageUrlToBase64(actor.avatar);
   // console.log(img)
-
-  // フォロー判定
-  let followed = false;
-  for (const follow of follows) {
-    if (follow.did == actor.did) {
-      followed = true;
-      break;
-    };
-  };
 
   elements.push({
     data: {
@@ -69,10 +60,10 @@ async function pushActorToNodes(actor, elements, level, follows) {
       handle: actor.handle,
       level: level,
       rank: level*20,
-      followed: followed,
       engagement: actor.engagement||undefined,
     },
     group: 'nodes',
+    grabbable: false,
   });
 }
 

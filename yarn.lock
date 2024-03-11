@@ -126,10 +126,10 @@ balanced-match@^1.0.0:
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
-blueskyer@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/blueskyer/-/blueskyer-1.1.0.tgz"
-  integrity sha512-61nIqCF9LCw1HcfzwzORAAuL31iv3jVswaquvJ9s1nMHT2gKHLAwEsPfgxbziGa439bRVfR/hProx4T1fyDtOA==
+blueskyer@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.npmjs.org/blueskyer/-/blueskyer-1.1.1.tgz"
+  integrity sha512-/bo6hfPVhYZfNhe+KCwsqPQ3/kzsEn3t/gNA+wV48FokehriUK0P2TOg+yNG9ShXkibBYbaPejaK0NfboRou1g==
   dependencies:
     "@atproto/api" "^0.10.4"
     "@ipld/car" "^5.3.0"
@@ -205,9 +205,9 @@ call-bind@^1.0.7:
     set-function-length "^1.2.1"
 
 cborg@^4.0.0, cborg@^4.0.5:
-  version "4.1.0"
-  resolved "https://registry.npmjs.org/cborg/-/cborg-4.1.0.tgz"
-  integrity sha512-hbWI4lRY0SdkTBbAH1STpY60rqR1gqGz4XaGZ6BXxncqCaAAOtmg2UNLA/6AJ8WG+p14J5P9t7Ul8f0u2ZLOhg==
+  version "4.1.1"
+  resolved "https://registry.npmjs.org/cborg/-/cborg-4.1.1.tgz"
+  integrity sha512-XBEXWdr1N0pjAX0l2a+BKmWGIMDYoLrrqgAWWETtaqn3HC4zn0dZoNO8vC+8oDZfDLMyVRfRD3kMuoYgT67KBQ==
 
 chalk@^4.0.2:
   version "4.1.2"

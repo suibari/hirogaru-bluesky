@@ -21,7 +21,7 @@ function Particle(x, y) {
   this.y = y;
   this.vx = random(-3, 3);
   this.vy = random(-3, 3);
-  this.radius = random(4, 30);
+  this.radius = random(8, 60);
   this.opacity = random(40, 255);
   this.alpha = 240; // 初期の透明度
 
@@ -58,6 +58,15 @@ function updateParticlePositions(newPosition) {
   if (newPosition) {
     for (var i = 0; i < particles.length; i++) {
       particles[i].setPosition(newPosition.x, newPosition.y);
+    }
+  }
+}
+
+// パーティクルを発生させる関数
+function emitParticlesFromNode(position, engagement) {
+  if (position && engagement > 0) {
+    for (var i = 0; i < engagement; i++) {
+      particles.push(new Particle(position.x, position.y));
     }
   }
 }

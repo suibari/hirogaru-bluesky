@@ -22,7 +22,6 @@ var cy = cytoscape({
         'background-fit': 'contain',
         'background-image': 'data(img)',
       },
-      grabbable: false,
     },
     {
       selector: 'edge',
@@ -112,12 +111,13 @@ async function fetchData(handle) {
       },
       stop: function() {
         document.getElementById('loading').style.display = 'none'; // くるくる表示終了
+        cyRunningFlag = false; // 描画後にフラグクリアすることで描画瞬間でのキャプチャを防ぐ
       },
     }).run();
     cy.userPanningEnabled(false);
     cy.boxSelectionEnabled(false);
     cyFirstRunFlag = true;
-    cyRunningFlag = false;
+    
     window.setTimeout(() => {  // cy.run()と同時に表示させるとfadeInが効かないので時間差をつける
       $('#shareButton').fadeIn();
     }, 1000);
@@ -202,19 +202,19 @@ $(document).ready(() => {
     $('#cardSubtitle').text("@"+handle);
     $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
     
-    // フォローバッジ変更
-    $('#card-badge').removeClass('bg-success');
-    $('#card-badge').removeClass('bg-danger');
-    if (node.data('level') == 5) {
-      // 中心ノードなら
-      $('#card-badge').text("");
-    } else if (JSON.parse(node.data('followed'))) {
-      $('#card-badge').text("Followed");
-      $('#card-badge').addClass('bg-success');
-    } else {
-      $('#card-badge').text("Not Followed");
-      $('#card-badge').addClass('bg-danger');
-    };
+    // // フォローバッジ変更
+    // $('#card-badge').removeClass('bg-success');
+    // $('#card-badge').removeClass('bg-danger');
+    // if (node.data('level') == 5) {
+    //   // 中心ノードなら
+    //   $('#card-badge').text("");
+    // } else if (JSON.parse(node.data('followed'))) {
+    //   $('#card-badge').text("Followed");
+    //   $('#card-badge').addClass('bg-success');
+    // } else {
+    //   $('#card-badge').text("Not Followed");
+    //   $('#card-badge').addClass('bg-danger');
+    // };
 
     if (!$('#card').is(':visible') || $('#card').data('nodeId') !== node.id()) {
       $('#card').data('nodeId', node.id());
@@ -250,14 +250,16 @@ $(document).ready(() => {
 
   // パーティクル
   cy.on('tap', 'node', function(event){
-    var centerNode = cy.$('node[level=5]');
     var node = event.target;
+    var position = node.renderedPosition(); // タップされたノードのcytoscape.jsの座標系での位置を取得
     var engagement = node.data('engagement');
 
+    // タップ時にp5.js側のキャンバスをリサイズ
+    // updateParticlePositions(position);
+    resizeCanvas(windowWidth, windowHeight);
+    
     // Create particles
-    for (var i = 0; i < engagement; i++) {
-      particles.push(new Particle(centerNode.renderedPosition().x, centerNode.renderedPosition().y+20)); // なんかずれるので+20px
-    }
+    emitParticlesFromNode(position, engagement); // パーティクルを発生させる
   });
 
   // ウィンドウのリサイズイベントを検知して、グラフをフィットさせる
@@ -265,20 +267,11 @@ $(document).ready(() => {
     if (!resizeEventFlag) {
       clearTimeout(resizeTimer); // タイマーをクリアして連続しての実行を防ぐ
       resizeTimer = setTimeout(function() {
-        // グラフをフィットさせる前に中心ノードの位置を取得
-        var centerNode = cy.$('node[level=5]'); // 中心ノードのIDを適切に指定
-        if (centerNode.length > 0) {
-          var centerNodePosition = centerNode.renderedPosition(); // cytoscape.jsの座標系での中心ノードの位置を取得
-          // キャンバスの中心に移動
-          centerNodePosition.x += windowWidth / 2;
-          centerNodePosition.y += windowHeight / 2;
-        }
-
         cy.resize(); // 描画領域のサイズをウィンドウのサイズに合わせる
         cy.fit('node, edge', 10); // グラフをフィットさせる
 
         // パーティクルの位置を更新
-        updateParticlePositions(centerNodePosition);
+        // updateParticlePositions(centerNodePosition);
 
         resizeEventFlag = false;
       }, 200); // イベントが一定時間後に発火するように遅延を設定する
