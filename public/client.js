@@ -61,6 +61,8 @@ fetchButton.addEventListener('click', (event) => {
     return;
   }
   
+  $('#titleContainer').fadeOut();
+  $('#bottom-left').fadeIn('slow');
   fetchData(handle);
 });
 

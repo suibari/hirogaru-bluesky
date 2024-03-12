@@ -24,7 +24,7 @@ async function addTextToImage(imageData) {
   const textWidth = ctx.measureText(text).width;
   const textHeight = fontSize;
   const margin = 10;
-  ctx.fillText(text, image.width - textWidth - margin, image.height - margin);
+  ctx.fillText(text, margin, image.height - margin);
 
   // CanvasをBase64 URIに変換
   const base64URI = canvas.toDataURL('image/png');
