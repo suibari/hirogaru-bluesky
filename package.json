@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "blueskyer": "^1.1.1",
+    "blueskyer": "^1.2.0",
+    "canvas": "^2.11.2",
     "express": "^4.18.2",
     "file-type": "^16.5.4",
     "multer": "^1.4.5-lts.1"

@@ -154,14 +154,23 @@ async function shareGraph() {
     // bg
     var randomColor = generateRandomColor();
 
-    var base64uri = await cy.png({
-      output: "base64uri",
+    var blob = await cy.png({
+      output: "blob",
       bg: randomColor,
       full: true,
     });
 
+    // サーバにblobを投げ合成してもらい、base64uriを受け取る
+    var formData = new FormData();
+    formData.append('image', blob);
+    var response = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    var json = await response.json();
+
     // Set image source
-    document.getElementById('popupImageShare').src = base64uri;
+    document.getElementById('popupImageShare').src = json.uri;
 
     // Show Bootstrap modal
     $('#shareModal').modal('show');

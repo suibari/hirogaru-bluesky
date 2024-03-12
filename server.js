@@ -1,6 +1,7 @@
 const { Blueskyer } = require('blueskyer');
-const { getElements, removeInvalidLinks, removeDuplicatesNodes } = require('./src/databuilder.js');
+const { getElements, removeDuplicatesNodes } = require('./src/databuilder.js');
 const Logger = require('./src/logger.js');
+const { addTextToImage } = require('./src/imgshaper.js')
 const express = require('express');
 const path = require('path');
 const multer  = require('multer');
@@ -24,15 +25,21 @@ app.get('/generate', async (req, res) => {
     res.status(500).send({error: "Internal Server Error", message: e.message});
   }
 });
-// app.post('/upload', upload.single('image'), async (req, res) => {
-//   const blob = req.file.buffer;
-//   // console.log(blob)
-//   const uint8Array = new Uint8Array(blob);
-//   // console.log(uint8Array)
-//   const response = await agent.uploadBlob(uint8Array, {encoding: 'image/png'});
+app.post('/upload', upload.single('image'), async (req, res) => {
+  try {
+    const blob = req.file.buffer;
+    // console.log(blob);
+    
+    const base64 = await addTextToImage(blob);
+    // console.log(base64);
 
-//   res.json({uri: response.data.blob});
-// });
+    res.json({uri: base64});
+    console.log("[INFO] send image data to client.");
+  } catch(e) {
+    console.log("[ERROR] An error occured: ", e);
+    res.status(500).send({error: "Internal Server Error", message: e.message});
+  }
+});
 app.listen(port, () => {
   console.log(`[INFO] Server is running on http://localhost:${port}`);
 })
