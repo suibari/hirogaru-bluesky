@@ -49,6 +49,8 @@
         align-items: center;
         text-align: center;
         color: white;
+        height: 100%;
+        width: 100%;
     }
     #title {
         font-size: 3em;
@@ -172,7 +174,7 @@
 
 <body>
 <!-- Emblem -->
-<div id="titleContainer" style="height: 100vh;">
+<div id="titleContainer">
     <div id="title">ひろがるBluesky! </div>
     <div id="subtitle">
         <div>左上にBlueskyのハンドル名を入力して、</div>
@@ -195,7 +197,7 @@
     </div>
 </div>
 <!-- alert -->
-<div id="alert" class="alert alert-danger" role="alert" style="z-index: 9999; display: none;">テキストが入力されていません</div>
+<div id="alert" class="alert alert-danger fixed-top" role="alert" style="z-index: 9999; display: none;">テキストが入力されていません</div>
 <!-- Loading Spinner -->
 <div id="loading" style="display: none;">
     <div class="spinner-border custom-spinner" role="status">
@@ -242,10 +244,16 @@
                         <li><a href="https://bsky.app/" target="_blank">Bluesky</a>のハンドル名(～.bsky.socialまで)を入れて<b>Generate!</b>を押してください</li>
                         <li>その人の<b>相関図</b>を作成します</li>
                         <li>相関図の中心が自分、そこに近づくほど仲良しの人です</li>
-                        <li>仲良し度はリプライやいいねの頻度で変わるので、しばらくしたら結果が変わるかも？</li>
+                        <li><b>利用にあたりパスワードを入力する必要がないので、ユーザ情報が漏れる心配もいっさいありません</b></li>
+                    </ul>
+                <h6>相関図のしくみ</h6>
+                    <ul>
+                        <li>仲良し度は<b>リプライやいいねの頻度</b>で変わります</li>
+                        <li>相関図に出てくる人が少ない時は、Blueskyでいいね・リプライしよう！</li>
+                        <li>結果はすぐに反映されるので、また相関図を作ってみよう！</li>
                         <li>相関図は大体のアカウントなら<b>20秒弱</b>で生成できるはずです</li>
                     </ul>
-                <h6>TIPS</h6>
+                <h6>相関図で遊ぼう</h6>
                     <ul>
                         <li>各ユーザのアイコンをクリックするとメニューが出ます</li>
                         <li>メニュー選択でプロフィールに飛んだり、その人を中心に相関図を再生成できます</li>

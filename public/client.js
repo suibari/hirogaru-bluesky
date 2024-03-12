@@ -61,13 +61,13 @@ fetchButton.addEventListener('click', (event) => {
     return;
   }
   
-  $('#titleContainer').fadeOut();
-  $('#bottom-left').fadeIn('slow');
   fetchData(handle);
 });
 
 async function fetchData(handle) {
   try {
+    $('#titleContainer').fadeOut();
+    $('#bottom-left').fadeIn('slow');
     cyRunningFlag = true;
 
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
