@@ -62,11 +62,23 @@ async function getData(handle) {
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
     const friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_NODES, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
 
+    // フォロー検出
+    const didArray = friendsWithProf.map(friend => friend.did);
+    const objFollow = await agent.isFollow(myselfWithProf.did, didArray);
+    for (const obj of objFollow) {
+      for (const friend of friendsWithProf) {
+        if (friend.did == obj.did) {
+          friend.following = obj.following
+          break;
+        };
+      };
+    };
+    
     // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
     const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
     // node, edge取得
-    let elements = await getElements(allWithProf);
+    let elements = await getElements(allWithProf, objFollow);
 
     logger.incExecCount();
     const elapsedTime = logger.tac();

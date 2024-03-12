@@ -213,19 +213,19 @@ $(document).ready(() => {
     $('#cardSubtitle').text("@"+handle);
     $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
     
-    // // フォローバッジ変更
-    // $('#card-badge').removeClass('bg-success');
-    // $('#card-badge').removeClass('bg-danger');
-    // if (node.data('level') == 5) {
-    //   // 中心ノードなら
-    //   $('#card-badge').text("");
-    // } else if (JSON.parse(node.data('followed'))) {
-    //   $('#card-badge').text("Followed");
-    //   $('#card-badge').addClass('bg-success');
-    // } else {
-    //   $('#card-badge').text("Not Followed");
-    //   $('#card-badge').addClass('bg-danger');
-    // };
+    // フォローバッジ変更
+    $('#card-badge').removeClass('bg-success');
+    $('#card-badge').removeClass('bg-danger');
+    if (node.data('level') == 5) {
+      // 中心ノードなら
+      $('#card-badge').text("");
+    } else if (JSON.parse(node.data('following'))) {
+      $('#card-badge').text("Following");
+      $('#card-badge').addClass('bg-success');
+    } else {
+      $('#card-badge').text("Not Following");
+      $('#card-badge').addClass('bg-danger');
+    };
 
     if (!$('#card').is(':visible') || $('#card').data('nodeId') !== node.id()) {
       $('#card').data('nodeId', node.id());

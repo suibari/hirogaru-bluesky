@@ -61,6 +61,7 @@ async function pushActorToNodes(actor, elements, level) {
       level: level,
       rank: level*20,
       engagement: actor.engagement||undefined,
+      following: actor.following,
     },
     group: 'nodes',
     grabbable: false,
