@@ -42,26 +42,30 @@ fetchInput.addEventListener('keyup', function(event) {
 });
 
 fetchButton.addEventListener('click', (event) => {
-  handle = fetchInput.value.trim();
-  
-  // エラー検査
-  if (!handle) {
-    showAlert("テキストが入力されていません");
-    return;
-  } else if (!/\./.test(handle) && /@/.test(handle)) {
-    handle = handle.replace("@", "") + ".bsky.social";
-    showAlert("有効なhandleではありません。もしかして", handle);
-    return;
-  } else if (!/\./.test(handle)) {
-    showAlert("有効なhandleではありません。もしかして", handle+".bsky.social");
-    return;
-  } else if (/@/.test(handle)) {
-    handle = handle.replace("@", "");
-    showAlert("有効なhandleではありません。もしかして", handle);
-    return;
+  if (!cyRunningFlag) {
+    handle = fetchInput.value.trim();
+    
+    // エラー検査
+    if (!handle) {
+      showAlert("テキストが入力されていません");
+      return;
+    } else if (!/\./.test(handle) && /@/.test(handle)) {
+      handle = handle.replace("@", "") + ".bsky.social";
+      showAlert("有効なhandleではありません。もしかして", handle);
+      return;
+    } else if (!/\./.test(handle)) {
+      showAlert("有効なhandleではありません。もしかして", handle+".bsky.social");
+      return;
+    } else if (/@/.test(handle)) {
+      handle = handle.replace("@", "");
+      showAlert("有効なhandleではありません。もしかして", handle);
+      return;
+    }
+    
+    fetchData(handle);
+  } else {
+    showAlert("画像生成中です");
   }
-  
-  fetchData(handle);
 });
 
 async function fetchData(handle) {
@@ -105,6 +109,7 @@ async function fetchData(handle) {
       name: 'concentric',
       animate: true,
       padding: 10,
+      startAngle: Math.PI * 2 * Math.random(), // ノードの開始位置を360度ランダムに
       concentric: function(node) {
         return node.data('level');
       },
@@ -153,6 +158,8 @@ function hideAlert() {
 
 async function shareGraph() {
   if (!cyRunningFlag) {
+    document.getElementById('loading').style.display = 'block'; // くるくる表示開始
+
     // bg
     var randomColor = generateRandomColor();
 
@@ -173,6 +180,8 @@ async function shareGraph() {
 
     // Set image source
     document.getElementById('popupImageShare').src = json.uri;
+
+    document.getElementById('loading').style.display = 'none'; // くるくる表示終了
 
     // Show Bootstrap modal
     $('#shareModal').modal('show');

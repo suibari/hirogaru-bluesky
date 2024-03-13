@@ -52,25 +52,29 @@ async function pushActorToNodes(actor, elements, level) {
   const img = await imageUrlToBase64(actor.avatar);
   // console.log(img)
 
+  const rank = getRank(actor);
+
   elements.push({
     data: {
       id: actor.did,
       name: actor.displayName,
       img: img,
       handle: actor.handle,
-      level: level,
-      rank: level*20,
+      level: level, // 同心円の階層
+      rank: rank, // アイコンサイズ
       engagement: actor.engagement||undefined,
       following: actor.following,
     },
     group: 'nodes',
-    grabbable: false,
   });
 }
 
 function getRank(actor) {
-  const rank = Math.log10(actor.postsCount * actor.followersCount)
-  const correctedRank = (rank === -Infinity) ? 0 : rank;
+  const RANK_COEF = 30;
+  const RANK_BIAS = 60;
+
+  const rank = Math.log10((actor.followersCount / actor.followsCount) * 1000) * RANK_COEF - RANK_BIAS;
+  const correctedRank = (rank < 10) ? 10 : rank;
   return correctedRank;
 }
 
