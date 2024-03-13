@@ -169,6 +169,8 @@ async function shareGraph() {
       output: "blob",
       bg: randomColor,
       full: true,
+      maxWidth: 750,
+      maxHeight: 750,
     });
 
     // サーバにblobを投げ合成してもらい、base64uriを受け取る
