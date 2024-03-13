@@ -6,6 +6,7 @@ var cyRunningFlag = false; // cy.run()実行中かのフラグ
 var tappingCard = false; // ノードタップ時のフラグ
 var resizeEventFlag = false; // リサイズイベントの処理フラグ
 var resizeTimer; // リサイズイベントを適切に制御するためのタイマー
+var shareRunningFlag = false; // シェア画像処理中フラグ
 
 // Cytoscape.js
 var cy = cytoscape({
@@ -157,8 +158,9 @@ function hideAlert() {
 }
 
 async function shareGraph() {
-  if (!cyRunningFlag) {
+  if (!cyRunningFlag && !shareRunningFlag) {
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
+    shareRunningFlag = true;
 
     // bg
     var randomColor = generateRandomColor();
@@ -182,6 +184,7 @@ async function shareGraph() {
     document.getElementById('popupImageShare').src = json.uri;
 
     document.getElementById('loading').style.display = 'none'; // くるくる表示終了
+    shareRunningFlag = false;
 
     // Show Bootstrap modal
     $('#shareModal').modal('show');
