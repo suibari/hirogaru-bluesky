@@ -28,7 +28,7 @@ class Particle {
     this.vx = random(-3, 3);
     this.vy = random(-3, 3);
     this.radius = random(scaledRadius*0.2, scaledRadius);
-    this.opacity = random(40, 255);
+    this.opacity = random(40, 240);
     this.alpha = 240; // 初期の透明度
 
     this.update = function () {
@@ -50,7 +50,7 @@ class Particle {
     };
 
     this.isFadedOut = function () {
-      return this.alpha <= 0; // 透明度が0以下になったらtrueを返す
+      return this.opacity >= 255; // 透明度が255以上になったらtrueを返す
     };
 
     this.setPosition = function (x, y) {

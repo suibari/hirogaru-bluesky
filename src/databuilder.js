@@ -130,7 +130,7 @@ async function imageUrlToBase64(imageUrl) {
   if (!response.ok) {
       // throw new Error('Failed to fetch image');
       console.error("[ERROR] failed to fetch image, so attach default image.")
-      base64StringWithMime = imageToBase64URI(DEFFAULT_AVATOR);
+      base64StringWithMime = imageToBase64(DEFFAULT_AVATOR);
       return base64StringWithMime;
   }
 
