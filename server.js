@@ -1,13 +1,13 @@
 const { Blueskyer } = require('blueskyer');
 const { getElements, removeDuplicatesNodes } = require('./src/databuilder.js');
-const Logger = require('./src/logger.js');
+const { TimeLogger, ExecutionLogger } = require('./src/logger.js');
 const { addTextToImage } = require('./src/imgshaper.js')
 const express = require('express');
 const path = require('path');
 const multer  = require('multer');
 const upload = multer();
 const agent = new Blueskyer();
-const logger = new Logger();
+const execLogger = new ExecutionLogger();
 
 const app = express();
 const port = process.env.PORT || 7860;
@@ -52,7 +52,8 @@ async function getData(handle) {
   const SCORE_LIKE = 1;
 
   try {
-    logger.tic();
+    const timeLogger = new TimeLogger();
+    timeLogger.tic();
 
     await agent.createOrRefleshSession();
 
@@ -80,9 +81,9 @@ async function getData(handle) {
     // node, edge取得
     let elements = await getElements(allWithProf, objFollow);
 
-    logger.incExecCount();
-    const elapsedTime = logger.tac();
-    const execCount = logger.getExecCount();
+    execLogger.incExecCount();
+    const elapsedTime = timeLogger.tac();
+    const execCount = execLogger.getExecCount();
     console.log("[INFO] exec time was " + elapsedTime + " [sec], total exec count is " + execCount + ".");
     
     // console.log(elements);

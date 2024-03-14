@@ -1,6 +1,6 @@
 const FileType  = require('file-type');
 const fs = require('fs');
-const defaultImageUrl = "https://knsoza1.com/wp-content/uploads/2020/07/70b3dd52350bf605f1bb4078ef79c9b9.png";
+const DEFFAULT_AVATOR = 'public/img/defaultavator.png';
 
 async function getElements(allWithProf) {
   let elements = [];
@@ -46,10 +46,14 @@ async function getElements(allWithProf) {
 }
 
 async function pushActorToNodes(actor, elements, level) {
+  const MYSELF_RANK = 20;
+
+  let img
   if (!actor.avatar) {
-    actor.avatar = defaultImageUrl;
+    img = imageToBase64(DEFFAULT_AVATOR);
+  } else {
+    img = await imageUrlToBase64(actor.avatar);
   };
-  const img = await imageUrlToBase64(actor.avatar);
   // console.log(img)
 
   const rank = getRank(actor);
@@ -71,10 +75,19 @@ async function pushActorToNodes(actor, elements, level) {
 
 function getRank(actor) {
   const RANK_COEF = 30;
-  const RANK_BIAS = 60;
+  const RANK_BIAS = 50;
+  const RANK_LOWEST = 20;
+  const RANK_HIGHEST = 60;
 
   const rank = Math.log10((actor.followersCount / actor.followsCount) * 1000) * RANK_COEF - RANK_BIAS;
-  const correctedRank = (rank < 10) ? 10 : rank;
+  let correctedRank;
+  if (RANK_HIGHEST < rank) {
+    correctedRank = RANK_HIGHEST; // 影響力が高すぎる場合クリップ
+  } else if (RANK_LOWEST > rank) {
+    correctedRank = RANK_LOWEST; // 影響力が低すぎる場合もクリップ
+  } else {
+    correctedRank = rank;
+  }
   return correctedRank;
 }
 
@@ -111,11 +124,14 @@ function removeDuplicatesNodes(headElement, otherElements) {
 }
 
 async function imageUrlToBase64(imageUrl) {
+  let base64StringWithMime;
+
   let response = await fetch(imageUrl);
   if (!response.ok) {
       // throw new Error('Failed to fetch image');
       console.error("[ERROR] failed to fetch image, so attach default image.")
-      response = await fetch(defaultImageUrl);
+      base64StringWithMime = imageToBase64URI(DEFFAULT_AVATOR);
+      return base64StringWithMime;
   }
 
   // 画像をBlobとして取得
@@ -130,11 +146,24 @@ async function imageUrlToBase64(imageUrl) {
   // BufferをBase64に変換
   const base64String = Buffer.from(buffer).toString('base64');
 
-  const base64StringWithMime = "url(data:" + fileType.mime + ";base64," + base64String + ")";
+  base64StringWithMime = "url(data:" + fileType.mime + ";base64," + base64String + ")";
   // fs.writeFileSync('temp_image.jpg', base64StringWithMime);
 
   // console.log(base64StringWithMime);
   return base64StringWithMime;
+}
+
+function imageToBase64(imagePath) {
+  // 画像ファイルを読み込み
+  const imageData = fs.readFileSync(imagePath);
+
+  // BufferをBase64文字列に変換
+  const base64String = Buffer.from(imageData).toString('base64');
+
+  // Base64 URIを生成
+  const base64URI = `url(data:image/png;base64,${base64String})`; // 画像形式に応じて変更
+
+  return base64URI;
 }
 
 module.exports.getElements = getElements;

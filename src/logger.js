@@ -1,30 +1,38 @@
-class Logger {
+class TimeLogger {
   constructor() {
-      this.startTime = null;
-      this.execCount = 0;
+    this.startTime = null;
   }
 
   tic() {
-      this.startTime = Date.now();
+    this.startTime = Date.now();
   }
 
   tac() {
-      if (!this.startTime) {
-          console.error("Call tic() before calling tac()");
-          return null;
-      }
-      const elapsedTime = (Date.now() - this.startTime) / 1000;
-      this.startTime = null;
-      return elapsedTime;
+    if (!this.startTime) {
+      console.error("Call tic() before calling tac()");
+      return null;
+    }
+    const elapsedTime = (Date.now() - this.startTime) / 1000;
+    this.startTime = null;
+    return elapsedTime;
+  }
+}
+  
+class ExecutionLogger {
+  constructor() {
+    this.execCount = 0;
   }
 
   incExecCount() {
-      this.execCount++;
+    this.execCount++;
   }
 
   getExecCount() {
-      return this.execCount;
+    return this.execCount;
   }
 }
 
-module.exports = Logger;
+module.exports = {
+  TimeLogger,
+  ExecutionLogger
+};
