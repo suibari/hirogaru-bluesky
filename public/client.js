@@ -13,25 +13,6 @@ var cy = cytoscape({
   container: document.getElementById('cy'), // container to render in
 
   elements: [],
-
-  style: [
-    {
-      selector: 'node',
-      style: {
-        'width': 'data(rank)',
-        'height': 'data(rank)',
-        'background-fit': 'contain',
-        'background-image': 'data(img)',
-      },
-    },
-    {
-      selector: 'edge',
-      style: {
-        'width': 3,
-        'display': 'none',
-      },
-    }
-  ]
 });
 
 // Enterキーが押されたときにfetch処理を実行
@@ -63,13 +44,15 @@ fetchButton.addEventListener('click', (event) => {
       return;
     }
     
-    fetchData(handle);
+    generateGraph(handle);
   } else {
     showAlert("画像生成中です");
   }
 });
 
-async function fetchData(handle) {
+async function generateGraph(handle) {
+  const NODE_NUM = 36;
+
   try {
     $('#titleContainer').fadeOut();
     $('#bottom-left').fadeIn('slow');
@@ -78,25 +61,29 @@ async function fetchData(handle) {
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('node, edge');
     cy.remove(elm);
-    handle = encodeURIComponent(handle);
-    const response = await fetch(`/generate?handle=${handle}`, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    // エラー処理
-    if (!response.ok) {
-      const errorData = await response.json();
-      showAlert("サーバでエラーが発生しました: " + errorData.message);
-      document.getElementById('loading').style.display = 'none'; // くるくる表示終了
-      cyRunningFlag = false;
-      return;
-    }
-
-    const data = await response.json();
+    const data = await fetchData(handle, NODE_NUM);
     // console.log(data);
     cy.add(data);
+    cy.style([
+      {
+        selector: 'node',
+        style: {
+          'width': 'data(rank)',
+          'height': 'data(rank)',
+          'background-fit': 'contain',
+          'background-image': 'data(img)',
+        },
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 'data(engagement)',
+          'display': 'none',
+          'curve-style': 'unbundled-bezier',
+          'target-arrow-shape': 'triangle'
+        },
+      }
+    ]);
     cy.layout({
       // cose ---
       // name: 'cose',
@@ -136,6 +123,25 @@ async function fetchData(handle) {
   }
 }
 
+async function fetchData(handle, nodenum) {
+  handle = encodeURIComponent(handle);
+  const response = await fetch(`/generate?handle=${handle}&nodenum=${nodenum}`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  // エラー処理
+  if (!response.ok) {
+    const errorData = await response.json();
+    showAlert("サーバでエラーが発生しました: " + errorData.message);
+    document.getElementById('loading').style.display = 'none'; // くるくる表示終了
+    cyRunningFlag = false;
+    return;
+  }
+  const data = await response.json();
+  return data;
+}
+
 // アラートが表示されるときの処理
 function showAlert(text, handle) {
   if (handle) {
@@ -144,7 +150,7 @@ function showAlert(text, handle) {
     $('#alert').fadeIn();
     $('#handleLink').one('click', function() {
       hideAlert();
-      fetchData(handle);
+      generateGraph(handle);
     });
   } else {
     $('#alert').text(text);
@@ -220,20 +226,20 @@ $(document).ready(() => {
   
   // カード表示
   cy.on('tap', 'node', function(evt){
-    var node = evt.target;
-    var handle = node.data('handle');
+    var tappedNode = evt.target;
+    var handle = tappedNode.data('handle');
 
-    $('#cardTitle').text(node.data('name'));
+    $('#cardTitle').text(tappedNode.data('name'));
     $('#cardSubtitle').text("@"+handle);
     $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
     
     // フォローバッジ変更
     $('#card-badge').removeClass('bg-success');
     $('#card-badge').removeClass('bg-danger');
-    if (node.data('level') == 5) {
+    if (tappedNode.data('level') == 5) {
       // 中心ノードなら
       $('#card-badge').text("");
-    } else if (JSON.parse(node.data('following'))) {
+    } else if (JSON.parse(tappedNode.data('following'))) {
       $('#card-badge').text("Following");
       $('#card-badge').addClass('bg-success');
     } else {
@@ -241,17 +247,72 @@ $(document).ready(() => {
       $('#card-badge').addClass('bg-danger');
     };
 
-    if (!$('#card').is(':visible') || $('#card').data('nodeId') !== node.id()) {
-      $('#card').data('nodeId', node.id());
+    if (!$('#card').is(':visible') || $('#card').data('nodeId') !== tappedNode.id()) {
+      $('#card').data('nodeId', tappedNode.id());
       $('#card').fadeIn();
       tappingCard = true;
     }
 
+    // 生成ボタン押された
     $('#regenerateButton').off('click').click(function(evt) {
       evt.stopPropagation();
-      fetchData(handle);
+      generateGraph(handle);
       $('#card').fadeOut();
       tappingCard = false;
+    });
+
+    // 関係ボタン押された
+    $('#socialButton').off('click').click(async function(evt) {
+      const NODE_NUM = 1000;
+
+      evt.stopPropagation();
+      document.getElementById('loading').style.display = 'block'; // くるくる表示開始
+
+      // 中心ノードを取得
+      var centerNode = cy.nodes().filter(function(node) {
+        return node.data('level') == 5;
+      }).first();
+
+      // サーバで相手側の相関図生成
+      const data = await fetchData(handle, NODE_NUM);
+      
+      // 相手から自分の関係抽出
+      const edgeTappedNodeToCenterNode = data.filter(d => {
+        return (d.group == 'edges') && (d.data.target == centerNode.data('id'));
+      });
+      cy.add(edgeTappedNodeToCenterNode);
+
+      // 自分と相手の間だけエッジを表示
+      cy.edges().forEach(function(edge){
+        if(edge.source().id() === tappedNode.id() && edge.target().id() === centerNode.id()){
+          edge.style('display', 'element'); // タップされたノードから中心ノードへのエッジ
+        } else if (edge.source().id() === centerNode.id() && edge.target().id() === tappedNode.id()) {
+          edge.style('display', 'element'); // 中心ノードからタップされたノードへのエッジ
+        } else {
+          edge.style('display', 'none'); // それ以外のエッジは非表示
+        }
+      });
+
+      // タップされたノードと中心のノード以外のノードを削除
+      cy.nodes().forEach(function(node){
+        if(node.id() !== tappedNode.id() && node.id() !== centerNode.id()){
+          node.remove();
+        }
+      });
+
+      // ノードのサイズを設定
+      cy.style().selector('node').style({
+        'width': 150,
+        'height': 150
+      }).update(); // スタイルの更新
+
+      // gridレイアウトを適用
+      cy.layout({ 
+        name: 'grid',
+        padding: 100,
+      }).run();
+      
+      document.getElementById('loading').style.display = 'none'; // くるくる表示終了
     });
   });
 

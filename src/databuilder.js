@@ -24,20 +24,22 @@ async function getElements(allWithProf) {
     if (n > 0) {
       await pushActorToNodes(friend, elements, n);
     }
+
+    // edges
+    // * follow (myself -> follow)
+    const engagement = getEdgeEngagement(friend.engagement);
+    if (i != 0) {
+      elements.push({
+        data: {
+          source: allWithProf[0].did,
+          target: friend.did,
+          engagement: engagement,
+        },
+        group: 'edges'
+      });
+    };
   };
-  // // edges
-  // // * follow (myself -> follow)
-  // for (const friend of friends) {
-  //   elements.push({
-  //     data: {
-  //       source: myself.did,
-  //       target: friend.did,
-  //     },
-  //     group: 'edges'
-  //   });
-  // };
-  // console.log("complete links: follows");
-  // console.log("complete links: follows of Followss");
+
 
   // nodes (rank)
   // const totalNodes = elements.filter(element => element.group === "nodes").length;
@@ -89,6 +91,16 @@ function getRank(actor) {
     correctedRank = rank;
   }
   return correctedRank;
+}
+
+function getEdgeEngagement(engagement) {
+    // 定数の設定
+    const exponent = 2; // 指数関数の指数を調整する定数
+
+    // 指数関数を適用して値を変換
+    let result = Math.pow(engagement, exponent) / 100;
+
+    return result;
 }
 
 function removeInvalidLinks(elements) {
