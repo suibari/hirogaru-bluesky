@@ -7,6 +7,7 @@ var tappingCard = false; // ノードタップ時のフラグ
 var resizeEventFlag = false; // リサイズイベントの処理フラグ
 var resizeTimer; // リサイズイベントを適切に制御するためのタイマー
 var shareRunningFlag = false; // シェア画像処理中フラグ
+var gaugeflag = false; // ゲージ表示フラグ
 
 // Cytoscape.js
 var cy = cytoscape({
@@ -57,6 +58,10 @@ async function generateGraph(handle) {
     $('#titleContainer').fadeOut();
     $('#bottom-left').fadeIn('slow');
     cyRunningFlag = true;
+    if (gaugeflag) {
+      $('#gauge-container').fadeOut();
+      gaugeflag = false;
+    };
 
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('node, edge');
@@ -267,6 +272,7 @@ $(document).ready(() => {
 
       evt.stopPropagation();
       document.getElementById('loading').style.display = 'block'; // くるくる表示開始
+      gaugeflag = true;
 
       // 中心ノードを取得
       var centerNode = cy.nodes().filter(function(node) {
@@ -311,6 +317,36 @@ $(document).ready(() => {
         name: 'grid',
         padding: 100,
       }).run();
+
+      // ゲージ作成
+      var gauge = new Gauge(document.getElementById('gauge-container')).setOptions({
+        id: "gauge-container", // Container element id
+        value: 0, // Initial value
+        min: 0, // Minimum value
+        max: 100, // Maximum value
+        title: "Gauge", // Gauge title
+        label: "", // Unit label
+        levelColors: ["#FF0000", "#FFFF00", "#00FF00"], // Colors for different levels
+        gaugeWidthScale: 0.4, // Width of the gauge
+        counter: true, // Show value counter
+        formatNumber: true // Format numbers
+      });
+      gauge.animationSpeed = 255;
+
+      // エンゲージメントを取得
+      var edge1 = cy.edges().filter(function(edge) {
+        return edge.data('source') == centerNode.id() && edge.data('target') == tappedNode.id();
+      });
+      var edge2 = cy.edges().filter(function(edge) {
+        return edge.data('source') == tappedNode.id() && edge.data('target') == centerNode.id();
+      });
+      const minEngagement = Math.min(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
+      const maxEngagement = Math.max(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
+      const socialvalue = (minEngagement / maxEngagement) * 100;
+
+      // ゲージ描画
+      gauge.set(socialvalue);
+      $('#gauge-container').fadeIn();
       
       document.getElementById('loading').style.display = 'none'; // くるくる表示終了
     });

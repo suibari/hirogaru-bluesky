@@ -34,6 +34,7 @@ async function getElements(allWithProf) {
           source: allWithProf[0].did,
           target: friend.did,
           engagement: engagement,
+          rawEngagement: friend.engagement,
         },
         group: 'edges'
       });
