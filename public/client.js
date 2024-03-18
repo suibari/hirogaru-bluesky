@@ -58,11 +58,8 @@ async function generateGraph(handle) {
     $('#titleContainer').fadeOut();
     $('#bottom-left').fadeIn('slow');
     cyRunningFlag = true;
-    if (gaugeflag) {
-      $('#gauge-container').fadeOut();
-      gaugeflag = false;
-    };
-
+    $('#gauge-container').css('visibility', 'hidden');
+    
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('node, edge');
     cy.remove(elm);
@@ -320,18 +317,25 @@ $(document).ready(() => {
 
       // ゲージ作成
       var gauge = new Gauge(document.getElementById('gauge-container')).setOptions({
-        id: "gauge-container", // Container element id
-        value: 0, // Initial value
-        min: 0, // Minimum value
-        max: 100, // Maximum value
-        title: "Gauge", // Gauge title
-        label: "", // Unit label
-        levelColors: ["#FF0000", "#FFFF00", "#00FF00"], // Colors for different levels
-        gaugeWidthScale: 0.4, // Width of the gauge
-        counter: true, // Show value counter
-        formatNumber: true // Format numbers
+        angle: -0.35,
+        lineWidth: 0.05,
+        radiusScale: 0.5,
+        pointer: {
+          strokeWidth: 0,
+          iconPath: './img/heart.png',
+          iconScale: 0.05,
+        },
+        limitMin: true, // Minimum value
+        limitMax: true, // Maximum value
+        colorStart: '#F48FFF',
+        colorStop: '#FFD8FB',
+        strokeColor: '#EEEEEE',
+        generateGradient: true,
+        highDpiSupport: true,
       });
-      gauge.animationSpeed = 255;
+      gauge.maxValue = 100;
+      gauge.setMinValue(0);
+      gauge.animationSpeed = 150;
 
       // エンゲージメントを取得
       var edge1 = cy.edges().filter(function(edge) {
@@ -342,11 +346,12 @@ $(document).ready(() => {
       });
       const minEngagement = Math.min(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
       const maxEngagement = Math.max(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
-      const socialvalue = (minEngagement / maxEngagement) * 100;
+      const biasEngagement = (maxEngagement > 100) ? (100 / 2) : maxEngagement / 2;
+      const socialvalue = ((minEngagement / maxEngagement) * 50) + biasEngagement;
 
       // ゲージ描画
       gauge.set(socialvalue);
-      $('#gauge-container').fadeIn();
+      $('#gauge-container').css('visibility', 'visible');
       
       document.getElementById('loading').style.display = 'none'; // くるくる表示終了
     });

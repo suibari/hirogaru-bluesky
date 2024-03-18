@@ -94,12 +94,13 @@ function getRank(actor) {
   return correctedRank;
 }
 
-function getEdgeEngagement(engagement) {
+function getEdgeEngagement(engaegement) {
     // 定数の設定
     const exponent = 2; // 指数関数の指数を調整する定数
 
     // 指数関数を適用して値を変換
-    let result = Math.pow(engagement, exponent) / 100;
+    let result = Math.pow(engaegement, exponent) / 200;
+    result = result > 25 ? 25 : result;
 
     return result;
 }
