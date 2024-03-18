@@ -8,6 +8,8 @@ var resizeEventFlag = false; // リサイズイベントの処理フラグ
 var resizeTimer; // リサイズイベントを適切に制御するためのタイマー
 var shareRunningFlag = false; // シェア画像処理中フラグ
 var gaugeflag = false; // ゲージ表示フラグ
+var myselfdata; // 中心の人のデータ
+var partnerdata; // 関係表示した相手のデータ
 
 // Cytoscape.js
 var cy = cytoscape({
@@ -51,7 +53,7 @@ fetchButton.addEventListener('click', (event) => {
   }
 });
 
-async function generateGraph(handle) {
+async function generateGraph(handle, data) {
   const NODE_NUM = 36;
 
   try {
@@ -63,9 +65,13 @@ async function generateGraph(handle) {
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('node, edge');
     cy.remove(elm);
-    const data = await fetchData(handle, NODE_NUM);
-    // console.log(data);
-    cy.add(data);
+    if (data === undefined) {
+      myselfdata = await fetchData(handle, NODE_NUM);
+      cy.add(myselfdata);
+    } else {
+      partnerdata = undefined; // 関係図からパートナー相関図を表示する際にパートナー情報をリセット
+      cy.add(data);
+    }
     cy.style([
       {
         selector: 'node',
@@ -82,7 +88,9 @@ async function generateGraph(handle) {
           'width': 'data(engagement)',
           'display': 'none',
           'curve-style': 'unbundled-bezier',
-          'target-arrow-shape': 'triangle'
+          'target-arrow-shape': 'triangle',
+          'line-color': 'white',
+          'target-arrow-color': 'white',
         },
       }
     ]);
@@ -234,6 +242,13 @@ $(document).ready(() => {
     $('#cardTitle').text(tappedNode.data('name'));
     $('#cardSubtitle').text("@"+handle);
     $('#cardLink').attr('href', "https://bsky.app/profile/" + handle);
+
+    // 中心ノードなら関係ボタンは非表示
+    if (tappedNode.data('level') == 5) {
+      $('#socialButton').hide();
+    } else {
+      $('#socialButton').show();
+    }
     
     // フォローバッジ変更
     $('#card-badge').removeClass('bg-success');
@@ -258,7 +273,13 @@ $(document).ready(() => {
     // 生成ボタン押された
     $('#regenerateButton').off('click').click(function(evt) {
       evt.stopPropagation();
-      generateGraph(handle);
+      if (tappedNode.data('level') == 5) {
+        generateGraph(handle, myselfdata);
+      } else if (partnerdata !== undefined) {
+        generateGraph(handle, partnerdata);        
+      } else {
+        generateGraph(handle);
+      }
       $('#card').fadeOut();
       tappingCard = false;
     });
@@ -277,10 +298,10 @@ $(document).ready(() => {
       }).first();
 
       // サーバで相手側の相関図生成
-      const data = await fetchData(handle, NODE_NUM);
+      partnerdata = await fetchData(handle, NODE_NUM);
       
       // 相手から自分の関係抽出
-      const edgeTappedNodeToCenterNode = data.filter(d => {
+      const edgeTappedNodeToCenterNode = partnerdata.filter(d => {
         return (d.group == 'edges') && (d.data.target == centerNode.data('id'));
       });
       cy.add(edgeTappedNodeToCenterNode);
