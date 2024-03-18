@@ -1,5 +1,5 @@
-const fetchButton = document.getElementById('fetchButton');
-const fetchInput = document.getElementById('fetchInput');
+const fetchButton = $("#fetchButton");
+const fetchInput = $("#fetchInput");
 
 var cyFirstRunFlag = false; // cy.run()が1度実行完了したら(相関図が出てる状態になったらtrue)
 var cyRunningFlag = false; // cy.run()実行中かのフラグ
@@ -35,16 +35,16 @@ var cy = cytoscape({
 });
 
 // Enterキーが押されたときにfetch処理を実行
-fetchInput.addEventListener('keyup', function(event) {
+fetchInput.on('keyup', function(event) {
     if (event.keyCode === 13) {
         event.preventDefault();
         fetchButton.click();
     }
 });
 
-fetchButton.addEventListener('click', (event) => {
+fetchButton.on('click', (event) => {
   if (!cyRunningFlag) {
-    handle = fetchInput.value.trim();
+    handle = fetchInput.val();
     
     // エラー検査
     if (!handle) {
@@ -303,4 +303,17 @@ $(document).ready(() => {
       resizeEventFlag = true; // フラグをセット
     };
   });
+
+  // ボタンがクリックされたときに値を保存する
+  fetchButton.on("click", function() {
+    var userInput = fetchInput.val();
+    localStorage.setItem("userInput", userInput);
+    // alert("Value saved to local storage: " + userInput);
+  });
+
+  // ページが読み込まれたときにローカルストレージから値を取得してフィールドに設定する
+  var savedValue = localStorage.getItem("userInput");
+  if (savedValue) {
+    fetchInput.val(savedValue);
+  }
 });
