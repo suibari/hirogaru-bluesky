@@ -50,7 +50,6 @@ async function getData(handle) {
   const THRESHOLD_LIKES = 100;
   const SCORE_REPLY = 10;
   const SCORE_LIKE = 1;
-  const RANK_LOWEST = 20;
 
   try {
     const timeLogger = new TimeLogger();
@@ -65,35 +64,26 @@ async function getData(handle) {
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
     let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_NODES, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
 
-    // フォロー検出
+    // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
     let didArray;
+    if (friendsWithProf.length < THRESHOLD_NODES) {
+      response = await agent.getFollows({actor: handle, limit: 50});
+      const follows = response.data.follows;
+      didArray = follows.map(follow => follow.did);
+      const mutualWithProf = await agent.getConcatProfiles(didArray);
+      friendsWithProf = friendsWithProf.concat(mutualWithProf);
+    };
+    
+    // フォロー検出
     didArray = friendsWithProf.map(friend => friend.did);
     const objFollow = await agent.isFollow(myselfWithProf.did, didArray);
     for (const obj of objFollow) {
       for (const friend of friendsWithProf) {
         if (friend.did == obj.did) {
           friend.following = obj.following
-          break;
         };
       };
     };
-
-    // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
-    if (friendsWithProf.length < THRESHOLD_NODES) {
-      response = await agent.getFollows({actor: handle, limit: 100});
-      const follows = response.data.follows;
-      didArray = follows.map(follow => follow.did);
-      const objMutual = await agent.isMutual(myselfWithProf.did, didArray);
-      didArray = objMutual.filter(obj => obj.mutual).map(obj => obj.did);
-      didArray = didArray.splice(0, 25); // getProfilesの制限回避
-      response = await agent.getProfiles({actors: didArray});
-      const mutualWithProf = response.data.profiles;
-      // エンゲージメントを最低値で埋めておく
-      for (const mutual of mutualWithProf) {
-        mutual.engagement = RANK_LOWEST;
-      };
-      friendsWithProf = friendsWithProf.concat(mutualWithProf);
-    }
     
     // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
     const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
