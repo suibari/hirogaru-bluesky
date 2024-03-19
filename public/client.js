@@ -61,6 +61,7 @@ async function generateGraph(handle, data) {
     $('#bottom-left').fadeIn('slow');
     cyRunningFlag = true;
     $('#gauge-container').css('visibility', 'hidden');
+    $('#gauge-message').fadeOut();
     
     document.getElementById('loading').style.display = 'block'; // くるくる表示開始
     var elm = cy.$('node, edge');
@@ -150,27 +151,6 @@ async function fetchData(handle, nodenum) {
   }
   const data = await response.json();
   return data;
-}
-
-// アラートが表示されるときの処理
-function showAlert(text, handle) {
-  if (handle) {
-    // console.log("detect")
-    $('#alert').html(text + ` <a id="handleLink" class="link-underline-primary" style="cursor: pointer;">${handle}</a> ？`);
-    $('#alert').fadeIn();
-    $('#handleLink').one('click', function() {
-      hideAlert();
-      generateGraph(handle);
-    });
-  } else {
-    $('#alert').text(text);
-    $('#alert').fadeIn();
-  };
-}
-
-// アラートを非表示にする処理
-function hideAlert() {
-  $('#alert').fadeOut();
 }
 
 async function shareGraph() {
@@ -337,7 +317,8 @@ $(document).ready(() => {
       }).run();
 
       // ゲージ作成
-      var gauge = new Gauge(document.getElementById('gauge-container')).setOptions({
+      var target = document.getElementById('gauge-body');
+      var gauge = new Gauge(target).setOptions({
         angle: -0.35,
         lineWidth: 0.05,
         radiusScale: 0.5,
@@ -367,14 +348,39 @@ $(document).ready(() => {
       });
       const minEngagement = Math.min(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
       const maxEngagement = Math.max(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
+      const onesidedloveValue = (minEngagement / maxEngagement);
       const biasEngagement = (maxEngagement > 100) ? (100 / 2) : maxEngagement / 2;
-      const socialvalue = ((minEngagement / maxEngagement) * 50) + biasEngagement;
+      const socialvalue = (onesidedloveValue * 50) + biasEngagement;
 
       // ゲージ描画
       gauge.set(socialvalue);
       $('#gauge-container').css('visibility', 'visible');
       
       document.getElementById('loading').style.display = 'none'; // くるくる表示終了
+
+      // 1秒後にメッセージ描画
+      var onesidedloveText;
+      var biasText;
+      if (!maxEngagement) {
+        onesidedloveText = "これから";
+      } else if (onesidedloveValue < 0.5) {
+        onesidedloveText = "片思い";
+      } else {
+        onesidedloveText = "相思相愛";
+      };
+      if (!biasEngagement) {
+        biasText = "まだまだ";
+      } else if (biasEngagement <= 20) {
+        biasText = "みがけば光る";
+      } else if (biasEngagement < 50) {
+        biasText = "最近話題の";
+      } else {
+        biasText = "Bluesky中にとどろく";
+      }
+      setTimeout(function() {
+        $('#gauge-message').text(biasText + onesidedloveText);
+        $('#gauge-message').fadeIn();
+      }, 1000)
     });
   });
 

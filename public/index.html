@@ -162,8 +162,20 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+    }
+    #gauge-body {
         width: 400px;
         height: 400px;
+    }
+    #gauge-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+        font-size: x-large;
+        width: 100%;
+        text-align: center;
     }
     #socialButton {
         margin-top: 5px;
@@ -300,13 +312,17 @@
     <span id="card-badge" class="badge position-absolute top-0 end-0 mt-1 me-1"></span>
 </div>
 <!-- Gauge -->
-<canvas id="gauge-container"></canvas>
+<div id="gauge-container">
+    <div id="gauge-message" class="fw-bold"></div>
+    <canvas id="gauge-body"></canvas>
+</div>
 <!-- Logo -->
 <div id="bottom-left"> <!-- 右下に表示する要素 -->
     <p>#ひろがるBluesky!</p>
 </div>
 
-<script src="perticle.js"></script>
+<script src="particle.js"></script>
+<script src="util.js"></script>
 <script src="client.js"></script>
 
 </body>
