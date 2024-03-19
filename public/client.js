@@ -346,8 +346,10 @@ $(document).ready(() => {
       var edge2 = cy.edges().filter(function(edge) {
         return edge.data('source') == tappedNode.id() && edge.data('target') == centerNode.id();
       });
-      const minEngagement = Math.min(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
-      const maxEngagement = Math.max(edge1.data('rawEngagement'), edge2.data('rawEngagement'));
+      const edge1eng = edge1.data('rawEngagement') > 0 ? edge1.data('rawEngagement') : 0;
+      const edge2eng = edge2.data('rawEngagement') > 0 ? edge2.data('rawEngagement') : 0;
+      const minEngagement = Math.min(edge1eng, edge2eng);
+      const maxEngagement = Math.max(edge1eng, edge2eng);
       const onesidedloveValue = (minEngagement / maxEngagement);
       const biasEngagement = (maxEngagement > 100) ? (100 / 2) : maxEngagement / 2;
       const socialvalue = (onesidedloveValue * 50) + biasEngagement;
@@ -362,7 +364,7 @@ $(document).ready(() => {
       var onesidedloveText;
       var biasText;
       if (!maxEngagement) {
-        onesidedloveText = "これから";
+        onesidedloveText = "今後に期待";
       } else if (onesidedloveValue < 0.5) {
         onesidedloveText = "片思い";
       } else {
