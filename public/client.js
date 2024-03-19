@@ -270,6 +270,7 @@ $(document).ready(() => {
 
       evt.stopPropagation();
       document.getElementById('loading').style.display = 'block'; // くるくる表示開始
+      $('#shareButton').fadeOut();
       gaugeflag = true;
 
       // 中心ノードを取得
