@@ -1,5 +1,5 @@
 const { Blueskyer } = require('blueskyer');
-const { getElements, removeDuplicatesNodes } = require('./src/databuilder.js');
+const { getElements, removeDuplicatesNodes, removeInvalidLinks } = require('./src/databuilder.js');
 const { TimeLogger, ExecutionLogger } = require('./src/logger.js');
 const { addTextToImage } = require('./src/imgshaper.js')
 const express = require('express');
@@ -16,8 +16,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/generate', async (req, res) => {
   try {
     const handle = req.query.handle;
-    console.log("[INFO] receive query from client. handle: "+handle);
-    const data = await getData(handle);
+    const nodenum = req.query.nodenum;
+    console.log(`[INFO] receive query from client. handle: ${handle}, nodenum: ${nodenum}`);
+    const data = await getData(handle, nodenum);
     res.json(data);
     console.log("[INFO] send data to client. total elements: "+data.length);
   } catch (e) {
@@ -44,7 +45,7 @@ app.listen(port, () => {
   console.log(`[INFO] Server is running on http://localhost:${port}`);
 })
 
-async function getData(handle) {
+async function getData(handle, nodenum) {
   const THRESHOLD_NODES = 36
   const THRESHOLD_TL = 1000;
   const THRESHOLD_LIKES = 100;
@@ -62,7 +63,7 @@ async function getData(handle) {
     const myselfWithProf = response.data;
 
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-    let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_NODES, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
+    let friendsWithProf = await agent.getInvolvedEngagements(handle, nodenum, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
 
     // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
     let didArray;

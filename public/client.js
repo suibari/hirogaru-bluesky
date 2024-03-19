@@ -126,7 +126,7 @@ async function generateGraph(handle, data) {
     
     window.setTimeout(() => {  // cy.run()と同時に表示させるとfadeInが効かないので時間差をつける
       $('#shareButton').fadeIn();
-    }, 1000);
+    }, 10);
 
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -256,7 +256,10 @@ $(document).ready(() => {
       if (tappedNode.data('level') == 5) {
         generateGraph(handle, myselfdata);
       } else if (partnerdata !== undefined) {
-        generateGraph(handle, partnerdata);        
+        generateGraph(handle); // 暫定措置
+        // generateGraph(handle, partnerdata);
+        // myselfdata = partnerdata; // 相手が今度は中心ノードになるのでこうする
+        // partnerdata = undefined;
       } else {
         generateGraph(handle);
       }
@@ -341,18 +344,18 @@ $(document).ready(() => {
       gauge.animationSpeed = 150;
 
       // エンゲージメントを取得
-      var edge1 = cy.edges().filter(function(edge) {
+      var edgeToPartner = cy.edges().filter(function(edge) {
         return edge.data('source') == centerNode.id() && edge.data('target') == tappedNode.id();
       });
-      var edge2 = cy.edges().filter(function(edge) {
+      var edgeFromPartner = cy.edges().filter(function(edge) {
         return edge.data('source') == tappedNode.id() && edge.data('target') == centerNode.id();
       });
-      const edge1eng = edge1.data('rawEngagement') > 0 ? edge1.data('rawEngagement') : 0;
-      const edge2eng = edge2.data('rawEngagement') > 0 ? edge2.data('rawEngagement') : 0;
-      const minEngagement = Math.min(edge1eng, edge2eng);
-      const maxEngagement = Math.max(edge1eng, edge2eng);
+      const engToPartner = edgeToPartner.data('rawEngagement') > 0 ? edgeToPartner.data('rawEngagement') : 0;
+      const engFromPartner = edgeFromPartner.data('rawEngagement') > 0 ? edgeFromPartner.data('rawEngagement') : 0;
+      const minEngagement = Math.min(engToPartner, engFromPartner);
+      const maxEngagement = Math.max(engToPartner, engFromPartner);
       const onesidedloveValue = (minEngagement / maxEngagement);
-      const biasEngagement = (maxEngagement > 100) ? (100 / 2) : maxEngagement / 2;
+      const biasEngagement = (maxEngagement > 500) ? 50 : maxEngagement / 10;
       const socialvalue = (onesidedloveValue * 50) + biasEngagement;
 
       // ゲージ描画

@@ -96,10 +96,10 @@ function getRank(actor) {
 
 function getEdgeEngagement(engaegement) {
     // 定数の設定
-    const exponent = 2; // 指数関数の指数を調整する定数
+    const exponent = 0.5; // 指数関数の指数を調整する定数
 
     // 指数関数を適用して値を変換
-    let result = Math.pow(engaegement, exponent) / 200;
+    let result = Math.pow(engaegement, exponent);
     result = result > 25 ? 25 : result;
 
     return result;
@@ -132,7 +132,9 @@ function removeDuplicatesNodes(headElement, otherElements) {
 
   const uniqueObjects = {};
   for (const obj of elements) {
-    uniqueObjects[obj.did] = obj;
+    if (!(obj.did in uniqueObjects)) {
+      uniqueObjects[obj.did] = obj;
+    }
   }
   return Object.values(uniqueObjects);
 }
