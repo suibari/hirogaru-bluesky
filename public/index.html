@@ -26,6 +26,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.1/p5.js"></script>
+<script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -166,6 +167,30 @@
         width: 300px;
         z-index: 7777;
     }
+    #gauge-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+    #gauge-body {
+        width: 400px;
+        height: 400px;
+    }
+    #gauge-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+        font-size: x-large;
+        width: 100%;
+        text-align: center;
+    }
+    #socialButton {
+        margin-top: 5px;
+    }
     .card-title {
         margin-top: 10px; /* 任意の値を指定 */
     }
@@ -248,37 +273,161 @@
                 <h5 class="modal-title" id="helpModalLabel">ひろがるBluesky!</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <h6>使い方</h6>
+            <ul class="nav nav-tabs" style="margin-bottom: 10px;">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#tab1">使い方</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tab2">利用規約</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tab3">変更履歴</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div id="tab1" class="container tab-pane fade show active">
+                    <h6>基本的な使い方</h6>
                     <ul>
                         <li><a href="https://bsky.app/" target="_blank">Bluesky</a>のハンドル名(～.bsky.socialまで)を入れて<b>Generate!</b>を押してください</li>
                         <li>その人の<b>相関図</b>を作成します</li>
                         <li>相関図の中心が自分、そこに近づくほど仲良しの人です</li>
                         <li><b>利用にあたりパスワードを入力する必要がないので、ユーザ情報が漏れる心配もいっさいありません</b></li>
                     </ul>
-                <h6>相関図のしくみ</h6>
+                    <h6>相関図のしくみ</h6>
+                        <ul>
+                            <li>仲良し度は<b>リプライやいいねの頻度</b>で変わります</li>
+                            <li>アイコンの大きさは<b>その人のフォロワーの多さ</b>です。アイコンの大きいユーザをフォローしてみよう</li>
+                            <li>相関図に出てくる人が少ない時は、Blueskyでいいね・リプライしよう！</li>
+                            <li>結果はリアルタイムに反映されるので、また相関図を作ってみよう！</li>
+                            <li>相関図は大体のアカウントなら<b>20秒弱</b>で生成できるはずです</li>
+                        </ul>
+                    <h6>相関図で遊ぼう</h6>
+                        <ul>
+                            <li>各ユーザのアイコンをクリックするとメニューが出ます</li>
+                            <li><b>メニュー選択でプロフィールに飛んだり、その人を中心に相関図を再生成できたり、関係性を分析したりできます</b></li>
+                            <li>関係性分析は、相関図中央のユーザと選択したユーザのリプライの頻度といいねの頻度から、仲良し度を出します</li>
+                            <li>関係性は<b>お互いに均等かつたくさんリプライといいねする</b>ことで上がる仕様となっています</li>
+                            <li>相関図表示時、右上のシェアボタンで相関図を画像として表示します。コピペしてBlueskyに投稿！</li>
+                            <li>相関図・関係性分析ともに、生成時間は主にポスト数で変わってきますが、1分はかかりません。生成時間が長すぎる時はリロードしてみてください</li>
+                        </ul>
+                    <h6>その他</h6>
+                        <ul>
+                            <li>ご意見ご要望は開発者の <a href="https://bsky.app/profile/suibari-cha.bsky.social" target="_blank">すいばり</a> までお気軽にどうぞ！</li>
+                        </ul>
+                </div>
+                <div id="tab2" class="container tab-pane fade">
+                    <h6>免責事項</h6>
                     <ul>
-                        <li>仲良し度は<b>リプライやいいねの頻度</b>で変わります</li>
-                        <li>相関図に出てくる人が少ない時は、Blueskyでいいね・リプライしよう！</li>
-                        <li>結果はすぐに反映されるので、また相関図を作ってみよう！</li>
-                        <li>相関図は大体のアカウントなら<b>20秒弱</b>で生成できるはずです</li>
+                        <li>本サービスは運営開始から現在まで <a href="https://bsky.app/profile/suibari-cha.bsky.social" target="_blank">すいばり</a> 個人により開発・運用・管理されています</li>
+                        <li>そのため、企業が実施しているような手厚いサポートやアップデートは実施が難しいです</li>
+                        <li>本サービスは正常な稼働に向けて可能な限りの改善・改修の努力をしますが、前提として自己責任でのご利用をお願いいたします</li>
+                        <li>また本サービスを利用したことによる過失や損害につきまして、開発者は一切の責任を負いません。ご了承ください</li>
                     </ul>
-                <h6>相関図で遊ぼう</h6>
+                    <h6>運用方針</h6>
                     <ul>
-                        <li>各ユーザのアイコンをクリックするとメニューが出ます</li>
-                        <li>メニュー選択でプロフィールに飛んだり、その人を中心に相関図を再生成できます</li>
-                        <li>右上のシェアボタンで相関図を画像として表示します。コピペしてBlueskyに投稿！</li>
-                        <li>生成時間は主にポスト数で変わってきますが、1分はかかりません。生成時間が長すぎる時はリロードしてみてください</li>
+                        <li>本サービスはAT Protocolの開発事例・技術習得の一環として構築したものです</li>
+                        <li><b>広告などのマネタイズを行う予定は今後含めいっさいありません</b></li>
+                        <li>本サービスはOSSであり、ソースコードは <a href="https://github.com/suibari/bsky-hirogaru-bluesky" target="_blank" class="modal-github-icon">こちら</a> で自由に閲覧・使用できます</li>
                     </ul>
-                <h6>免責事項</h6>
+                    <h6>プライバシーポリシー</h6>
                     <ul>
-                        <li>本サービスによって生じた損害について開発者は責任を負いません</li>
-                        <li>本サービスは予告なく停止する可能性があります</li>
+                        <li>本サービスはサービスの提供のために、左上テキストボックスに入力された情報を収集し、開発者のみ見られるログに記録します</li>
+                        <li><b>このため、テキストボックスにはハンドル名以外（パスワードやその他個人情報等）を入力しないよう十分お気を付けください</b></li>
+                        <li>情報は本サービスの提供のために利用させていただくものであり、それ以外の目的ではいっさい利用いたしません</li>
                     </ul>
-                <h6>その他</h6>
+                    <h6>データの第三者提供について</h6>
                     <ul>
-                        <li>ご意見ご要望は<a href="https://bsky.app/profile/suibari-cha.bsky.social" target="_blank">開発者まで</a>お気軽にどうぞ！</li>
+                        <li>当サイトでは法令及びガイドラインに別段の定めがある場合を除き、 同意を得ないで第三者に個人情報を提供することはいたしません</li>
                     </ul>
+                    <h6>アクセス解析について</h6>
+                    <ul>
+                        <li>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を利用しています。 このGoogleアナリティクスはトラフィックデータの収集のためにCookieを使用しています。 このトラフィックデータは匿名で収集されており、個人を特定するものではありません。この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください</li>
+                    </ul>
+                    <h6>プライバシーポリシーの変更について</h6>
+                    <ul>
+                        <li>当サイトは、個人情報に関して適用される日本の法令を遵守するとともに、 本ポリシーの内容を適宜見直しその改善に努めます</li>
+                        <li>修正された最新のプライバシーポリシーは常に本ページにて開示されます</li>
+                    </ul>
+                </div>
+                <div id="tab3" class="container tab-pane fade">
+                    <h5>v0.3.0</h5>
+                    <ul>
+                        <li>選択したユーザとの相互関係性の表示機能を追加</li>
+                    </ul>
+                    <h6>v0.2.10</h6>
+                    <ul>
+                        <li>Googleアナリティクス追加</li>
+                    </ul>
+                    <h6>v0.2.9</h6>
+                    <ul>
+                        <li>相関図の枠が満たない場合、フォローで埋めるよう修正</li>
+                        <li>バグ修正</li>
+                    </ul>
+                    <h6>v0.2.8</h6>
+                    <ul>
+                        <li>相関図の枠が満たない場合、相互フォローで埋めるよう修正</li>
+                        <li>ハンドル名送信時にローカルストレージに保存し、次回アクセス時に読み込みする機能を追加</li>
+                        <li>リプライを10点に加点</li>
+                        <li>いいねの集計数が少なくなっていたバグ修正</li>
+                    </ul>
+                    <h6>v0.2.7</h6>
+                    <ul>
+                        <li>アバター画像にアクセスできないユーザへの対応にエンバグがあったのを修正</li>
+                        <li>タップ時のハートが内部処理で消えず重くなっていたバグを修正</li>
+                    </ul>
+                    <h6>v0.2.6</h6>
+                    <ul>
+                        <li>アイコンの大きさを一定値でクリッピングするよう修正</li>
+                        <li>その他軽微修正</li>
+                    </ul>
+                    <h6>v0.2.5</h6>
+                    <ul>
+                        <li>集合体が苦手な人向けにデザインを全体的に配慮（アイコンの大きさを不均等化、相関図を回転させ左右非対称に、アイコンドラッグ可能に）</li>
+                        <li>バグ対応</li>
+                    </ul>
+                    <h6>v0.2.4</h6>
+                    <ul>
+                        <li>生成画像のサイズを制限</li>
+                    </ul>
+                    <h6>v0.2.3</h6>
+                    <ul>
+                        <li>ページアクセス時にタイトル表示</li>
+                    </ul>
+                    <h6>v0.2.2</h6>
+                    <ul>
+                        <li>フォローバッジ復活</li>
+                        <li>生成画像にアプリ名を合成する機能追加</li>
+                        <li>ハートの大きさ調整</li>
+                    </ul>
+                    <h6>v0.2.1</h6>
+                    <ul>
+                        <li>コミット漏れ</li>
+                    </ul>
+                    <h5>v0.2.0</h5>
+                    <ul>
+                        <li>ノードタップ時にハートがエンゲージメントに応じて出現</li>
+                        <li>フォローバッジ削除</li>
+                        <li>バグ対応</li>
+                    </ul>
+                    <h6>v0.1.3</h6>
+                    <ul>
+                        <li>フォローバッジ追加</li>
+                        <li>アバター画像にアクセスできないユーザに対応</li>
+                        <li>リプライを3点から5点に加点</li>
+                    </ul>
+                    <h6>v0.1.2</h6>
+                    <ul>
+                        <li>テキストボックスとボタン配置のUIを改善</li>
+                    </ul>
+                    <h6>v0.1.1</h6>
+                    <ul>
+                        <li>ハンドル名サジェスト機能を修正（@入れた場合に訂正を促す）</li>
+                    </ul>
+                    <h5>v0.1.0</h5>
+                    <ul>
+                        <li>ファーストリリース</li>
+                    </ul>
+                </div>
             </div>
             <div class="modal-footer d-flex justify-content-center">
                 <a href="https://github.com/suibari/bsky-hirogaru-bluesky" target="_blank" class="modal-github-icon"><i class="bi bi-github github-icon"></i></a>
@@ -292,16 +441,23 @@
     <div class="card-body">
         <h5 class="card-title" id="cardTitle"></h5>
         <a href="#" id="cardLink" class="card-link" target="_blank"><h6 class="card-subtitle mb-2 text-muted" id="cardSubtitle"></h6></a>
-        <button id="regenerateButton" class="btn btn-primary">この人を中心に相関図を再生成</button>
+        <button id="regenerateButton" class="btn btn-primary">この人の相関図を見る</button>
+        <button id="socialButton" class="btn btn-primary">この人との関係を分析する</button>
     </div>
     <span id="card-badge" class="badge position-absolute top-0 end-0 mt-1 me-1"></span>
+</div>
+<!-- Gauge -->
+<div id="gauge-container">
+    <div id="gauge-message" class="fw-bold"></div>
+    <canvas id="gauge-body"></canvas>
 </div>
 <!-- Logo -->
 <div id="bottom-left"> <!-- 右下に表示する要素 -->
     <p>#ひろがるBluesky!</p>
 </div>
 
-<script src="perticle.js"></script>
+<script src="particle.js"></script>
+<script src="util.js"></script>
 <script src="client.js"></script>
 
 </body>
