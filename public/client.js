@@ -274,6 +274,7 @@ $(document).ready(() => {
       evt.stopPropagation();
       document.getElementById('loading').style.display = 'block'; // くるくる表示開始
       $('#shareButton').fadeOut();
+      $('#card').fadeOut();
       gaugeflag = true;
 
       // 中心ノードを取得
@@ -341,7 +342,7 @@ $(document).ready(() => {
       });
       gauge.maxValue = 100;
       gauge.setMinValue(0);
-      gauge.animationSpeed = 150;
+      gauge.animationSpeed = 100;
 
       // エンゲージメントを取得
       var edgeToPartner = cy.edges().filter(function(edge) {
@@ -386,7 +387,14 @@ $(document).ready(() => {
       setTimeout(function() {
         $('#gauge-message').text(biasText + onesidedloveText);
         $('#gauge-message').fadeIn();
-      }, 1000)
+        $('#returnButton').fadeIn();
+      }, 1000);
+
+      // 戻るボタン押された
+      $('#returnButton').on('click').click(function() {
+        generateGraph(handle, myselfdata);
+        $('#returnButton').fadeOut();
+      });
     });
   });
 
