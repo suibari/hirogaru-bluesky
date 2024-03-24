@@ -130,7 +130,6 @@ async function generateGraph(handle, data) {
 
   } catch (error) {
     console.error('Error fetching data:', error);
-    showAlert("ブラウザでエラーが発生しました");
   }
 }
 
