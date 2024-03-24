@@ -27,14 +27,15 @@ async function getElements(allWithProf) {
 
     // edges
     // * follow (myself -> follow)
-    const engagement = getEdgeEngagement(friend.engagement);
+    const engagement = friend.engagement ? friend.engagement : 0;
+    const engagementExp = getEdgeEngagement(engagement);
     if (i != 0) {
       elements.push({
         data: {
           source: allWithProf[0].did,
           target: friend.did,
-          engagement: engagement,
-          rawEngagement: friend.engagement,
+          engagement: engagementExp,
+          rawEngagement: engagement,
         },
         group: 'edges'
       });

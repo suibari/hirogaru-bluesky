@@ -350,10 +350,12 @@ $(document).ready(() => {
       var edgeFromPartner = cy.edges().filter(function(edge) {
         return edge.data('source') == tappedNode.id() && edge.data('target') == centerNode.id();
       });
-      const engToPartner = edgeToPartner.data('rawEngagement') > 0 ? edgeToPartner.data('rawEngagement') : 0;
-      const engFromPartner = edgeFromPartner.data('rawEngagement') > 0 ? edgeFromPartner.data('rawEngagement') : 0;
-      const minEngagement = Math.min(engToPartner, engFromPartner);
-      const maxEngagement = Math.max(engToPartner, engFromPartner);
+      const engToPartner = edgeToPartner.data('rawEngagement');
+      const engToPartnerClipped = engToPartner > 0 ? engToPartner : 0;
+      const engFromPartner = edgeFromPartner.data('rawEngagement');
+      const engFromPartnerClipped = engFromPartner > 0 ? engFromPartner : 0;
+      const minEngagement = Math.min(engToPartnerClipped, engFromPartnerClipped);
+      const maxEngagement = Math.max(engToPartnerClipped, engFromPartnerClipped);
       const onesidedloveValue = (minEngagement / maxEngagement);
       const biasEngagement = (maxEngagement > 500) ? 50 : maxEngagement / 10;
       const socialvalue = (onesidedloveValue * 50) + biasEngagement;

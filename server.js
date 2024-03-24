@@ -65,7 +65,7 @@ async function getData(handle, nodenum) {
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
     let friendsWithProf = await agent.getInvolvedEngagements(handle, nodenum, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
 
-    // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
+    // 要素数がTHRESHOLD_NODESに満たなければ、フォロー追加
     let didArray;
     if (friendsWithProf.length < THRESHOLD_NODES) {
       response = await agent.getFollows({actor: handle, limit: 50});
@@ -91,6 +91,9 @@ async function getData(handle, nodenum) {
 
     // node, edge取得
     let elements = await getElements(allWithProf, objFollow);
+
+    // 無効なエッジ（edgeのsourceまたはtargetがnodeに存在しないもの）を削除
+    removeInvalidLinks(elements);
 
     execLogger.incExecCount();
     const elapsedTime = timeLogger.tac();
