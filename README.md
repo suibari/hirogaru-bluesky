@@ -1,32 +1,38 @@
-# Hirogaru-Bluesky!
+# create-svelte
 
-"Hirogaru Bluesky!" means "Bluesky connects people widely." in Japanese.
+Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
 
-This web app calculates engagement based on a user's number of replies and likes, and displays concentric circles of which users they interact with the most.
+## Creating a project
 
-Since you can immediately see the interaction status of other users, the concept is to use that to connect with "friends of friends."
+If you're seeing this, you've probably already done this step. Congrats!
 
-Please try to access it! (Not need to sign in or install apps.)
+```bash
+# create a new project in the current directory
+npm create svelte@latest
 
-https://hirogaru-bluesky.fly.dev/
+# create a new project in my-app
+npm create svelte@latest my-app
+```
 
-## Basic Usage
+## Developing
 
-* Enter Bluesky's handle (~.bsky.social) to input box and press "Generate!"
-* A correlation chart of the person will be created.
-* The center of the chart is you, and the closer you are to the center of the chart, the closer you are to that person.
-* The degree of friendship depends on the frequency of replies and likes, so the result may change after a while.
-* The correlation chart should be generated in less than 20 seconds for most accounts.
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-## TIPS
+```bash
+npm run dev
 
-* Clicking on each user's icon will bring up a menu.
-* You can jump to the profile or regenerate the correlation chart around that person by selecting the menu item.
-* Click the share button in the upper right corner to display the correlation chart as an image. Copy and paste and post to Bluesky!
-* Generation time depends mainly on the number of posts, but should not take more than a minute. If the generation time is too long, try reloading!
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
 
-## Other
+## Building
 
-Please feel free to contact me with any comments or requests!
+To create a production version of your app:
 
-https://bsky.app/profile/suibari-cha.bsky.social
+```bash
+npm run build
+```
+
+You can preview the production build with `npm run preview`.
+
+> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.

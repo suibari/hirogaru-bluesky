@@ -1,21 +1,24 @@
 {
-  "dependencies": {
-    "blueskyer": "^1.2.4",
-    "canvas": "^2.11.2",
-    "express": "^4.18.2",
-    "file-type": "^16.5.4",
-    "multer": "^1.4.5-lts.1"
-  },
-  "name": "bsky_ff_connect",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "suibari",
-  "license": "MIT",
-  "description": "",
-  "devDependencies": {
-    "@flydotio/dockerfile": "^0.5.2"
-  }
+	"name": "bsky-hirogaru-bluesky-svelte",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^3.0.0",
+		"@sveltejs/kit": "^2.0.0",
+		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"svelte": "^4.2.7",
+		"vite": "^5.0.3"
+	},
+	"type": "module",
+	"dependencies": {
+		"blueskyer": "^1.2.5",
+		"cytoscape": "^3.28.1",
+		"dotenv": "^16.4.5",
+		"file-type": "^16.5.4"
+	}
 }

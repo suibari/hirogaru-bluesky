@@ -1,8 +1,8 @@
-const FileType  = require('file-type');
-const fs = require('fs');
-const DEFFAULT_AVATOR = 'public/img/defaultavator.png';
+import FileType from 'file-type';
+import fs from 'fs';
+const DEFFAULT_AVATOR = 'static/defaultavator.png';
 
-async function getElements(allWithProf) {
+export async function getElements(allWithProf) {
   let elements = [];
 
   // nodes
@@ -106,7 +106,7 @@ function getEdgeEngagement(engaegement) {
     return result;
 }
 
-function removeInvalidLinks(elements) {
+export function removeInvalidLinks(elements) {
   const validEdges = []; // 有効なエッジを格納する配列
   const validNodes = []; // 有効なノードを格納する配列
 
@@ -128,7 +128,7 @@ function removeInvalidLinks(elements) {
   elements.push(...validNodes, ...validEdges);
 }
 
-function removeDuplicatesNodes(headElement, otherElements) {
+export function removeDuplicatesNodes(headElement, otherElements) {
   const elements = [headElement].concat(otherElements);
 
   const uniqueObjects = {};
@@ -182,7 +182,3 @@ function imageToBase64(imagePath) {
 
   return base64URI;
 }
-
-module.exports.getElements = getElements;
-module.exports.removeInvalidLinks = removeInvalidLinks;
-module.exports.removeDuplicatesNodes = removeDuplicatesNodes;

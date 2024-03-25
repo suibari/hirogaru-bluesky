@@ -1,4 +1,4 @@
-class TimeLogger {
+export class TimeLogger {
   constructor() {
     this.startTime = null;
   }
@@ -18,7 +18,7 @@ class TimeLogger {
   }
 }
   
-class ExecutionLogger {
+export class ExecutionLogger {
   constructor() {
     this.execCount = 0;
   }
@@ -31,8 +31,3 @@ class ExecutionLogger {
     return this.execCount;
   }
 }
-
-module.exports = {
-  TimeLogger,
-  ExecutionLogger
-};
