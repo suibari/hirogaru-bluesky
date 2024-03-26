@@ -1,4 +1,4 @@
-import { getData } from '$lib/server/database.js';
+import { getData } from '$lib/server/router.js';
 
 export const actions = {
   generate: async ({request}) => {

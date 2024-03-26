@@ -1,11 +1,11 @@
 import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD } from '$env/static/private';
-import { Blueskyer } from 'blueskyer';
+import { MyBlueskyer } from '$lib/server/bluesky.js';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
-const agent = new Blueskyer();
+const agent = new MyBlueskyer();
 const execLogger = new ExecutionLogger();
 
-export async function getData(handle, nodenum) {
+export async function getData(handle) {
   const THRESHOLD_NODES = 36
   const THRESHOLD_TL = 1000;
   const THRESHOLD_LIKES = 100;
@@ -24,7 +24,7 @@ export async function getData(handle, nodenum) {
     const myselfWithProf = response.data;
 
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-    let friendsWithProf = await agent.getInvolvedEngagements(handle, nodenum, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
+    let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
 
     // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
     let didArray;

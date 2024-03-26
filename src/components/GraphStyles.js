@@ -18,5 +18,11 @@ export default [
       'line-color': 'white',
       'target-arrow-color': 'white',
     },
+  },
+  {
+    selector: 'node[level=0]',
+    style: {
+      'display': 'none',
+    }
   }
 ]

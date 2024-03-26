@@ -17,11 +17,10 @@ export async function getElements(allWithProf) {
       n = 3;
     } else if (i >= 19 && i < 37) {
       n = 2;
+    } else {
+      n = 0; // not display
     }
-    // } else {
-    //   n = 1;
-    // }
-    if (n > 0) {
+    if (n > -1) {
       await pushActorToNodes(friend, elements, n);
     }
 

@@ -2,24 +2,50 @@
   import { onMount, setContext } from 'svelte'
   import cytoscape from 'cytoscape'
   import GraphStyles from './GraphStyles.js'
+  import UserCard from './UserCard.svelte';
 
   export let elements;
+  export let isRunning;
+  let tappedNode;
 
   setContext('graphSharedState', {
     getCyInstance: () => cyInstance
   })
 
-  let refElement = null
-  let cyInstance = null
+  let refElement = null;
+  let cyInstance = null;
 
   onMount(() => {
     cyInstance = cytoscape({
       container: refElement,
-      elements: elements,
+      elements: [],
       style: GraphStyles
     })
 
-    // cyInstance.on('add', () => {
+    // カード表示
+    cyInstance
+      .on('tap', 'node', function(evt){
+        tappedNode = evt.target;
+        console.log( 'tapped ' + tappedNode.id() );
+      });
+
+    // カード非表示
+    cyInstance
+      .on('tap', function(evt){
+        if (evt.target === cyInstance) {
+          tappedNode = null;
+          console.log( 'tap not node.' );
+        }
+      });
+  })
+
+  // elementsが変わったら実行される
+  $: {
+    if ((cyInstance) && (elements.length > 0)) { // onMountより先にここが実行されてエラーになるので防ぐ
+      isRunning = true;
+      cyInstance.elements().remove();
+      cyInstance.add(elements);
+
       cyInstance
         .layout({
           name: 'concentric',
@@ -32,11 +58,13 @@
           levelWidth: () => {
             return 1;
           },
+          stop: function() {
+            isRunning = false;
+          },
         })
-        .run()
-    // })
-  })
-
+        .run();
+    };
+  }
 </script>
 
 <div class="graph" bind:this={refElement}>
@@ -44,6 +72,11 @@
     <slot></slot>
   {/if}
 </div>
+
+<!-- カード表示 -->
+{#if tappedNode}
+  <UserCard tappedNode={tappedNode} />
+{/if}
 
 <style>
   .graph {

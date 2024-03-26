@@ -5,7 +5,10 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"prepare": "npm run smui-theme-light && npm run smui-theme-dark",
+		"smui-theme-light": "smui-theme compile build/smui.css -i src/theme",
+		"smui-theme-dark": "smui-theme compile build/smui-dark.css -i src/theme/dark"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
@@ -16,9 +19,13 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@smui/card": "^7.0.0-beta.18",
+		"@smui/circular-progress": "^7.0.0-beta.18",
 		"blueskyer": "^1.2.5",
 		"cytoscape": "^3.28.1",
 		"dotenv": "^16.4.5",
-		"file-type": "^16.5.4"
+		"file-type": "^16.5.4",
+		"smui-theme": "^7.0.0-beta.18",
+		"svelte-material-ui": "^7.0.0-beta.18"
 	}
 }
