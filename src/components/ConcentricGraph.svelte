@@ -2,81 +2,72 @@
   import { onMount, setContext } from 'svelte'
   import cytoscape from 'cytoscape'
   import GraphStyles from './GraphStyles.js'
-  import UserCard from './UserCard.svelte';
-
-  export let elements;
-  export let isRunning;
-  let tappedNode;
+  import { createEventDispatcher } from 'svelte';
+  const dispatch = createEventDispatcher();
+  
+  let refElement = null;
+  let cyInstance = null;
+  let tappedNode = null;
 
   setContext('graphSharedState', {
     getCyInstance: () => cyInstance
   })
-
-  let refElement = null;
-  let cyInstance = null;
 
   onMount(() => {
     cyInstance = cytoscape({
       container: refElement,
       elements: [],
       style: GraphStyles
-    })
+    });
 
     // カード表示
     cyInstance
-      .on('tap', 'node', function(evt){
-        tappedNode = evt.target;
-        console.log( 'tapped ' + tappedNode.id() );
-      });
+    .on('tap', 'node', function(evt){
+      tappedNode = evt.target;
+      console.log( 'tapped ' + tappedNode.id() );
+      dispatch('tapNode', tappedNode);
+    });
 
     // カード非表示
     cyInstance
-      .on('tap', function(evt){
-        if (evt.target === cyInstance) {
-          tappedNode = null;
-          console.log( 'tap not node.' );
-        }
-      });
-  })
+    .on('tap', function(evt){
+      if (evt.target === cyInstance) {
+        tappedNode = null;
+        console.log( 'tap not node.' );
+        dispatch('tapNode', tappedNode);
+      }
+    });
+  });
 
-  // elementsが変わったら実行される
-  $: {
-    if ((cyInstance) && (elements.length > 0)) { // onMountより先にここが実行されてエラーになるので防ぐ
-      isRunning = true;
-      cyInstance.elements().remove();
-      cyInstance.add(elements);
+  export function runConcentric(elements) {
+    cyInstance.elements().remove();
+    cyInstance.add(elements);
 
-      cyInstance
-        .layout({
-          name: 'concentric',
-          animate: true,
-          padding: 10,
-          startAngle: Math.PI * 2 * Math.random(), // ノードの開始位置を360度ランダムに
-          concentric: node => {
-            return node.data('level');
-          },
-          levelWidth: () => {
-            return 1;
-          },
-          stop: function() {
-            isRunning = false;
-          },
-        })
-        .run();
-    };
+    cyInstance
+      .layout({
+        name: 'concentric',
+        animate: true,
+        padding: 10,
+        startAngle: Math.PI * 2 * Math.random(), // ノードの開始位置を360度ランダムに
+        concentric: node => {
+          return node.data('level');
+        },
+        levelWidth: () => {
+          return 1;
+        },
+        stop: () => {
+          dispatch('stopRun');
+        },
+      })
+      .run();
   }
 </script>
 
-<div class="graph" bind:this={refElement}>
+<div id="cy" class="graph" bind:this={refElement}>
   {#if cyInstance}
     <slot></slot>
   {/if}
 </div>
-
-<!-- カード表示 -->
-{#if tappedNode}
-  <UserCard tappedNode={tappedNode} />
-{/if}
 
 <style>
   .graph {

@@ -11,7 +11,7 @@
   import Button, { Label } from '@smui/button';
 
   export let tappedNode;
-  let img = tappedNode.data('img');
+  export let handleSubmit;
 </script>
 
 <!-- {#if tappedNode} -->
@@ -36,7 +36,7 @@
     <Actions>
       <ActionButtons>
         <Button>
-          <Label>相関図をつくる</Label>
+          <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
         </Button>
         <Button>
           <Label>関係分析</Label>

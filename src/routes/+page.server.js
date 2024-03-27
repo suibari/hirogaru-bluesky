@@ -6,7 +6,7 @@ export const actions = {
       const data = await request.formData();
       const handle = data.get('handle');
       console.log(`[INFO] receive query from client. handle: ${data.get('handle')}.`);
-      const elements = await getData(handle, 36);
+      const elements = await getData(handle);
       console.log("[INFO] send data to client. total elements: "+elements.length);
   
       return { success: true, elements: elements };

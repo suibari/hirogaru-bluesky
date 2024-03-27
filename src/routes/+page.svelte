@@ -2,43 +2,69 @@
   import ConcentricGraph from "../components/ConcentricGraph.svelte";
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress';
+  import UserCard from "../components/UserCard.svelte";
+	import { invalidateAll, goto } from '$app/navigation';
+	import { applyAction, deserialize } from '$app/forms';
 
-  export let form;
+  // export let form; // これがないとform actionを受け取れない
   let isRunning = false; // フェッチ&描画実行中のフラグ
-  
+  let tappedNode = null; // ノードタップフラグ
+  let runConcentric; // 同心円相関図描画関数
   let elements = [];
-  if (form) {
-    elements = form.elements;
+  // if (form) {
+  //   elements = form.elements;
+  // }
+
+  // ユーザカードの相関図ボタン用関数
+  async function handleSubmit(event) {
+    isRunning = true;
+
+    const body = new FormData(event.currentTarget);
+    // body.append("handle", handle);
+    const response = await fetch('?/generate', {
+      method: 'POST',
+      body: body,
+    });
+    const result = deserialize(await response.text());
+    if (result.type === 'success') {
+      // await invalidateAll();
+      elements = result.data.elements;
+
+      runConcentric(elements);
+    }
+    applyAction(result); // formへのresult格納
   }
 
-  function handleSubmit() {
-    isRunning = true;
+  // 描画停止ハンドラ
+  function stopRun() {
+    isRunning = false;
+  }
+
+  // タップハンドラ
+  function tapNode(event) {
+    tappedNode = event.detail;
   }
 </script>
 
-<form method="post" action="?/generate" on:submit="{handleSubmit}">
+<form method="post" action="?/generate" on:submit|preventDefault={handleSubmit}>
   <input type="text" name="handle" autocomplete="off" placeholder="handle.bsky.social" />
   <button type="submit">Generate!</button>
 </form>
 
-<!-- <div class="form">
-  <Textfield bind:value={handle} label="Handle Name" variant="outlined">
-    <Icon class="material-icons" slot="leadingIcon">alternate_email</Icon>
-    <HelperText slot="helper">handle.bsky.social</HelperText>
-  </Textfield>
-  <Button variant="raised">
-    <Label>Generate!</Label>
-  </Button>
-</div> -->
+<!-- Cytoscape -->
+<ConcentricGraph bind:runConcentric={runConcentric} on:stopRun={stopRun} on:tapNode={tapNode} />
 
-<ConcentricGraph {elements} {isRunning} />
+<!-- カード表示 -->
+{#if tappedNode !== null}
+  <UserCard {tappedNode} {handleSubmit} />
+{/if}
 
 <!-- ローディングスピナー -->
-<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-  {#if isRunning}
+{#if isRunning !== false}
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
     <CircularProgress style="height: 60px; width: 60px;" indeterminate />
-  {/if}
-</div>
+  </div>
+{/if}
 
 <style>
   form {
