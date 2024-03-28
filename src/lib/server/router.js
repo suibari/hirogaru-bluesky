@@ -16,7 +16,6 @@ export async function getData(handle) {
     const timeLogger = new TimeLogger();
     timeLogger.tic();
 
-    console.log(BSKY_IDENTIFIER)
     await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
     let response;

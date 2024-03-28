@@ -1,26 +1,35 @@
 <script>
-  import ConcentricGraph from "../components/ConcentricGraph.svelte";
+  import Graph from "../components/Graph.svelte";
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress';
   import UserCard from "../components/UserCard.svelte";
-	import { invalidateAll, goto } from '$app/navigation';
+  import Particle from "../components/Particle.svelte";
 	import { applyAction, deserialize } from '$app/forms';
 
   // export let form; // これがないとform actionを受け取れない
   let isRunning = false; // フェッチ&描画実行中のフラグ
   let tappedNode = null; // ノードタップフラグ
   let runConcentric; // 同心円相関図描画関数
+  let runGrid; // 関係図描画関数
   let elements = [];
-  // if (form) {
-  //   elements = form.elements;
-  // }
+  let partnerElements = [];
+  let position;
+  let engagement;
+  let emitParticlesFromNode;
 
   // ユーザカードの相関図ボタン用関数
   async function handleSubmit(event) {
+    let body;
+
     isRunning = true;
 
-    const body = new FormData(event.currentTarget);
-    // body.append("handle", handle);
+    if (event.currentTarget) {
+      body = new FormData(event.currentTarget);
+    } else {
+      // formで呼ばれたわけではない
+      body = new FormData();
+      body.append("handle", event);
+    }
     const response = await fetch('?/generate', {
       method: 'POST',
       body: body,
@@ -43,6 +52,29 @@
   // タップハンドラ
   function tapNode(event) {
     tappedNode = event.detail;
+
+    // パーティクル発生
+    // position = tappedNode.renderedPosition(); 
+    // engagement = tappedNode.data('engagement');
+    // emitParticlesFromNode(position, engagement);
+  }
+
+  async function doSocialAnalysis() {
+    let body;
+
+    isRunning = true;
+
+    body = new FormData();
+    body.append("handle", tappedNode.data('handle'));
+    const response = await fetch('?/generate', {
+      method: 'POST',
+      body: body,
+    });
+    const result = deserialize(await response.text());
+    if (result.type === 'success') {
+      partnerElements = result.data.elements;
+      runGrid(partnerElements);
+    }
   }
 </script>
 
@@ -52,11 +84,18 @@
 </form>
 
 <!-- Cytoscape -->
-<ConcentricGraph bind:runConcentric={runConcentric} on:stopRun={stopRun} on:tapNode={tapNode} />
+<Graph bind:runConcentric={runConcentric} bind:runGrid={runGrid} on:stopRun={stopRun} on:tapNode={tapNode} />
+
+<!-- ハートパーティクル -->
+<!-- {#if engagement}
+  {#each Array(engagement) as _, i}
+    <Particle bind:emitParticlesFromNode={emitParticlesFromNode}/>
+  {/each}
+{/if} -->
 
 <!-- カード表示 -->
 {#if tappedNode !== null}
-  <UserCard {tappedNode} {handleSubmit} />
+  <UserCard {tappedNode} {handleSubmit} on:doSocialAnalysis={doSocialAnalysis} />
 {/if}
 
 <!-- ローディングスピナー -->

@@ -9,9 +9,18 @@
     ActionIcons,
   } from '@smui/card';
   import Button, { Label } from '@smui/button';
+  import { createEventDispatcher, onMount } from 'svelte';
+  const dispatch = createEventDispatcher();
 
   export let tappedNode;
   export let handleSubmit;
+
+  onMount(() => {
+    function handleClickSocialAnalysis() {
+    console.log("clicked social analysis");
+    dispatch('doSocialAnalysis');
+    }
+  })
 </script>
 
 <!-- {#if tappedNode} -->
@@ -39,7 +48,7 @@
           <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
         </Button>
         <Button>
-          <Label>関係分析</Label>
+          <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
         </Button>
       </ActionButtons>
     </Actions>
