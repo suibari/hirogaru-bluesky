@@ -3,8 +3,9 @@
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress';
   import UserCard from "../components/UserCard.svelte";
-  import Particle from "../components/Particle.svelte";
+  // import Particle from "../components/Particle.svelte";
 	import { applyAction, deserialize } from '$app/forms';
+  import ConfettiWrap from "../components/ConfettiWrap.svelte";
 
   // export let form; // これがないとform actionを受け取れない
   let isRunning = false; // フェッチ&描画実行中のフラグ
@@ -15,7 +16,7 @@
   let partnerElements = [];
   let position;
   let engagement;
-  let emitParticlesFromNode;
+  let displayConfetti;
 
   // ユーザカードの相関図ボタン用関数
   async function handleSubmit(event) {
@@ -54,9 +55,13 @@
     tappedNode = event.detail;
 
     // パーティクル発生
-    // position = tappedNode.renderedPosition(); 
-    // engagement = tappedNode.data('engagement');
-    // emitParticlesFromNode(position, engagement);
+    position = tappedNode.renderedPosition(); 
+    engagement = tappedNode.data('engagement');
+    displayConfetti(position.x, position.y, engagement);
+  }
+
+  function tapNotNode() {
+    tappedNode = null;
   }
 
   async function doSocialAnalysis() {
@@ -84,14 +89,10 @@
 </form>
 
 <!-- Cytoscape -->
-<Graph bind:runConcentric={runConcentric} bind:runGrid={runGrid} on:stopRun={stopRun} on:tapNode={tapNode} />
+<Graph bind:runConcentric={runConcentric} bind:runGrid={runGrid} on:stopRun={stopRun} on:tapNode={tapNode} on:tapNotNode={tapNotNode} />
 
-<!-- ハートパーティクル -->
-<!-- {#if engagement}
-  {#each Array(engagement) as _, i}
-    <Particle bind:emitParticlesFromNode={emitParticlesFromNode}/>
-  {/each}
-{/if} -->
+<!-- パーティクル -->
+<ConfettiWrap bind:displayConfetti={displayConfetti} />
 
 <!-- カード表示 -->
 {#if tappedNode !== null}

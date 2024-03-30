@@ -12,6 +12,8 @@
   let edgeToPartner;
   let edgeFromPartner;
   let isGauge = false;
+  let formerNodeWidth;
+  let formerNodeHeight;
   
   setContext('graphSharedState', {
     getCyInstance: () => cyInstance
@@ -21,6 +23,7 @@
     cyInstance = cytoscape({
       container: refElement,
       elements: [],
+      userZoomingEnabled: false,
     });
 
     // カード表示
@@ -37,7 +40,7 @@
       if (evt.target === cyInstance) {
         tappedNode = null;
         console.log( 'tap not node.' );
-        dispatch('tapNode', tappedNode);
+        dispatch('tapNotNode');
       }
     });
   });
@@ -67,11 +70,41 @@
         },
       })
       .run();
+
+    // マウスオーバーノード拡大
+    cyInstance
+    .on('mouseover', 'node', (event) => {
+      const node = event.target;
+      formerNodeWidth = node.width();
+      formerNodeHeight = node.height();
+      node.animate({
+        style: {
+          width: '80px',
+          height: '80px',
+        },
+        duration: 100,
+      });
+    });
+
+    // マウスアウトノード縮小
+    cyInstance
+    .on('mouseout', 'node', (event) => {
+      const node = event.target;
+      node.animate({
+        style: {
+          width: `${formerNodeWidth}px`,
+          height: `${formerNodeHeight}px`,
+        },
+        duration: 50,
+      });
+    });
   }
 
   // 関係図描画
   export function runGrid(partnerElements) {
     isGauge = false;
+    cyInstance.removeListener('mouseover', 'node');
+    cyInstance.removeListener('mouseout', 'node');
 
     // 中心ノード取得
     let centerNode = cyInstance.nodes().filter(node => {
@@ -111,10 +144,17 @@
     });
 
     // nodeサイズ設定
-    cyInstance.style().selector('node').style({
-      'width': 150,
-      'height': 150
-    }).update(); // スタイルの更新
+    //   こっちの書き方じゃないとmouseover/outイベントと競合するみたい…
+    cyInstance.nodes().forEach(node => {
+      node.style({
+        width: '150px',
+        height: '150px',
+      });
+    });
+    // cyInstance.style().selector('node').style({
+    //   'width': '150px',
+    //   'height': '150px',
+    // }).update(); // スタイルの更新
 
     // レイアウト適用
     cyInstance.layout({ 

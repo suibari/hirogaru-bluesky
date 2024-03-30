@@ -9,6 +9,12 @@ export default [
     },
   },
   {
+    selector: 'node[level=0]',
+    style: {
+      'display': 'none',
+    }
+  },
+  {
     selector: 'edge',
     style: {
       'width': 'data(engagement)',
@@ -19,10 +25,4 @@ export default [
       'target-arrow-color': 'white',
     },
   },
-  {
-    selector: 'node[level=0]',
-    style: {
-      'display': 'none',
-    }
-  }
 ]
