@@ -27,27 +27,22 @@
 <div class="card-container">
   <Card>
     <PrimaryAction on:click={window.open(`https://bsky.app/profile/${tappedNode.data('handle')}`, "_blank")}>
-      <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}">
-        <MediaContent>
-          <div
-            style="color: #fff; position: absolute; bottom: 16px; left: 16px;"
-          >
-            <h2 class="mdc-typography--headline6" style="margin: 0;">
-              {tappedNode.data('name')}
-            </h2>
-            <h3 class="mdc-typography--subtitle2" style="margin: 0;">
-              {tappedNode.data('handle')}
-            </h3>
-          </div>
-        </MediaContent>
-      </Media>
+      <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}" />
+      <Content>
+        <h3 style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          {tappedNode.data('name')}
+        </h3>
+        <h6 style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          {tappedNode.data('handle')}
+        </h6>
+      </Content>
     </PrimaryAction>
     <Actions>
       <ActionButtons>
-        <Button>
+        <Button variant="raised">
           <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
         </Button>
-        <Button>
+        <Button variant="raised">
           <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
         </Button>
       </ActionButtons>
@@ -61,6 +56,7 @@
     position: fixed;
     bottom: 10px;
     left: 10px;
+    width: 230px;
     z-index: 1;
   }
 </style>

@@ -12,8 +12,8 @@
   let edgeToPartner;
   let edgeFromPartner;
   let isGauge = false;
-  let formerNodeWidth;
-  let formerNodeHeight;
+  let formerNodeWidth, formerNodeHeight;
+  let animationTimeout;
   
   setContext('graphSharedState', {
     getCyInstance: () => cyInstance
@@ -45,7 +45,9 @@
     });
   });
 
+  // ---------------------
   // 同心円グラフ描画
+  // ---------------------
   export function runConcentric(elements) {
     isGauge = false;
 
@@ -77,6 +79,7 @@
       const node = event.target;
       formerNodeWidth = node.width();
       formerNodeHeight = node.height();
+      node.stop();
       node.animate({
         style: {
           width: '80px',
@@ -90,6 +93,7 @@
     cyInstance
     .on('mouseout', 'node', (event) => {
       const node = event.target;
+      node.stop();
       node.animate({
         style: {
           width: `${formerNodeWidth}px`,
@@ -100,7 +104,9 @@
     });
   }
 
+  // ---------------------
   // 関係図描画
+  // ---------------------
   export function runGrid(partnerElements) {
     isGauge = false;
     cyInstance.removeListener('mouseover', 'node');
@@ -167,6 +173,34 @@
 
     // ゲージ表示
     isGauge = true;
+  }
+
+  // ---------------------
+  // 画面キャプチャ
+  // ---------------------
+  export async function captureGraph() {
+    // アイコンサイズ一定モード切り替え
+
+    // 背景色
+    const randomColor = generateRandomColor();
+
+    const blob = await cyInstance.png({
+      output: "blob",
+      bg: randomColor,
+      full: true,
+      maxWidth: 750,
+      maxHeight: 750,
+    });
+
+    return blob;
+  }
+
+  // ランダムな背景色を生成する関数
+  function generateRandomColor() {
+    var hue = Math.floor(Math.random() * 360); // 色相をランダムに選択（0から359）
+    var saturation = Math.floor(Math.random() * 31) + 60; // 彩度を60から90の間でランダムに選択
+    var lightness = Math.floor(Math.random() * 21) + 60; // 明度を40から80の間でランダムに選択
+    return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)'; // HSLカラーモデルで色を返す
   }
 </script>
 
