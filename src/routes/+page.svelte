@@ -1,13 +1,17 @@
 <script>
+  // Sveltekit modules
+  import { applyAction, deserialize } from '$app/forms';
+  import { browser } from '$app/environment';
+  import { writable } from 'svelte/store';
+  import { onMount } from 'svelte';
   // external modules
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress';
-  import { applyAction, deserialize } from '$app/forms';
   import Dialog, { Content, Header } from '@smui/dialog';
   import IconButton from "@smui/icon-button";
   import Tab, { Label } from "@smui/tab";
   import TabBar from "@smui/tab-bar";
-  import { CameraPhotoSolid, QuestionCircleSolid } from 'flowbite-svelte-icons';
+  import Snackbar, {Actions} from '@smui/snackbar';
   // my components
   import Graph from "../components/Graph.svelte";
   import UserCard from "../components/UserCard.svelte";
@@ -34,33 +38,61 @@
   let isClickShare = false;
   let isClickHelp = false;
   let activeTab = "使い方";
+  let snackbarWarningRunning;
+  let snackbarWarningNeverRun;
+  let snackbarErrorFetch;
+  let inputHandle = writable('');
+  let errorMessage;
+
+  // ページ読み込み時ローカルストレージのハンドルをセット
+  onMount(() => {
+    const storedValue = localStorage.getItem('handle');
+    if (storedValue) {
+      inputHandle.set(storedValue);
+    }
+  })
 
   // ユーザカードの相関図ボタン用関数
   async function handleSubmit(event) {
-    let body;
+    if (isRunning) {
+      snackbarWarningRunning.open();
 
-    isNeverRun = false;
-    isRunning = true;
-
-    if (event.currentTarget) {
-      body = new FormData(event.currentTarget);
     } else {
-      // formで呼ばれたわけではない
-      body = new FormData();
-      body.append("handle", event);
-    }
-    const response = await fetch('?/generate', {
-      method: 'POST',
-      body: body,
-    });
-    const result = deserialize(await response.text());
-    if (result.type === 'success') {
-      // await invalidateAll();
-      elements = result.data.elements;
+      let body;
 
-      runConcentric(elements);
-    }
-    applyAction(result); // formへのresult格納
+      isNeverRun = false;
+      isRunning = true;
+
+      if (event.currentTarget) {
+        body = new FormData(event.currentTarget);
+
+        // ローカルストレージに保存
+        localStorage.setItem("handle", body.get('handle'));
+      } else {
+        // formで呼ばれたわけではない、eventにhandleが設定されているはず
+        body = new FormData();
+        body.append("handle", event);
+      }
+      const response = await fetch('?/generate', {
+        method: 'POST',
+        body: body,
+      });
+
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          // await invalidateAll();
+          elements = result.data.elements;
+          runConcentric(elements);
+        };
+        // applyAction(result); // formへのresult格納
+      } else {
+        const json = await response.json();
+        errorMessage = json.error.message;
+        snackbarErrorFetch.open();
+        isRunning = false;
+      }
+    };
   }
 
   // 描画停止ハンドラ
@@ -85,50 +117,71 @@
 
   // 関係分析ハンドラ
   async function doSocialAnalysis() {
-    let body;
+    if (isRunning) {
+      snackbarWarningRunning.open();
 
-    isRunning = true;
+    } else {
+      let body;
 
-    body = new FormData();
-    body.append("handle", tappedNode.data('handle'));
-    const response = await fetch('?/generate', {
-      method: 'POST',
-      body: body,
-    });
-    const result = deserialize(await response.text());
-    if (result.type === 'success') {
-      partnerElements = result.data.elements;
-      runGrid(partnerElements);
-    }
+      isRunning = true;
+
+      body = new FormData();
+      body.append("handle", tappedNode.data('handle'));
+      const response = await fetch('?/generate', {
+        method: 'POST',
+        body: body,
+      });
+      const result = deserialize(await response.text());
+      if (result.type === 'success') {
+        partnerElements = result.data.elements;
+        runGrid(partnerElements);
+      }
+    };
   }
 
   // シェアボタンハンドラ
   async function handleShare() {
-    isRunning = true;
-    
-    const blob = await captureGraph();
+    if (isRunning) {
+      snackbarWarningRunning.open();
 
-    // サーバにblobを投げ合成してもらい、base64uriを受け取る
-    let body = new FormData();
-    console.log(`${blob.type}, ${blob.size} [Byte]`);
-    body.append('image', blob, "image.png");
-    const response = await fetch('?/upload', {
-      method: 'POST',
-      body: body,
-    });
-    const result = deserialize(await response.text());
-    if (result.type === 'success') {
-      srcGraph = result.data.uri;
-      isClickShare = true;
-    };
-    isRunning = false;
+    } else if (isNeverRun) {
+      snackbarWarningNeverRun.open();
+
+    } else {
+      isRunning = true;
+      
+      const blob = await captureGraph();
+
+      // サーバにblobを投げ合成してもらい、base64uriを受け取る
+      let body = new FormData();
+      console.log(`${blob.type}, ${blob.size} [Byte]`);
+      body.append('image', blob, "image.png");
+      const response = await fetch('?/upload', {
+        method: 'POST',
+        body: body,
+      });
+      const result = deserialize(await response.text());
+      if (result.type === 'success') {
+        srcGraph = result.data.uri;
+        isClickShare = true;
+      };
+      isRunning = false;
+    }
   }
 </script>
 
+<!-- フォーム -->
 <form method="post" action="?/generate" on:submit|preventDefault={handleSubmit}>
-  <input type="text" name="handle" autocomplete="off" placeholder="handle.bsky.social" />
+  <input type="text" name="handle" autocomplete="off" placeholder="handle.bsky.social" bind:value={$inputHandle} />
   <button type="submit">Generate!</button>
 </form>
+<!-- フェッチエラー -->
+<Snackbar bind:this={snackbarErrorFetch}>
+  <Label>エラーが発生しました: {errorMessage}</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
 
 <!-- タイトル -->
 {#if isNeverRun}
@@ -188,6 +241,19 @@
     </ol>
   </Content>
 </Dialog>
+<!-- シェアエラー -->
+<Snackbar bind:this={snackbarWarningRunning}>
+  <Label>グラフ生成中です</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
+<Snackbar bind:this={snackbarWarningNeverRun}>
+  <Label>相関図を生成してください</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
 
 <!-- ヘルプモーダル -->
 <Dialog

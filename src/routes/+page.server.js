@@ -1,6 +1,6 @@
 import { getData } from '$lib/server/router.js';
 import { addTextToImage } from '$lib/server/imgshaper.js';
-import fs from 'fs';
+import { error } from '@sveltejs/kit';
 
 export const actions = {
   generate: async ({request}) => {
@@ -14,7 +14,7 @@ export const actions = {
       return { success: true, elements: elements };
     } catch (e) {
       console.error("[ERROR] An error occured: ", e);
-      return { success: false };
+      error(500, { message: e.error });
     }
   },
 
@@ -31,7 +31,7 @@ export const actions = {
       return { success: true, uri: base64 };
     } catch (e) {
       console.error("[ERROR] An error occured: ", e);
-      return { success: false };
+      error(500, { message: e.error });
     } 
   }
 }
