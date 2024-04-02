@@ -196,13 +196,21 @@
         method: 'POST',
         body: body,
       });
-      const result = deserialize(await response.text());
-      if (result.type === 'success') {
-        srcGraph = result.data.uri;
-        isClickShare = true;
+      
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          srcGraph = result.data.uri;
+          isClickShare = true;
+        };
+        isRunning = false;
+      } else {
+        const json = await response.json();
+        errorMessage = json.error.message;
+        snackbarErrorFetch.open();
+        isRunning = false;
       };
-      isRunning = false;
-    }
+    };
   }
 </script>
 
