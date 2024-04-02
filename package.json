@@ -20,6 +20,7 @@
 	"dependencies": {
 		"@smui/card": "^7.0.0-beta.18",
 		"@smui/circular-progress": "^7.0.0-beta.18",
+		"@smui/dialog": "^7.0.0-beta.18",
 		"@smui/icon-button": "^7.0.0-beta.18",
 		"@smui/snackbar": "^7.0.0-beta.18",
 		"@smui/tab": "^7.0.0-beta.18",

@@ -113,5 +113,6 @@
     font-size: x-large;
     width: 100%;
     text-align: center;
+    pointer-events: none;
   }
 </style>
