@@ -19,7 +19,7 @@
       radiusScale: 0.5,
       pointer: {
         strokeWidth: 0,
-        iconPath: 'heart.png',
+        iconPath: 'img/heart.png',
         iconScale: 0.05,
       },
       limitMin: true, // Minimum value
@@ -32,7 +32,7 @@
     });
     gauge.maxValue = 100;
     gauge.setMinValue(0);
-    gauge.animationSpeed = 100;
+    gauge.animationSpeed = 5; // canvasに文字描画する場合5以下にしないと
 
     // エンゲージメントを取得
     const engToPartner = edgeToPartner.data('rawEngagement');
@@ -48,8 +48,6 @@
     // ゲージ描画
     gauge.set(socialvalue);
     
-    // document.getElementById('loading').style.display = 'none'; // くるくる表示終了
-
     // 1秒後にメッセージ描画
     if (!maxEngagement) {
       onesidedloveText = "今後に期待";
@@ -68,33 +66,44 @@
       biasText = "Bluesky中にとどろく";
     }
     setTimeout(function() {
+      // テキスト要素で文字描画
       gaugeMessage = true;
-    }, 1000);
+
+      // canvasで中央に文字描画
+      // const canvas = document.getElementById('gauge');
+      // const ctx = canvas.getContext('2d');
+
+      // const text = biasText + onesidedloveText;
+      // const fontsize = 24;
+
+      // ctx.beginPath();
+      // ctx.font = `${fontsize}px Roboto medium`;
+      // const textWidth = ctx.measureText(text).width;
+      // const x = (canvas.width - textWidth) / 2;
+      // const y = (canvas.height + fontsize) / 2;
+      // ctx.fillText(text, x, y);
+    }, 500);
   });
 </script>
 
-<div id="gauge-container">
-  <canvas class="gauge" bind:this={refElement}>
-    {#if gauge}
-      <slot></slot>
-    {/if}
-  </canvas>
-  {#if gaugeMessage}
-    <p>{biasText}{onesidedloveText}</p>
+<canvas id="gauge" bind:this={refElement}>
+  {#if gauge}
+    <slot></slot>
   {/if}
-</div>
+</canvas>
+{#if gaugeMessage}
+  <p>{biasText}{onesidedloveText}</p>
+{/if}
 
 <style>
-  #gauge-container {
+  #gauge {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  canvas {
     width: 400px;
     height: 400px;
+    pointer-events: none;
   }
   p {
     position: absolute;

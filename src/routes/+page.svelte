@@ -33,16 +33,15 @@
   let position;
   let engagement;
   let displayConfetti;
-  let captureGraph;
+  let captureConcentric, captureGrid;
   let srcGraph;
   let isClickShare = false;
   let isClickHelp = false;
   let activeTab = "使い方";
-  let snackbarWarningRunning;
-  let snackbarWarningNeverRun;
-  let snackbarErrorFetch;
+  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch;
   let inputHandle = writable('');
   let errorMessage;
+  let isGridMode = false;
 
   // ページ読み込み時ローカルストレージのハンドルをセット
   onMount(() => {
@@ -62,6 +61,7 @@
 
       isNeverRun = false;
       isRunning = true;
+      isGridMode = false;
 
       if (event.currentTarget) {
         body = new FormData(event.currentTarget);
@@ -122,20 +122,50 @@
 
     } else {
       let body;
+      const partnerNode = tappedNode;
 
       isRunning = true;
 
       body = new FormData();
-      body.append("handle", tappedNode.data('handle'));
+      body.append("handle", partnerNode.data('handle'));
       const response = await fetch('?/generate', {
         method: 'POST',
         body: body,
       });
-      const result = deserialize(await response.text());
-      if (result.type === 'success') {
-        partnerElements = result.data.elements;
-        runGrid(partnerElements);
-      }
+
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          console.log("debug!")
+
+          partnerElements = result.data.elements;
+          runGrid(partnerElements, partnerNode);
+        }
+      } else {
+        const json = await response.json();
+        errorMessage = json.error.message;
+        snackbarErrorFetch.open();
+        isRunning = false;
+      };     
+    };
+  }
+
+  function finishGrid() {
+    isGridMode = true;
+  }
+
+  function backConcentric(event) {
+    const handle = event.detail;
+    const centerNode = elements.filter(obj => obj.data.level === 5);
+
+    if (centerNode[0].data.handle === handle) {
+      // 自分が選択された
+      runConcentric(elements);
+      isGridMode = false;
+    } else {
+      // 相手が選択された
+      runConcentric(partnerElements);
+      isGridMode = false;
     };
   }
 
@@ -148,9 +178,15 @@
       snackbarWarningNeverRun.open();
 
     } else {
+      let blob;
+
       isRunning = true;
       
-      const blob = await captureGraph();
+      if (isGridMode) {
+        blob = await captureGrid();
+      } else {
+        blob = await captureConcentric();
+      };
 
       // サーバにblobを投げ合成してもらい、base64uriを受け取る
       let body = new FormData();
@@ -192,24 +228,30 @@
 <Graph
   bind:runConcentric={runConcentric}
   bind:runGrid={runGrid}
-  bind:captureGraph={captureGraph}
+  bind:captureConcentric={captureConcentric}
+  bind:captureGrid={captureGrid}
   on:stopRun={stopRun}
   on:tapNode={tapNode}
-  on:tapNotNode={tapNotNode}>
-</Graph>
+  on:tapNotNode={tapNotNode}
+  on:finishGrid={finishGrid} />
 
 <!-- パーティクル -->
 <ConfettiWrap bind:displayConfetti={displayConfetti} />
 
 <!-- カード表示 -->
 {#if tappedNode !== null}
-  <UserCard {tappedNode} {handleSubmit} on:doSocialAnalysis={doSocialAnalysis} />
+  <UserCard
+    {tappedNode}
+    {handleSubmit}
+    {isGridMode}
+    on:doSocialAnalysis={doSocialAnalysis}
+    on:backConcentric={backConcentric} />
 {/if}
 
 <!-- ローディングスピナー -->
 {#if isRunning !== false}
-  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-    <CircularProgress style="height: 60px; width: 60px;" indeterminate />
+  <div id="loadingSpinner">
+    <CircularProgress style="height: 100px; width: 100px;" indeterminate />
   </div>
 {/if}
 
@@ -256,39 +298,54 @@
 </Snackbar>
 
 <!-- ヘルプモーダル -->
-<Dialog
-  bind:open={isClickHelp}
-  fullscreen
-  aria-labelledby="helptitle"
-  aria-describedby="helpmessage"
->
-  <Header>
-    <TabBar tabs={['使い方', '当サイトについて', '詳細仕様', '変更履歴']} let:tab bind:active={activeTab}>
-      <Tab {tab}>
-        <Label>{tab}</Label>
-      </Tab>
-    </TabBar>
-    <IconButton action="close" class="material-icons" style="float: right;">close</IconButton>
-  </Header>
-  <Content>
-    {#if activeTab === "使い方"}
-      <Usage/>
-    {:else if activeTab === "当サイトについて"}
-      <About/>
-    {:else if activeTab === "詳細仕様"}
-      <Specification/>
-    {:else if activeTab === "変更履歴"}
-      <ChangeLog/>
-    {/if}
-  </Content>
-</Dialog>
+<div id="helpModal">
+  <Dialog
+    bind:open={isClickHelp}
+    fullscreen
+    aria-labelledby="helptitle"
+    aria-describedby="helpmessage"
+  >
+    <Header>
+      <TabBar tabs={['使い方', '当サイトについて', '変更履歴']} let:tab bind:active={activeTab}>
+        <Tab {tab}>
+          <Label>{tab}</Label>
+        </Tab>
+      </TabBar>
+      <IconButton action="close" class="material-icons" style="float: right;">close</IconButton>
+    </Header>
+    <Content>
+      {#if activeTab === "使い方"}
+        <Usage/>
+      {:else if activeTab === "当サイトについて"}
+        <About/>
+      {:else if activeTab === "詳細仕様"}
+        <Specification/>
+      {:else if activeTab === "変更履歴"}
+        <ChangeLog/>
+      {/if}
+    </Content>
+  </Dialog>
+</div>
 
 <style>
   form {
-    margin-top: 8px;
+    margin-top: 16px;
     margin-left: 8px;
     position: relative;
     z-index: 1;
+  }
+  @media screen and (max-width: 600px) {
+    form button {
+      margin-top: 10px;
+      display: block;
+    }
+  }
+  #loadingSpinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
   }
   #shareButton {
     position: fixed;
@@ -312,5 +369,8 @@
     height: 50px;
     color: white;
     cursor: pointer;
+  }
+  #helpModal {
+    z-index: 10;
   }
 </style>

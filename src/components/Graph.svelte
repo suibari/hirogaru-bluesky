@@ -1,9 +1,10 @@
 <script>
   import { onMount, setContext } from 'svelte'
   import cytoscape from 'cytoscape'
-  import GraphStyles from './GraphStyles.js'
+  import GraphStylesConcentric from './GraphStylesConcentric.js'
   import Gauge from './Gauge.svelte';
   import { createEventDispatcher } from 'svelte';
+    import { createImageData } from 'canvas';
   const dispatch = createEventDispatcher();
   
   let refElement = null;
@@ -12,8 +13,7 @@
   let edgeToPartner;
   let edgeFromPartner;
   let isGauge = false;
-  let formerNodeWidth, formerNodeHeight;
-  let animationTimeout;
+  let formerNodeWidth, formerNodeHeight;  
   
   setContext('graphSharedState', {
     getCyInstance: () => cyInstance
@@ -54,7 +54,7 @@
     cyInstance.elements().remove();
     cyInstance.add(elements);
 
-    cyInstance.style(GraphStyles);
+    cyInstance.style(GraphStylesConcentric);
     cyInstance
       .layout({
         name: 'concentric',
@@ -67,11 +67,10 @@
         levelWidth: () => {
           return 1;
         },
-        stop: () => {
-          dispatch('stopRun');
-        },
       })
       .run();
+
+    dispatch('stopRun');
 
     // マウスオーバーノード拡大
     cyInstance
@@ -107,7 +106,7 @@
   // ---------------------
   // 関係図描画
   // ---------------------
-  export function runGrid(partnerElements) {
+  export function runGrid(partnerElements, partnerNode) {
     isGauge = false;
     cyInstance.removeListener('mouseover', 'node');
     cyInstance.removeListener('mouseout', 'node');
@@ -123,19 +122,19 @@
     });
     cyInstance.add(edgeFromPartnerObj);
     edgeFromPartner = cyInstance.edges().filter(function(edge) {
-      return edge.data('source') === tappedNode.id() && edge.data('target') === centerNode.id();
+      return edge.data('source') === partnerNode.id() && edge.data('target') === centerNode.id();
     });
 
     // 自分から相手のedge取得
     edgeToPartner = cyInstance.edges().filter(function(edge) {
-      return edge.data('source') === centerNode.id() && edge.data('target') === tappedNode.id();
+      return edge.data('source') === centerNode.id() && edge.data('target') === partnerNode.id();
     });
 
     // 自分と相手の間だけのedgeを表示、それ以外非表示
     cyInstance.edges().forEach(edge => {
-      if (edge.source().id() === tappedNode.id() && edge.target().id() === centerNode.id()) {
+      if (edge.source().id() === partnerNode.id() && edge.target().id() === centerNode.id()) {
         edge.style('display', 'element'); // タップされたノードから中心ノードへのエッジ
-      } else if (edge.source().id() === centerNode.id() && edge.target().id() === tappedNode.id()) {
+      } else if (edge.source().id() === centerNode.id() && edge.target().id() === partnerNode.id()) {
         edge.style('display', 'element'); // 中心ノードからタップされたノードへのエッジ
       } else {
         edge.style('display', 'none'); // それ以外のエッジは非表示
@@ -144,7 +143,7 @@
 
     // タップノードと中心ノード以外のnode削除
     cyInstance.nodes().forEach(node => {
-      if (node.id() !== tappedNode.id() && node.id() !== centerNode.id()) {
+      if (node.id() !== partnerNode.id() && node.id() !== centerNode.id()) {
         node.remove();
       }
     });
@@ -166,19 +165,19 @@
     cyInstance.layout({ 
       name: 'grid',
       padding: 100,
-      stop: () => {
-        dispatch('stopRun');
-      },
     }).run();
+    dispatch('stopRun');
 
     // ゲージ表示
     isGauge = true;
+
+    dispatch('finishGrid');
   }
 
   // ---------------------
   // 画面キャプチャ
   // ---------------------
-  export async function captureGraph() {
+  export async function captureConcentric() {
     // アイコンサイズ一定モード切り替え
 
     // 背景色
@@ -195,12 +194,60 @@
     return blob;
   }
 
+  export async function captureGrid() {
+    // 背景色
+    const randomColor = generateRandomColor();
+
+    const graphContext = await cyInstance.png({
+      output: "base64uri",
+      bg: randomColor,
+      full: false,
+      maxWidth: 750,
+      maxHeight: 750,
+    });
+
+    const gauge = document.getElementById('gauge');
+    const gaugeContext = gauge.toDataURL();
+
+    return new Promise(async (resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = cyInstance.width();
+      canvas.height = cyInstance.height();
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(await createImage(graphContext), 0, 0, cyInstance.width(), cyInstance.height());
+      ctx.drawImage(await createImage(gaugeContext), cyInstance.width()/2 - 400/2, cyInstance.height()/2 - 400/2, 400, 400);
+
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    });
+  }
+
   // ランダムな背景色を生成する関数
   function generateRandomColor() {
     var hue = Math.floor(Math.random() * 360); // 色相をランダムに選択（0から359）
     var saturation = Math.floor(Math.random() * 31) + 60; // 彩度を60から90の間でランダムに選択
     var lightness = Math.floor(Math.random() * 21) + 60; // 明度を40から80の間でランダムに選択
     return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)'; // HSLカラーモデルで色を返す
+  }
+
+  function createImage(context) {
+    return new Promise((resolve, reject) => {
+      let image = new Image;
+      image.src = context;
+      image.onload = () => resolve(image);
+    });
+  }
+
+  function convertUriToBlob(dataUri) {
+    const byteString = atob(dataUri.split(',')[1]);
+    const mimeType = dataUri.match(/:([a-z\/\-]+);/)[1];
+
+    let buffer = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+  	  buffer[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([buffer], {type: mimeType});
   }
 </script>
 

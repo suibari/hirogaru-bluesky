@@ -14,6 +14,7 @@
 
   export let tappedNode;
   export let handleSubmit;
+  export let isGridMode;
 
   onMount(() => {
     function handleClickSocialAnalysis() {
@@ -27,24 +28,38 @@
 <div class="card-container">
   <Card>
     <PrimaryAction on:click={window.open(`https://bsky.app/profile/${tappedNode.data('handle')}`, "_blank")}>
-      <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}" />
-      <Content>
-        <h3 style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          {tappedNode.data('name')}
-        </h3>
-        <h6 style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          {tappedNode.data('handle')}
-        </h6>
-      </Content>
+      <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}">
+        <div class="cardtext-container">
+          <h3 class="cardtext">
+            {tappedNode.data('name')}
+          </h3>
+          <h6 class="cardtext">
+            {tappedNode.data('handle')}
+          </h6>
+        </div>
+      </Media>
     </PrimaryAction>
     <Actions>
       <ActionButtons>
-        <Button variant="raised">
-          <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
-        </Button>
-        <Button variant="raised">
-          <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
-        </Button>
+        {#if isGridMode}
+          <Button variant="raised">
+            <Label on:click={() => dispatch('backConcentric', tappedNode.data('handle'))}>相関図にもどる</Label>
+          </Button>
+        {:else if tappedNode.data('level') === 5}
+          <Button variant="raised" color="secondary" disabled>
+            <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
+          </Button>
+          <Button variant="raised" color="secondary" disabled>
+            <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
+          </Button>
+        {:else}
+          <Button variant="raised">
+            <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
+          </Button>
+          <Button variant="raised">
+            <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
+          </Button>
+        {/if}
       </ActionButtons>
     </Actions>
   </Card>
@@ -58,5 +73,18 @@
     left: 10px;
     width: 230px;
     z-index: 1;
+  }
+  .cardtext-container {
+    position: absolute;
+    width: 100%;
+    bottom: 8px;
+    left: 16px;
+    color: white;
+    mix-blend-mode: difference;
+  }
+  .cardtext {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

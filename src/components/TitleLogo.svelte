@@ -10,14 +10,14 @@
 
 <style>
   #titleContainer {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: white;
-    height: 100%;
+    /* height: 100%; */
     width: 100%;
+    text-align: center;
   }
   #title {
     font-size: 3em;

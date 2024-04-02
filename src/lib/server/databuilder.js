@@ -1,6 +1,6 @@
 import FileType from 'file-type';
 import fs from 'fs';
-const DEFFAULT_AVATOR = 'static/defaultavator.png';
+const DEFFAULT_AVATOR = 'static/img/defaultavator.png';
 
 export async function getElements(allWithProf) {
   let elements = [];
@@ -20,7 +20,7 @@ export async function getElements(allWithProf) {
     } else {
       n = 0; // not display
     }
-    if (n > -1) {
+    if (n > 0) {
       await pushActorToNodes(friend, elements, n);
     }
 

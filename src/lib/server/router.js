@@ -52,6 +52,9 @@ export async function getData(handle) {
     // node, edge取得
     let elements = await getElements(allWithProf, objFollow);
 
+    // 不要エッジ除去
+    removeInvalidLinks(elements);
+
     execLogger.incExecCount();
     const elapsedTime = timeLogger.tac();
     const execCount = execLogger.getExecCount();
