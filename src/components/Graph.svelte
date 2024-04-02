@@ -30,7 +30,7 @@
     cyInstance
     .on('tap', 'node', function(evt){
       tappedNode = evt.target;
-      console.log( 'tapped ' + tappedNode.id() );
+      // console.log( 'tapped ' + tappedNode.id() );
       dispatch('tapNode', tappedNode);
     });
 
@@ -39,7 +39,7 @@
     .on('tap', function(evt){
       if (evt.target === cyInstance) {
         tappedNode = null;
-        console.log( 'tap not node.' );
+        // console.log( 'tap not node.' );
         dispatch('tapNotNode');
       }
     });

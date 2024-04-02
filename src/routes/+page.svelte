@@ -136,7 +136,7 @@
       if (response.ok) {
         const result = deserialize(await response.text());
         if (result.type === 'success') {
-          console.log("debug!")
+          // console.log("debug!")
 
           partnerElements = result.data.elements;
           runGrid(partnerElements, partnerNode);
@@ -190,7 +190,7 @@
 
       // サーバにblobを投げ合成してもらい、base64uriを受け取る
       let body = new FormData();
-      console.log(`${blob.type}, ${blob.size} [Byte]`);
+      // console.log(`${blob.type}, ${blob.size} [Byte]`);
       body.append('image', blob, "image.png");
       const response = await fetch('?/upload', {
         method: 'POST',
