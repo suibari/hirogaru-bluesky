@@ -29,7 +29,7 @@ export class MyBlueskyer extends Blueskyer {
     
       // 誰に対してリプライしたかをカウント
       for (const [index, feed] of Object.entries(feeds)) {
-        if (feed.reply) {
+        if ((feed.reply) && (feed.$type == 'app.bsky.feed.defs#postView')) {
           if (handle != feed.reply.parent.author.handle) { // 自分に対するリプライは除外
             const replyTo = feed.reply.parent.author.did;
             let flagFound = false;
