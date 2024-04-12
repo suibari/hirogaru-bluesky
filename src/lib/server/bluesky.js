@@ -29,21 +29,24 @@ export class MyBlueskyer extends Blueskyer {
     
       // 誰に対してリプライしたかをカウント
       for (const [index, feed] of Object.entries(feeds)) {
-        if ((feed.reply) && (feed.$type == 'app.bsky.feed.defs#postView')) {
-          if (handle != feed.reply.parent.author.handle) { // 自分に対するリプライは除外
-            const replyTo = feed.reply.parent.author.did;
-            let flagFound = false;
-            for (const node of resultArray) {
-              if (replyTo == node.did) {
-                node.score = node.score + SCORE_REPLY;
-                flagFound = true;
-                break;
+        const reply = feed.reply;
+        if (reply) {
+          if (reply.parent.$type === 'app.bsky.feed.defs#postView') { // replyの中身がある場合のみ
+            if (handle != feed.reply.parent.author.handle) { // 自分に対するリプライは除外
+              const replyTo = feed.reply.parent.author.did;
+              let flagFound = false;
+              for (const node of resultArray) {
+                if (replyTo == node.did) {
+                  node.score = node.score + SCORE_REPLY;
+                  flagFound = true;
+                  break;
+                };
+              };
+              if (!flagFound) {
+                resultArray.push({did: replyTo, score: SCORE_REPLY});
               };
             };
-            if (!flagFound) {
-              resultArray.push({did: replyTo, score: SCORE_REPLY});
-            };
-          };
+        } ;
         };
       };
       // for likes[]
