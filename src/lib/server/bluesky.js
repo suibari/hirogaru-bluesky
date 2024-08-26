@@ -30,18 +30,20 @@ export class MyBlueskyer extends Blueskyer {
       // 誰に対してリプライしたかをカウント
       for (const [index, feed] of Object.entries(feeds)) {
         if (feed.reply) {
-          if (handle != feed.reply.parent.author.handle) { // 自分に対するリプライは除外
-            const replyTo = feed.reply.parent.author.did;
-            let flagFound = false;
-            for (const node of resultArray) {
-              if (replyTo == node.did) {
-                node.score = node.score + SCORE_REPLY;
-                flagFound = true;
-                break;
+          if (feed.reply.parent.$type === 'app.bsky.feed.defs#postView') {
+            if (feed.reply.parent.author.handle != handle) { // 自分に対するリプライは除外
+              const replyTo = feed.reply.parent.author.did;
+              let flagFound = false;
+              for (const node of resultArray) {
+                if (replyTo == node.did) {
+                  node.score = node.score + SCORE_REPLY;
+                  flagFound = true;
+                  break;
+                };
               };
-            };
-            if (!flagFound) {
-              resultArray.push({did: replyTo, score: SCORE_REPLY});
+              if (!flagFound) {
+                resultArray.push({did: replyTo, score: SCORE_REPLY});
+              };
             };
           };
         };
