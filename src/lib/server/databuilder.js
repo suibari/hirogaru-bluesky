@@ -1,6 +1,6 @@
 import FileType from 'file-type';
 import fs from 'fs';
-import {DEFFAULT_AVATOR} from '$env/static/private';
+const DEFFAULT_AVATOR = 'src/lib/img/defaultavator.png'; // $libエイリアスはimport構文&$app.server.read使用でないと効かない
 
 export async function getElements(allWithProf) {
   let elements = [];
@@ -172,7 +172,6 @@ async function imageUrlToBase64(imageUrl) {
 function imageToBase64(imagePath) {
   // 画像ファイルを読み込み
   const imageData = fs.readFileSync(imagePath);
-  // const imageData = read(imagePath);
 
   // BufferをBase64文字列に変換
   const base64String = Buffer.from(imageData).toString('base64');
