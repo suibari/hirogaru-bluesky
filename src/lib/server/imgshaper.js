@@ -1,12 +1,16 @@
 import { createCanvas, loadImage, registerFont } from 'canvas';
+import { fileURLToPath } from 'url';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const FONT_PATH_ABS = path.join(__dirname, '../fonts/mgenplus-1c-medium.ttf') // server側に置いたフォントファイルを読み出す手段がこれしかない？
 
 export async function addTextToImage(imageData) {
-  const fontPath = "static/fonts/mgenplus-1c-medium.ttf";
   const fontSize = 18;
 
   try {
     // フォントの読み込み
-    registerFont(fontPath, { family: 'myFont' });
+    registerFont(FONT_PATH_ABS, { family: 'myFont' });
 
     // 画像の読み込み
     const image = await loadImage(imageData);
