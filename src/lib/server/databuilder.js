@@ -1,7 +1,6 @@
 import FileType from 'file-type';
-import fs from 'fs';
-import {read} from '$app/server';
-const DEFFAULT_AVATOR = `url(${fs.readFileSync('src/lib/img/defaultavator.b64', 'utf8')})`;
+import { base64DefaultAvatorImage } from '$lib/img/defaultavator.js';
+const DEFFAULT_AVATOR = `url(${base64DefaultAvatorImage})`;
 
 export async function getElements(allWithProf) {
   let elements = [];
