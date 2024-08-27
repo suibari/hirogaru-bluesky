@@ -1,6 +1,7 @@
 import FileType from 'file-type';
 import fs from 'fs';
-const DEFFAULT_AVATOR = 'src/lib/img/defaultavator.png'; // $libエイリアスはimport構文&$app.server.read使用でないと効かない
+import {read} from '$app/server';
+const DEFFAULT_AVATOR = `url(${fs.readFileSync('src/lib/img/defaultavator.b64', 'utf8')})`;
 
 export async function getElements(allWithProf) {
   let elements = [];
@@ -53,7 +54,7 @@ async function pushActorToNodes(actor, elements, level) {
 
   let img
   if (!actor.avatar) {
-    img = imageToBase64(DEFFAULT_AVATOR);
+    img = DEFFAULT_AVATOR;
   } else {
     img = await imageUrlToBase64(actor.avatar);
   };
@@ -146,7 +147,7 @@ async function imageUrlToBase64(imageUrl) {
   if (!response.ok) {
       // throw new Error('Failed to fetch image');
       console.error("[ERROR] failed to fetch image, so attach default image.")
-      base64StringWithMime = imageToBase64(DEFFAULT_AVATOR);
+      base64StringWithMime = DEFFAULT_AVATOR;
       return base64StringWithMime;
   }
 
@@ -167,17 +168,4 @@ async function imageUrlToBase64(imageUrl) {
 
   // console.log(base64StringWithMime);
   return base64StringWithMime;
-}
-
-function imageToBase64(imagePath) {
-  // 画像ファイルを読み込み
-  const imageData = fs.readFileSync(imagePath);
-
-  // BufferをBase64文字列に変換
-  const base64String = Buffer.from(imageData).toString('base64');
-
-  // Base64 URIを生成
-  const base64URI = `url(data:image/png;base64,${base64String})`; // 画像形式に応じて変更
-
-  return base64URI;
 }
