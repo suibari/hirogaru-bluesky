@@ -12,6 +12,7 @@
   import Tab, { Label } from "@smui/tab";
   import TabBar from "@smui/tab-bar";
   import Snackbar, {Actions} from '@smui/snackbar';
+  import Button from "@smui/button";
   // my components
   import Graph from "../components/Graph.svelte";
   import UserCard from "../components/UserCard.svelte";
@@ -34,11 +35,12 @@
   let engagement;
   let displayConfetti;
   let captureConcentric, captureGrid;
+  let blobGraph;
   let srcGraph;
   let isClickShare = false;
   let isClickHelp = false;
   let activeTab = "使い方";
-  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch;
+  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarWarningNotSupportWebShareAPI, snackbarErrorFetch;
   let inputHandle = writable('');
   let errorMessage;
   let isGridMode = false;
@@ -178,20 +180,17 @@
       snackbarWarningNeverRun.open();
 
     } else {
-      let blob;
-
       isRunning = true;
       
       if (isGridMode) {
-        blob = await captureGrid();
+        blobGraph = await captureGrid();
       } else {
-        blob = await captureConcentric();
+        blobGraph = await captureConcentric();
       };
 
       // サーバにblobを投げ合成してもらい、base64uriを受け取る
       let body = new FormData();
-      // console.log(`${blob.type}, ${blob.size} [Byte]`);
-      body.append('image', blob, "image.png");
+      body.append('image', blobGraph, "image.png");
       const response = await fetch('?/upload', {
         method: 'POST',
         body: body,
@@ -211,6 +210,28 @@
         isRunning = false;
       };
     };
+  }
+
+  async function shareContent() {
+    // blobをFile Objectに変換
+    const img = new File([blobGraph], "graph.png", {
+      type: "image/png",
+    });
+
+    const file = {
+      text: "#ひろがるBluesky\nhttps://hirogaru-bluesky.vercel.app",
+      url: "https://hirogaru-bluesky.vercel.app/",
+      files: [img]
+    };
+
+    if (navigator.share) {
+      await navigator.share(file)
+      .catch(e => {
+        console.error(e);
+      });
+    } else {
+      snackbarWarningNotSupportWebShareAPI.open();
+    }
   }
 </script>
 
@@ -285,10 +306,10 @@
   </Header>
   <Content id="share-message">  
     <img id="share-image" src={srcGraph} alt="ひろがるBluesky相関図">
-    <ol>
-      <li>画像を右クリックかロングタップでコピーしてください</li>
-      <li><a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky%0D%0Ahttps%3A%2F%2Fhirogaru-bluesky.vercel.app%2F%0D%0A" target="_blank">こちら</a>をクリックして、開いたポスト画面に画像をペーストしてシェア！</li>
-    </ol>
+    <div id="shareButtonInModal">
+      <Button variant="raised" id="share-button" on:click={() => shareContent()}>Share!</Button>
+    </div>
+    <div id="shareNoteInModal">※上記ボタンでシェアできない場合は、画像を右クリックなどでコピー後、<a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky%0D%0Ahttps%3A%2F%2Fhirogaru-bluesky.vercel.app%2F%0D%0A" target="_blank">こちら</a>をクリックして、開いたポスト画面に画像をペーストしてください</div>
   </Content>
 </Dialog>
 <!-- シェアエラー -->
@@ -300,6 +321,12 @@
 </Snackbar>
 <Snackbar bind:this={snackbarWarningNeverRun}>
   <Label>相関図を生成してください</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
+<Snackbar bind:this={snackbarWarningNotSupportWebShareAPI}>
+  <Label>ブラウザでWeb Share APIがサポートされていません</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
@@ -368,6 +395,15 @@
   #share-image {
     max-width: 100%;
     height: auto;
+  }
+  #shareButtonInModal {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  #shareNoteInModal {
+    font-size: small;
   }
   #helpButton {
     position: fixed;
