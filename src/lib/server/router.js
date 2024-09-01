@@ -25,15 +25,13 @@ export async function getData(handle) {
     // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
     let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
 
-    // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
+    // 相互フォロー追加
     let didArray;
-    if (friendsWithProf.length < THRESHOLD_NODES) {
-      response = await agent.getFollows({actor: handle, limit: 50});
-      const follows = response.data.follows;
-      didArray = follows.map(follow => follow.did);
-      const mutualWithProf = await agent.getConcatProfiles(didArray);
-      friendsWithProf = friendsWithProf.concat(mutualWithProf);
-    };
+    response = await agent.getFollows({actor: handle, limit: 50});
+    const follows = response.data.follows;
+    didArray = follows.map(follow => follow.did);
+    const mutualWithProf = await agent.getConcatProfiles(didArray);
+    friendsWithProf = friendsWithProf.concat(mutualWithProf);
     
     // フォロー検出
     didArray = friendsWithProf.map(friend => friend.did);
@@ -50,7 +48,7 @@ export async function getData(handle) {
     const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
     // node, edge取得
-    let elements = await getElements(allWithProf, objFollow);
+    let elements = await getElements(allWithProf);
 
     // 不要エッジ除去
     removeInvalidLinks(elements);
