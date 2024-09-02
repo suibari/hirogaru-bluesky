@@ -34,7 +34,9 @@ export async function getData(handle) {
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
     await Promise.all(elements.map(async elem => {
-      elem.data.img = await imageUrlToBase64(elem.data.img);
+      if (elem.group === 'nodes') {
+        elem.data.img = await imageUrlToBase64(elem.data.img);
+      }
     }));
 
     execLogger.incExecCount();
