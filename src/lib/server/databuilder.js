@@ -157,12 +157,18 @@ export async function imageUrlToBase64(imageUrl) {
     return DEFFAULT_AVATOR;
   }
 
+  // フェッチ試行。ここはfetch errorが出やすいので、error時にはデフォルト画像を設定しておく
+  const response = await fetch(imageUrl).catch(() => {
+    console.error("[ERROR] failed to fetch, so attach default image.");
+    return DEFFAULT_AVATOR
+  });
+
   // フェッチ失敗時もデフォルト画像を設定
-  const response = await fetch(imageUrl);
   if (!response.ok) {
-    console.error("[ERROR] failed to fetch image, so attach default image.")
+    console.error("[ERROR] failed to fetch image, so attach default image.");
     return DEFFAULT_AVATOR;
 
+  // フェッチ成功
   } else {
     // 画像をBlobとして取得
     const imageBlob = await response.blob();

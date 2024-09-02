@@ -22,7 +22,7 @@ export async function getData(handle) {
     timeLogger.tic();
 
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
-    const elements = await kv.get(handle);
+    let elements = await kv.get(handle);
     if (elements === null) {
       // データがないので同期処理で待って最低限のデータを渡す
       elements = await getElementsAndSetDb(handle, THRESHOLD_TL, THRESHOLD_LIKES);
@@ -87,7 +87,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like) 
   const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
   // node, edge取得
-  const elements = await getElements(allWithProf, objFollow);
+  let elements = await getElements(allWithProf, objFollow);
 
   // 不要エッジ除去
   removeInvalidLinks(elements);
