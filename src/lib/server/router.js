@@ -10,27 +10,26 @@ const kv = createClient({
 const agent = new MyBlueskyer();
 const execLogger = new ExecutionLogger();
 
+const THRESHOLD_NODES = 36
+const THRESHOLD_TL = 1000;
+const THRESHOLD_LIKES = 100;
+const SCORE_REPLY = 10;
+const SCORE_LIKE = 1;
 
 export async function getData(handle) {
-  const THRESHOLD_NODES = 36
-  const THRESHOLD_TL = 1000;
-  const THRESHOLD_LIKES = 100;
-  const SCORE_REPLY = 10;
-  const SCORE_LIKE = 1;
-  let elements = [];
-
   try {
     const timeLogger = new TimeLogger();
     timeLogger.tic();
 
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
-    elements = await kv.get(handle);
+    const elements = await kv.get(handle);
     if (elements === null) {
-      await getElementsAndSetDb(handle);
+      // データがないので同期処理で待って最低限のデータを渡す
+      elements = await getElementsAndSetDb(handle, THRESHOLD_TL, THRESHOLD_LIKES);
     } else {
-      // const worker = new Worker.default();
-      // const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
-      // worker.postMessage({action: 'reload', args: [handle]});
+      // データがあれば非同期処理で裏でデータ更新
+      console.log(`[WORKER] updata db: ${handle}`);
+      getElementsAndSetDb(handle, Infinity, Infinity);
     }
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
@@ -51,7 +50,7 @@ export async function getData(handle) {
   }
 }
 
-export async function getElementsAndSetDb(handle) {
+export async function getElementsAndSetDb(handle, threshold_tl, threshold_like) {
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
   let response;
@@ -59,7 +58,7 @@ export async function getElementsAndSetDb(handle) {
   const myselfWithProf = response.data;
 
   // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-  let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_TL, THRESHOLD_LIKES, SCORE_REPLY, SCORE_LIKE);
+  let friendsWithProf = await agent.getInvolvedEngagements(handle, threshold_tl, threshold_like, SCORE_REPLY, SCORE_LIKE);
 
   // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
   let didArray;
@@ -86,11 +85,15 @@ export async function getElementsAndSetDb(handle) {
   const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
   // node, edge取得
-  elements = await getElements(allWithProf, objFollow);
+  const elements = await getElements(allWithProf, objFollow);
 
   // 不要エッジ除去
   removeInvalidLinks(elements);
 
   // DBセット
   kv.set(handle, elements);
+
+  console.log(`[INFO] analyzed elements: ${elements.length}`);
+
+  return elements;
 }
