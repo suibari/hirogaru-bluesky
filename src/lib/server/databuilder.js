@@ -65,7 +65,7 @@ async function pushActorToNodes(actor, elements, level) {
     data: {
       id: actor.did,
       name: actor.displayName,
-      img: img,
+      img: actor.avatar,
       handle: actor.handle,
       level: level, // 同心円の階層
       rank: rank, // アイコンサイズ
@@ -139,32 +139,33 @@ export function removeDuplicatesNodes(headElement, otherElements) {
   return Object.values(uniqueObjects);
 }
 
-async function imageUrlToBase64(imageUrl) {
-  let base64StringWithMime;
-
-  let response = await fetch(imageUrl);
-  if (!response.ok) {
-      // throw new Error('Failed to fetch image');
-      console.error("[ERROR] failed to fetch image, so attach default image.")
-      base64StringWithMime = DEFFAULT_AVATOR;
-      return base64StringWithMime;
+export async function imageUrlToBase64(imageUrl) {
+  // アバターがない場合デフォルト画像を設定
+  if (!(imageUrl)) {
+    return DEFFAULT_AVATOR;
   }
 
-  // 画像をBlobとして取得
-  const imageBlob = await response.blob();
-        
-  // BlobをBufferに変換
-  const buffer = await imageBlob.arrayBuffer();
+  // フェッチ失敗時もデフォルト画像を設定
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+    console.error("[ERROR] failed to fetch image, so attach default image.")
+    return DEFFAULT_AVATOR;
 
-  // バッファからファイルタイプを取得する
-  const fileType = await FileType.fromBuffer(buffer);
-  
-  // BufferをBase64に変換
-  const base64String = Buffer.from(buffer).toString('base64');
+  } else {
+    // 画像をBlobとして取得
+    const imageBlob = await response.blob();
+          
+    // BlobをBufferに変換
+    const buffer = await imageBlob.arrayBuffer();
 
-  base64StringWithMime = "url(data:" + fileType.mime + ";base64," + base64String + ")";
-  // fs.writeFileSync('temp_image.jpg', base64StringWithMime);
+    // バッファからファイルタイプを取得する
+    const fileType = await FileType.fromBuffer(buffer);
+    
+    // BufferをBase64に変換
+    const base64String = Buffer.from(buffer).toString('base64');
 
-  // console.log(base64StringWithMime);
-  return base64StringWithMime;
+    const base64StringWithMime = "url(data:" + fileType.mime + ";base64," + base64String + ")";
+
+    return base64StringWithMime;
+  }
 }

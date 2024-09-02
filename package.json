@@ -31,6 +31,7 @@
 		"@sveltejs/adapter-node": "^5.0.1",
 		"@tsparticles/preset-fireworks": "^3.0.2",
 		"@tsparticles/svelte": "^3.0.0",
+		"@vercel/kv": "^2.0.0",
 		"blueskyer": "^1.2.6",
 		"canvas": "^2.11.2",
 		"cytoscape": "^3.28.1",
