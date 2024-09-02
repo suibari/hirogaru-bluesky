@@ -42,6 +42,7 @@
   let inputHandle = writable('');
   let errorMessage;
   let isGridMode = false;
+  let selectedRadius;
 
   // ページ読み込み時ローカルストレージのハンドルをセット
   onMount(() => {
@@ -94,6 +95,27 @@
       }
     };
   }
+
+  // 相関図半径のセレクトボックス選択肢生成
+  function getOptions() {
+    if (isNeverRun) {
+      return [4]; // isNeverRunがtrueの場合、3のみ表示
+    } else {
+      options = [];
+      const maxLevel = elements.reduce((max, obj) => {
+        return obj.data.level > max ? obj.data.level : max;
+      }, -Infinity);
+      // 数式に基づいてオプションを追加
+      for (let i = 2; i <= maxLevel; i++) {
+        options.push(i);
+      }
+    }
+
+    return options;
+  }
+
+  // `elements`または`isNeverRun`が変更されたときに`options`を再計算
+  $: options = getOptions(elements); // elements引数は使わないが、ないとreactive statementsが動かない
 
   // 描画停止ハンドラ
   function stopRun() {
@@ -219,6 +241,16 @@
   <input type="text" name="handle" autocomplete="off" placeholder="handle.bsky.social" bind:value={$inputHandle} />
   <button type="submit">Generate!</button>
 </form>
+<div id="selectRadius">半径
+  <select
+    bind:value={selectedRadius}
+    on:change={() => runConcentric(elements)}
+    disabled={isRunning||isNeverRun} >
+    {#each options as option}
+      <option value={option} selected={option == selectedRadius}>{option}</option>
+    {/each}
+  </select>
+</div>
 <!-- フェッチエラー -->
 <Snackbar bind:this={snackbarErrorFetch}>
   <Label>エラーが発生しました: {errorMessage}</Label>
@@ -238,6 +270,7 @@
   bind:runGrid={runGrid}
   bind:captureConcentric={captureConcentric}
   bind:captureGrid={captureGrid}
+  selectedRadius={selectedRadius}
   on:stopRun={stopRun}
   on:tapNode={tapNode}
   on:tapNotNode={tapNotNode}
@@ -341,6 +374,12 @@
     margin-left: 8px;
     position: relative;
     z-index: 1;
+  }
+  #selectRadius {
+    margin-top: 8px; /* フォームとセレクトボックスの間のスペースを調整 */
+    margin-left: 8px; /* フォームの左マージンと揃える */
+    position: relative;
+    z-index: 1; /* フォームと同じz-indexを持たせる（必要なら調整） */
   }
   @media screen and (max-width: 600px) {
     form button {

@@ -4,47 +4,59 @@ const DEFFAULT_AVATOR = `url(${base64DefaultAvatorImage})`;
 
 export async function getElements(allWithProf) {
   let elements = [];
+  let n = 0;
+  let sum = 0;
+  let groupSizes = [];
 
-  // nodes
-  for (const [i, friend] of allWithProf.entries()) {
-    // console.log(followandfollower.handle+","+i)
-    let n = 0;
-    if (i == 0) {
-      n = 5;
-    } else if (i >= 1 && i < 7) {
-      n = 4;
-    } else if (i >= 7 && i < 19) {
-      n = 3;
-    } else if (i >= 19 && i < 37) {
-      n = 2;
-    } else {
-      n = 0; // not display
+  // グループサイズのリストを作成
+  for (let i = 1;; i++) {
+    const groupSize = 6 * i - 5; // 1, 6, 12, 18, 24, ...
+    groupSizes.push(groupSize);
+    sum += groupSize;
+    if (sum >= allWithProf.length) break;
+  }
+
+  // 最後のグループが1になるように調整
+  let lastGroupSize = groupSizes.pop();
+  if (sum > allWithProf.length) {
+    lastGroupSize -= (sum - allWithProf.length);
+  }
+  if (lastGroupSize > 0) {
+    groupSizes.push(lastGroupSize);
+  }
+
+  let currentIndex = 0;
+  for (let groupIndex = 0; groupIndex < groupSizes.length; groupIndex++) {
+    n = groupSizes.length - groupIndex; // デクリメントされたnの値
+
+    for (let i = 0; i < groupSizes[groupIndex]; i++) {
+      if (currentIndex >= allWithProf.length) break;
+
+      const friend = allWithProf[currentIndex];
+
+      if (n > 0) {
+        await pushActorToNodes(friend, elements, n);
+      }
+
+      // エッジの処理
+      const engagement = friend.engagement ? friend.engagement : 0;
+      const engagementExp = getEdgeEngagement(engagement);
+      if (currentIndex != 0) {
+        elements.push({
+          data: {
+            source: allWithProf[0].did,
+            target: friend.did,
+            engagement: engagementExp,
+            rawEngagement: engagement,
+          },
+          group: 'edges'
+        });
+      };
+
+      currentIndex++;
     }
-    if (n > 0) {
-      await pushActorToNodes(friend, elements, n);
-    }
+  }
 
-    // edges
-    // * follow (myself -> follow)
-    const engagement = friend.engagement ? friend.engagement : 0;
-    const engagementExp = getEdgeEngagement(engagement);
-    if (i != 0) {
-      elements.push({
-        data: {
-          source: allWithProf[0].did,
-          target: friend.did,
-          engagement: engagementExp,
-          rawEngagement: engagement,
-        },
-        group: 'edges'
-      });
-    };
-  };
-
-
-  // nodes (rank)
-  // const totalNodes = elements.filter(element => element.group === "nodes").length;
-  
   return elements;
 }
 
