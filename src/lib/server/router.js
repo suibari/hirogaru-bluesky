@@ -11,10 +11,13 @@ const agent = new MyBlueskyer();
 const execLogger = new ExecutionLogger();
 
 const THRESHOLD_NODES = 36
-const THRESHOLD_TL = 1000;
-const THRESHOLD_LIKES = 100;
+const THRESHOLD_TL_TMP = 500;
+const THRESHOLD_LIKES_TMP = 50;
+const THRESHOLD_TL_MAX = 20000;
+const THRESHOLD_LIKES_MAX = 2000;
 const SCORE_REPLY = 10;
 const SCORE_LIKE = 1;
+const MAX_RADIUS = 10;
 
 export async function getData(handle) {
   try {
@@ -22,15 +25,23 @@ export async function getData(handle) {
     timeLogger.tic();
 
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
+    let isFirstTime = false;
     let elements = await kv.get(handle);
     if (elements === null) {
       // データがないので同期処理で待って最低限のデータを渡す
-      elements = await getElementsAndSetDb(handle, THRESHOLD_TL, THRESHOLD_LIKES);
-    } else {
-      // データがあれば非同期処理で裏でデータ更新
-      console.log(`[WORKER] updata db: ${handle}`);
-      getElementsAndSetDb(handle, Infinity, Infinity);
+      elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false);
+      isFirstTime = true;
     }
+    // データ有無に寄らず非同期処理で裏でデータ更新
+    console.log(`[WORKER] start to updata DB: ${handle}`);
+    getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
+
+    // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
+    const nodes = elements.filter(obj => obj.group === 'nodes');
+    const slicedNodes = nodes.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
+    const edges = elements.filter(obj => obj.group === 'edges');
+    elements = [...slicedNodes, ...edges];
+    removeInvalidLinks(elements);
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
     await Promise.all(elements.map(async elem => {
@@ -44,15 +55,15 @@ export async function getData(handle) {
     const execCount = execLogger.getExecCount();
     console.log("[INFO] exec time was " + elapsedTime + " [sec], total exec count is " + execCount + ".");
     
-    // console.log(elements);
-    return elements;
+    // console.log(elements.length, isFirstTime);
+    return {elements: elements, isFirstTime: isFirstTime};
 
   } catch(e) {
     throw e;
   }
 }
 
-export async function getElementsAndSetDb(handle, threshold_tl, threshold_like) {
+export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, setDbEn) {
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
   let response;
@@ -93,9 +104,10 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like) 
   removeInvalidLinks(elements);
 
   // DBセット
-  kv.set(handle, elements);
-
-  console.log(`[INFO] analyzed elements: ${elements.length}`);
+  if (setDbEn) {
+    kv.set(handle, elements);
+    console.log(`[WORKER] complete to update DB, elements: ${elements.length}, ${handle}`);
+  }
 
   return elements;
 }

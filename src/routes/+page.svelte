@@ -38,7 +38,7 @@
   let isClickShare = false;
   let isClickHelp = false;
   let activeTab = "使い方";
-  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch;
+  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccessFirstTime;
   let inputHandle = writable('');
   let errorMessage;
   let isGridMode = false;
@@ -84,6 +84,10 @@
         if (result.type === 'success') {
           // await invalidateAll();
           elements = result.data.elements;
+          const isFirstTime = result.data.isFirstTime;
+          if (isFirstTime) {
+            snackbarSuccessFirstTime.open();
+          }
           runConcentric(elements);
         };
         // applyAction(result); // formへのresult格納
@@ -105,8 +109,12 @@
       const maxLevel = elements.reduce((max, obj) => {
         return obj.data.level > max ? obj.data.level : max;
       }, -Infinity);
+      const minLevel = elements.reduce((min, obj) => {
+        return obj.data.level < min ? obj.data.level : min;
+      }, Infinity);
+      const diffLevel = maxLevel - minLevel;
       // 数式に基づいてオプションを追加
-      for (let i = 2; i <= maxLevel; i++) {
+      for (let i = 2; i <= diffLevel+1; i++) {
         options.push(i);
       }
     }
@@ -244,7 +252,10 @@
 <div id="selectRadius">半径
   <select
     bind:value={selectedRadius}
-    on:change={() => runConcentric(elements)}
+    on:change={() => {
+      isRunning = true;
+      runConcentric(elements);
+    }}
     disabled={isRunning||isNeverRun} >
     {#each options as option}
       <option value={option} selected={option == selectedRadius}>{option}</option>
@@ -254,6 +265,13 @@
 <!-- フェッチエラー -->
 <Snackbar bind:this={snackbarErrorFetch}>
   <Label>エラーが発生しました: {errorMessage}</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
+<!-- 初回実行の通知 -->
+<Snackbar bind:this={snackbarSuccessFirstTime}>
+  <Label>初回実行なので取得データ数を減らして実行します。<br>数分後にデータ更新されますので、また実行してみてください!</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>

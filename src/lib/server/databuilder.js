@@ -63,21 +63,22 @@ export async function getElements(allWithProf) {
 async function pushActorToNodes(actor, elements, level) {
   const MYSELF_RANK = 20;
 
-  let img
-  if (!actor.avatar) {
-    img = DEFFAULT_AVATOR;
-  } else {
-    img = await imageUrlToBase64(actor.avatar);
-  };
-  // console.log(img)
-
+  let img;
+  if (actor.avatar) {
+    if (actor.avatar.match(/avatar/)) {
+      img = actor.avatar.replace('avatar', 'avatar_thumbnail'); // 通信料低減のためサムネイル画像を選択
+    } else {
+      img = actor.avatar;
+    }
+  }
+  
   const rank = getRank(actor);
 
   elements.push({
     data: {
       id: actor.did,
       name: actor.displayName,
-      img: actor.avatar,
+      img: img,
       handle: actor.handle,
       level: level, // 同心円の階層
       rank: rank, // アイコンサイズ
