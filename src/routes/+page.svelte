@@ -249,8 +249,10 @@
   <input type="text" name="handle" autocomplete="off" placeholder="handle.bsky.social" bind:value={$inputHandle} />
   <button type="submit">Generate!</button>
 </form>
-<div id="selectRadius">半径
+<div id="selectRadius">
+  <IconButton class="material-icons">swap_vertical_circle</IconButton>
   <select
+    id="selectBox"
     bind:value={selectedRadius}
     on:change={() => {
       isRunning = true;
@@ -394,10 +396,16 @@
     z-index: 1;
   }
   #selectRadius {
-    margin-top: 8px; /* フォームとセレクトボックスの間のスペースを調整 */
-    margin-left: 8px; /* フォームの左マージンと揃える */
+    margin-top: 0px;
+    margin-left: 0px;
     position: relative;
-    z-index: 1; /* フォームと同じz-indexを持たせる（必要なら調整） */
+    z-index: 1;
+    color: white;
+  }
+  #selectBox {
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
   }
   @media screen and (max-width: 600px) {
     form button {
