@@ -34,7 +34,6 @@ export async function getElements(allWithProf) {
 
       const friend = allWithProf[currentIndex];
 
-      console.log(n);
       if (n <= 0) {
         await pushActorToNodes(friend, elements, n);
       }

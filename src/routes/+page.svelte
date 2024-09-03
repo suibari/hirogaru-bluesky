@@ -367,7 +367,7 @@
     aria-describedby="helpmessage"
   >
     <Header>
-      <TabBar tabs={['使い方', '当サイトについて', '変更履歴']} let:tab bind:active={activeTab}>
+      <TabBar tabs={['使い方', '当サイトについて', '詳細仕様', '変更履歴']} let:tab bind:active={activeTab}>
         <Tab {tab}>
           <Label>{tab}</Label>
         </Tab>
