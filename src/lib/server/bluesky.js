@@ -37,12 +37,13 @@ export class MyBlueskyer extends Blueskyer {
               for (const node of resultArray) {
                 if (replyTo == node.did) {
                   node.score = node.score + SCORE_REPLY;
+                  node.replyCount++;
                   flagFound = true;
                   break;
                 };
               };
               if (!flagFound) {
-                resultArray.push({did: replyTo, score: SCORE_REPLY});
+                resultArray.push({did: replyTo, score: SCORE_REPLY, replyCount: 1});
               };
             };
           };
@@ -54,12 +55,17 @@ export class MyBlueskyer extends Blueskyer {
         for (const node of resultArray) {
           if (did == node.did) {
             node.score = node.score + SCORE_LIKE;
+            if (node.likeCount) {
+              node.likeCount++;
+            } else {
+              node.likeCount = 1;
+            }
             flagFound = true;
             break;
           };
         };
         if (!flagFound) {
-          resultArray.push({did: did, score: SCORE_LIKE});
+          resultArray.push({did: did, score: SCORE_LIKE, likeCount: 1});
         };
       };
       // scoreで降順ソート
@@ -76,6 +82,8 @@ export class MyBlueskyer extends Blueskyer {
       // エンゲージメントスコアを格納しておく
       for (const [index, friend] of Object.entries(friendsWithProf)) {
         friend.engagement = resultArray[index].score;
+        friend.replyCount = resultArray[index].replyCount;
+        friend.likeCount = resultArray[index].likeCount;
       };
 
       return friendsWithProf;

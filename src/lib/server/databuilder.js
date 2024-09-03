@@ -83,6 +83,8 @@ async function pushActorToNodes(actor, elements, level) {
       level: level, // 同心円の階層
       rank: rank, // アイコンサイズ
       engagement: actor.engagement||undefined,
+      reply: actor.replyCount||0,
+      like: actor.likeCount||0,
       following: actor.following,
     },
     group: 'nodes',
