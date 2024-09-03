@@ -4,7 +4,6 @@ const DEFFAULT_AVATOR = `url(${base64DefaultAvatorImage})`;
 
 export async function getElements(allWithProf) {
   let elements = [];
-  let n = 0;
   let sum = 0;
   let groupSizes = [];
 
@@ -16,7 +15,7 @@ export async function getElements(allWithProf) {
     if (sum >= allWithProf.length) break;
   }
 
-  // 最後のグループが1になるように調整
+  // 最後のグループがオーバーした場合の調整
   let lastGroupSize = groupSizes.pop();
   if (sum > allWithProf.length) {
     lastGroupSize -= (sum - allWithProf.length);
@@ -27,14 +26,16 @@ export async function getElements(allWithProf) {
 
   let currentIndex = 0;
   for (let groupIndex = 0; groupIndex < groupSizes.length; groupIndex++) {
-    n = groupSizes.length - groupIndex; // デクリメントされたnの値
+    // 最初のグループがn=0、次のグループがn=-1、... となるようにnを計算
+    let n = -groupIndex;
 
     for (let i = 0; i < groupSizes[groupIndex]; i++) {
       if (currentIndex >= allWithProf.length) break;
 
       const friend = allWithProf[currentIndex];
 
-      if (n > 0) {
+      console.log(n);
+      if (n <= 0) {
         await pushActorToNodes(friend, elements, n);
       }
 

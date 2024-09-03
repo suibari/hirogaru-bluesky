@@ -9,12 +9,6 @@ export default [
     },
   },
   {
-    selector: 'node[level=0]',
-    style: {
-      'display': 'none',
-    }
-  },
-  {
     selector: 'edge',
     style: {
       'width': 'data(engagement)',

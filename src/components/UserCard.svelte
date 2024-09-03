@@ -40,25 +40,25 @@
       </Media>
     </PrimaryAction>
     <Actions>
-      <ActionButtons>
+      <ActionButtons style="width: 100%;">
         {#if isGridMode}
           <Button variant="raised">
             <Label on:click={() => dispatch('backConcentric', tappedNode.data('handle'))}>相関図にもどる</Label>
           </Button>
-        {:else if tappedNode.data('level') === 5}
-          <Button variant="raised" color="secondary" disabled>
+        {:else if tappedNode.data('level') === 0}
+          <Button variant="raised" color="secondary" disabled style="width: 100%">
             <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
           </Button>
-          <Button variant="raised" color="secondary" disabled>
+          <!-- <Button variant="raised" color="secondary" disabled>
             <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
-          </Button>
+          </Button> -->
         {:else}
-          <Button variant="raised">
+          <Button variant="raised" style="width: 100%">
             <Label on:click={handleSubmit(tappedNode.data('handle'))}>相関図をつくる</Label>
           </Button>
-          <Button variant="raised">
+          <!-- <Button variant="raised">
             <Label on:click={() => {dispatch('doSocialAnalysis');}}>関係分析</Label>
-          </Button>
+          </Button> -->
         {/if}
       </ActionButtons>
     </Actions>

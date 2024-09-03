@@ -24,7 +24,7 @@
     cyInstance = cytoscape({
       container: refElement,
       elements: [],
-      userZoomingEnabled: false,
+      userZoomingEnabled: true,
     });
 
     // カード表示

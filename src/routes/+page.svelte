@@ -186,7 +186,7 @@
 
   function backConcentric(event) {
     const handle = event.detail;
-    const centerNode = elements.filter(obj => obj.data.level === 5);
+    const centerNode = elements.filter(obj => obj.data.level === 0);
 
     if (centerNode[0].data.handle === handle) {
       // 自分が選択された
