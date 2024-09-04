@@ -11,10 +11,8 @@ const agent = new MyBlueskyer();
 const execLogger = new ExecutionLogger();
 
 const THRESHOLD_NODES = 36
-const THRESHOLD_TL_TMP = 500;
-const THRESHOLD_LIKES_TMP = 50;
-const THRESHOLD_TL_MAX = 20000;
-const THRESHOLD_LIKES_MAX = 2000;
+const THRESHOLD_TL_TMP = 200;
+const THRESHOLD_LIKES_TMP = 20;
 const SCORE_REPLY = 10;
 const SCORE_LIKE = 1;
 const MAX_RADIUS = 10;
@@ -32,9 +30,6 @@ export async function getData(handle) {
       elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false);
       isFirstTime = true;
     }
-    // データ有無に寄らず非同期処理で裏でデータ更新
-    // console.log(`[WORKER] start to updata DB: ${handle}`);
-    // getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
 
     // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
     const nodes = elements.filter(obj => obj.group === 'nodes');
@@ -63,7 +58,7 @@ export async function getData(handle) {
   }
 }
 
-export async function getElementsAndSetDb(handle, setDbEn) {
+export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, setDbEn) {
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
   let response;
@@ -71,7 +66,7 @@ export async function getElementsAndSetDb(handle, setDbEn) {
   const myselfWithProf = response.data;
 
   // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-  let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, SCORE_REPLY, SCORE_LIKE);
+  let friendsWithProf = await agent.getInvolvedEngagements(handle, threshold_tl, threshold_like, SCORE_REPLY, SCORE_LIKE);
 
   // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
   let didArray;
@@ -83,22 +78,11 @@ export async function getElementsAndSetDb(handle, setDbEn) {
     friendsWithProf = friendsWithProf.concat(mutualWithProf);
   };
 
-  // フォロー検出
-  didArray = friendsWithProf.map(friend => friend.did);
-  const objFollow = await agent.isFollow(myselfWithProf.did, didArray);
-  for (const obj of objFollow) {
-    for (const friend of friendsWithProf) {
-      if (friend.did == obj.did) {
-        friend.following = obj.following
-      };
-    };
-  };
-
   // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
   const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
   // node, edge取得
-  let elements = await getElements(allWithProf, objFollow);
+  let elements = await getElements(allWithProf);
 
   // 不要エッジ除去
   removeInvalidLinks(elements);
