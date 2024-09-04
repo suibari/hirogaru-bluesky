@@ -37,6 +37,7 @@
 		"cytoscape": "^3.28.1",
 		"dotenv": "^16.4.5",
 		"file-type": "^16.5.4",
+		"inngest": "^3.22.8",
 		"smui-theme": "^7.0.0-beta.18",
 		"svelte-confetti": "^1.4.0",
 		"svelte-material-ui": "^7.0.0-beta.18"

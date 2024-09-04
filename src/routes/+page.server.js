@@ -1,6 +1,7 @@
 import { getData } from '$lib/server/router.js';
 import { addTextToImage } from '$lib/server/imgshaper.js';
 import { error } from '@sveltejs/kit';
+import { inngest } from '$lib/inngest/inngest.js';
 
 export const actions = {
   generate: async ({request}) => {
@@ -10,6 +11,15 @@ export const actions = {
       console.log(`[INFO] receive query from client. handle: ${data.get('handle')}.`);
       const {elements, isFirstTime} = await getData(handle);
       console.log("[INFO] send data to client. total elements: "+elements.length);
+
+      // Inngestトリガー
+      if (elements) {
+        console.log(`[WORKER] start to updata DB: ${handle}`);
+        inngest.send({
+          name: 'hirogaru/update.db', 
+          data: { handle },
+        });
+      }
   
       return { success: true, elements: elements, isFirstTime: isFirstTime };
     } catch (e) {

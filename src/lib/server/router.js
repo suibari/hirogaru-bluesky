@@ -33,8 +33,8 @@ export async function getData(handle) {
       isFirstTime = true;
     }
     // データ有無に寄らず非同期処理で裏でデータ更新
-    console.log(`[WORKER] start to updata DB: ${handle}`);
-    getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
+    // console.log(`[WORKER] start to updata DB: ${handle}`);
+    // getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
 
     // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
     const nodes = elements.filter(obj => obj.group === 'nodes');
@@ -63,7 +63,7 @@ export async function getData(handle) {
   }
 }
 
-export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, setDbEn) {
+export async function getElementsAndSetDb(handle, setDbEn) {
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
   let response;
@@ -71,7 +71,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   const myselfWithProf = response.data;
 
   // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-  let friendsWithProf = await agent.getInvolvedEngagements(handle, threshold_tl, threshold_like, SCORE_REPLY, SCORE_LIKE);
+  let friendsWithProf = await agent.getInvolvedEngagements(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, SCORE_REPLY, SCORE_LIKE);
 
   // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
   let didArray;
