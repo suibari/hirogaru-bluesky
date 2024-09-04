@@ -1,4 +1,4 @@
-import { INNGEST_SIGING_KEY } from '$env/static/private';
+import { INNGEST_SIGNING_KEY } from '$env/static/private';
 import { inngest } from '$lib/inngest/inngest.js';
 import { serve } from 'inngest/sveltekit';
 import { updateDbFunction } from '$lib/inngest/function.js';
@@ -8,8 +8,8 @@ const options = {
   functions: [updateDbFunction],
 }
 
-if (INNGEST_SIGING_KEY) {
-  options.signingKey = INNGEST_SIGING_KEY;
+if (INNGEST_SIGNING_KEY) {
+  options.signingKey = INNGEST_SIGNING_KEY;
 }
 
 const inngestServe = serve(options);
