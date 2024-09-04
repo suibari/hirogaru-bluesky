@@ -48,13 +48,13 @@
           <IconButton class="material-icons">reply</IconButton>
         </div>
         <h4>
-          {tappedNode.data('reply')}
+          {tappedNode.data('reply') || "-"}
         </h4>
         <div class="icon">
           <IconButton class="material-icons">favorite</IconButton>
         </div>
         <h4>
-          {tappedNode.data('like')}
+          {tappedNode.data('like') || "-"}
         </h4>
       </div>
     {/if}
@@ -122,6 +122,7 @@
     flex-shrink: 0;
     color: #333;
     margin-left: 10px;
+    pointer-events: none;
   }
   #replylike h4 {
     margin: 0;

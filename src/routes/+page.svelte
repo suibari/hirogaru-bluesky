@@ -250,7 +250,9 @@
   <button type="submit">Generate!</button>
 </form>
 <div id="selectRadius">
-  <IconButton class="material-icons">swap_vertical_circle</IconButton>
+  <div class="icon">
+    <IconButton class="material-icons">swap_vertical_circle</IconButton>
+  </div>
   <select
     id="selectBox"
     bind:value={selectedRadius}
@@ -396,16 +398,17 @@
     z-index: 1;
   }
   #selectRadius {
+    display: flex;
+    align-items: center;
     margin-top: 0px;
     margin-left: 0px;
-    position: relative;
-    z-index: 1;
     color: white;
   }
+  #selectRadius > .icon {
+    pointer-events: none;
+  }
   #selectBox {
-    position: absolute;
-    top: 50%;
-    transform: translate(0, -50%);
+    z-index: 1;
   }
   @media screen and (max-width: 600px) {
     form button {
