@@ -1,9 +1,8 @@
 import { inngest } from './inngest';
 import { getElementsAndSetDb } from '$lib/server/router.js';
-const { createFunction } = inngest;
 
 // Inngestの関数を定義
-export const updateDbFunction = createFunction(
+export const updateDbFunction = inngest.createFunction(
   { id: 'UpdateDatabase' },  // ワークフローの名前
   { event: 'hirogaru/update.db' },         // トリガーされるイベント名
   async ({ event }) => {

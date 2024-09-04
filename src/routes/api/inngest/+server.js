@@ -1,11 +1,10 @@
 import { INNGEST_SIGNING_KEY } from '$env/static/private';
-import { inngest } from '$lib/inngest/inngest.js';
+import { functions, inngest } from '$lib/inngest';
 import { serve } from 'inngest/sveltekit';
-import { updateDbFunction } from '$lib/inngest/function.js';
 
 const options = {
   client: inngest,
-  functions: [updateDbFunction],
+  functions,
 }
 
 if (INNGEST_SIGNING_KEY) {
@@ -15,3 +14,5 @@ if (INNGEST_SIGNING_KEY) {
 const inngestServe = serve(options);
 
 export const POST = inngestServe.POST;
+export const GET = inngestServe.GET;
+export const PUT = inngestServe.PUT;
