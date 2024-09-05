@@ -10,6 +10,7 @@
   } from '@smui/card';
   import Button, { Label } from '@smui/button';
   import { createEventDispatcher, onMount } from 'svelte';
+  import IconButton from "@smui/icon-button";
   const dispatch = createEventDispatcher();
 
   export let tappedNode;
@@ -28,16 +29,34 @@
   <Card>
     <PrimaryAction on:click={window.open(`https://bsky.app/profile/${tappedNode.data('handle')}`, "_blank")}>
       <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}">
-        <div class="cardtext-container">
-          <h3 class="cardtext">
-            {tappedNode.data('name')}
-          </h3>
-          <h6 class="cardtext">
-            {tappedNode.data('handle')}
-          </h6>
+        <div class="cardtext-bg">
+          <div class="cardtext-container">
+            <h3 class="cardtext">
+              {tappedNode.data('name')}
+            </h3>
+            <h6 class="cardtext">
+              {tappedNode.data('handle')}
+            </h6>
+          </div>
         </div>
       </Media>
     </PrimaryAction>
+    {#if tappedNode.data('level') !== 0}
+      <div id="replylike">
+        <div class="icon">
+          <IconButton class="material-icons">reply</IconButton>
+        </div>
+        <h4>
+          {tappedNode.data('reply') || "-"}
+        </h4>
+        <div class="icon">
+          <IconButton class="material-icons">favorite</IconButton>
+        </div>
+        <h4>
+          {tappedNode.data('like') || "-"}
+        </h4>
+      </div>
+    {/if}
     <Actions>
       <ActionButtons style="width: 100%;">
         <Button variant="raised" style="width: 100%">
@@ -57,17 +76,40 @@
     width: 230px;
     z-index: 1;
   }
-  .cardtext-container {
+  .cardtext-bg {
     position: absolute;
+    bottom: 0;
+    height: 50%;
     width: 100%;
-    bottom: 8px;
-    left: 16px;
-    color: white;
-    mix-blend-mode: difference;
+    background: linear-gradient(to top, white, transparent);
+    display: flex;
+    align-items: flex-end;
+  }
+  .cardtext-container {
+    width: 100%;
+    padding-left: 12px;
+    color: #333;
   }
   .cardtext {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  #replylike {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    color: #333;
+    margin-left: 10px;
+    pointer-events: none;
+  }
+  #replylike h4 {
+    margin: 0;
+    flex-shrink: 0;
+    margin-right: 20px;
   }
 </style>
