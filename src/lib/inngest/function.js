@@ -1,8 +1,8 @@
 import { inngest } from './inngest';
 import { getElementsAndSetDb } from '$lib/server/router.js';
 
-const THRESHOLD_TL_MAX = 10000;
-const THRESHOLD_LIKES_MAX = 2000;
+const THRESHOLD_TL_MAX = 5000;
+const THRESHOLD_LIKES_MAX = 1000;
 
 // Inngestの関数を定義
 export const updateDbFunction = inngest.createFunction(

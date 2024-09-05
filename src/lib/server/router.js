@@ -15,9 +15,6 @@ const MAX_RADIUS = 10;
 
 export async function getData(handle) {
   try {
-    const timeLogger = new TimeLogger();
-    timeLogger.tic();
-
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
     let isFirstTime = false;
     let elements = await kv.get(handle);
@@ -27,24 +24,12 @@ export async function getData(handle) {
       isFirstTime = true;
     }
 
-    // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
-    const nodes = elements.filter(obj => obj.group === 'nodes');
-    const slicedNodes = nodes.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
-    const edges = elements.filter(obj => obj.group === 'edges');
-    elements = [...slicedNodes, ...edges];
-    removeInvalidLinks(elements);
-
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
     await Promise.all(elements.map(async elem => {
       if (elem.group === 'nodes') {
         elem.data.img = await imageUrlToBase64(elem.data.img);
       }
     }));
-
-    execLogger.incExecCount();
-    const elapsedTime = timeLogger.tac();
-    const execCount = execLogger.getExecCount();
-    console.log("[INFO] exec time was " + elapsedTime + " [sec], total exec count is " + execCount + ".");
     
     // console.log(elements.length, isFirstTime);
     return {elements: elements, isFirstTime: isFirstTime};
@@ -55,6 +40,9 @@ export async function getData(handle) {
 }
 
 export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, setDbEn) {
+  const timeLogger = new TimeLogger();
+  timeLogger.tic();
+
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
   let response;
@@ -77,8 +65,11 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
   const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
+  // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
+  const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
+
   // node, edge取得
-  let elements = await getElements(allWithProf);
+  let elements = await getElements(slicedAllWithProf);
 
   // 不要エッジ除去
   removeInvalidLinks(elements);
@@ -86,8 +77,9 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   // DBセット
   if (setDbEn) {
     kv.set(handle, elements);
-    console.log(`[WORKER] complete to update DB, elements: ${elements.length}, ${handle}`);
   }
+
+  console.log(`[WORKER] exec time was ${timeLogger.tac()} [sec]: ${handle}`);
 
   return elements;
 }
