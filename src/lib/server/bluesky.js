@@ -116,14 +116,19 @@ export class MyBlueskyer extends Blueskyer {
       this.api.setHeader('Authorization', `Bearer ${accessJwt}`);
     }
     try {
-      const response = await this.getTimeline();
-      if ((response.status === 400) && (response.data.error === "ExpiredToken")) {
-        // accsessJwt期限切れ
-        const response = await this.refreshSession();
-        kv.set("accessJwt", response.data.accessJwt);
-        kv.set("refreshJwt", response.data.refreshJwt);
-        console.log("[INFO] token was expired, so refleshed the session.");
-      };
+      const self = this;
+      await this.getTimeline().catch(async err => {
+        if ((err.status === 400) && (err.error === "ExpiredToken")) {
+          // accsessJwt期限切れ
+          const response = await this.login({
+            identifier: identifier,
+            password: password
+          });
+          kv.set("accessJwt", response.data.accessJwt);
+          kv.set("refreshJwt", response.data.refreshJwt);
+          console.log("[INFO] token was expired, so refleshed the session.");
+        }
+      });
     } catch (e) {
       throw e;
     }
