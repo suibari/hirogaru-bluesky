@@ -12,15 +12,6 @@ export const actions = {
       const {elements, isFirstTime} = await getData(handle);
       console.log("[INFO] send data to client. total elements: "+elements.length);
 
-      // Inngestトリガー
-      if (elements) {
-        console.log(`[WORKER] start to updata DB: ${handle}`);
-        inngest.send({
-          name: 'hirogaru/update.db', 
-          data: { handle },
-        });
-      }
-  
       return { success: true, elements: elements, isFirstTime: isFirstTime };
     } catch (e) {
       console.error("[ERROR] An error occured: ", e);
@@ -43,5 +34,26 @@ export const actions = {
       console.error("[ERROR] An error occured: ", e);
       error(500, { message: e.error });
     } 
+  },
+
+  update: async ({ request }) => {
+    try {
+      const data = await request.formData();
+      const handle = data.get('handle');
+      console.log(`[INFO] updating DB for handle: ${handle}`);
+
+
+      // Inngestトリガー
+      await inngest.send({
+        name: 'hirogaru/update.db', 
+        data: { handle },
+      });
+      console.log("[INFO] Inngest event sent.");
+
+      return { success: true, message: "Update successful" };
+    } catch (e) {
+      console.error("[ERROR] An error occurred: ", e);
+      throw error(500, { message: e.message });
+    }
   }
 }

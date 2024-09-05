@@ -89,6 +89,12 @@
             snackbarSuccessFirstTime.open();
           }
           runConcentric(elements);
+
+          // 裏でinngestに更新リクエスト
+          const response = await fetch('?/update', {
+            method: 'POST',
+            body: body,
+          });
         };
         // applyAction(result); // formへのresult格納
       } else {
