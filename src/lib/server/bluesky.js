@@ -1,4 +1,5 @@
 import { Blueskyer } from "blueskyer";
+import { kv } from "$lib/server/vercel_kv";
 
 export class MyBlueskyer extends Blueskyer {
     /**
@@ -87,6 +88,42 @@ export class MyBlueskyer extends Blueskyer {
       };
 
       return friendsWithProf;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  /**
+   * アクセストークンとリフレッシュトークンが未取得ならセッションを作成、既取得で期限切れならセッションをリフレッシュ
+   * 元のライブラリをオーバーライドしVercel KVに値を保存
+   */
+  async createOrRefleshSession(identifier, password) {
+    const accessJwt = await kv.get("accessJwt");
+    const refreshJwt = await kv.get("refreshJwt");
+    
+    if ((!accessJwt) && (!refreshJwt)) {
+      // 初回起動時にaccsessJwt取得
+      const response = await this.login({
+        identifier: identifier,
+        password: password
+      });
+      kv.set("accessJwt", response.data.accessJwt);
+      kv.set("refreshJwt", response.data.refreshJwt);
+      // console.log(this.accessJwt)
+      console.log("[INFO] created new session.");
+    } else {
+      // Vercel KVから取ってきた値をインスタンスにセット
+      this.api.setHeader('Authorization', `Bearer ${accessJwt}`);
+    }
+    try {
+      const response = await this.getTimeline();
+      if ((response.status === 400) && (response.data.error === "ExpiredToken")) {
+        // accsessJwt期限切れ
+        const response = await this.refreshSession();
+        kv.set("accessJwt", response.data.accessJwt);
+        kv.set("refreshJwt", response.data.refreshJwt);
+        console.log("[INFO] token was expired, so refleshed the session.");
+      };
     } catch (e) {
       throw e;
     }

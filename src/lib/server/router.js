@@ -1,12 +1,8 @@
-import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD, KV_REST_API_URL, KV_REST_API_TOKEN } from '$env/static/private';
+import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD } from '$env/static/private';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64 } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
-import { createClient } from '@vercel/kv';
-const kv = createClient({
-  url: KV_REST_API_URL,
-  token: KV_REST_API_TOKEN
-});
+import { kv } from '$lib/server/vercel_kv.js';
 const agent = new MyBlueskyer();
 const execLogger = new ExecutionLogger();
 
