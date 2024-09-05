@@ -4,7 +4,6 @@ import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase6
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
 import { kv } from '$lib/server/vercel_kv.js';
 const agent = new MyBlueskyer();
-const execLogger = new ExecutionLogger();
 
 const THRESHOLD_NODES = 36
 const THRESHOLD_TL_TMP = 200;
@@ -82,4 +81,12 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   console.log(`[WORKER] exec time was ${timeLogger.tac()} [sec]: ${handle}`);
 
   return elements;
+}
+
+export async function doSearchActors(query) {
+  const params = {q: query};
+  await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
+  const response = await agent.searchActors(params);
+  const actors = response.data.actors;
+  return actors;
 }

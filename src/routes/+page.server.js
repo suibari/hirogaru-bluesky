@@ -1,4 +1,4 @@
-import { getData } from '$lib/server/router.js';
+import { getData, doSearchActors } from '$lib/server/router.js';
 import { addTextToImage } from '$lib/server/imgshaper.js';
 import { error } from '@sveltejs/kit';
 import { inngest } from '$lib/inngest/inngest.js';
@@ -42,7 +42,6 @@ export const actions = {
       const handle = data.get('handle');
       console.log(`[INFO] updating DB for handle: ${handle}`);
 
-
       // Inngestトリガー
       await inngest.send({
         name: 'hirogaru/update.db', 
@@ -51,6 +50,20 @@ export const actions = {
       console.log("[INFO] Inngest event sent.");
 
       return { success: true, message: "Update successful" };
+    } catch (e) {
+      console.error("[ERROR] An error occurred: ", e);
+      throw error(500, { message: e.message });
+    }
+  },
+
+  search: async ({ request }) => {
+    try {
+      const data = await request.formData();
+      const handle = data.get('handle');
+
+      const searchResult = await doSearchActors(handle);
+
+      return { success: true, searchResult: searchResult };
     } catch (e) {
       console.error("[ERROR] An error occurred: ", e);
       throw error(500, { message: e.message });

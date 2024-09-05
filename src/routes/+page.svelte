@@ -37,19 +37,30 @@
   let srcGraph;
   let isClickShare = false;
   let isClickHelp = false;
+  let isShowSuggestion = false;
   let activeTab = "使い方";
   let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccessFirstTime;
   let inputHandle = writable('');
+  let suggestions = writable([]);
   let errorMessage;
   let isGridMode = false;
   let selectedRadius;
 
-  // ページ読み込み時ローカルストレージのハンドルをセット
+  
   onMount(() => {
+    // ページ読み込み時ローカルストレージのハンドルをセット
     const storedValue = localStorage.getItem('handle');
     if (storedValue) {
       inputHandle.set(storedValue);
     }
+
+    // サジェスト欄のイベントリスナーセット
+    document.addEventListener('click', closeSuggestions);
+
+    // コンポーネントが破棄されるときにイベントリスナーを削除
+    return () => {
+      document.removeEventListener('click', closeSuggestions);
+    };
   })
 
   // ユーザカードの相関図ボタン用関数
@@ -63,8 +74,9 @@
       isNeverRun = false;
       isRunning = true;
       isGridMode = false;
+      isShowSuggestion = false;
 
-      if (event.currentTarget) {
+      if ((event) && (event.currentTarget)) {
         body = new FormData(event.currentTarget);
 
         // ローカルストレージに保存
@@ -104,6 +116,41 @@
         isRunning = false;
       }
     };
+  }
+
+  async function handleInput(event) {
+    const value = event.target.value;
+    const form = event.target.form;
+    
+    if (value.length > 0) {
+      const body = new FormData(form);
+      const response = await fetch('?/search', {
+        method: 'POST',
+        body: body,
+      });
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          const results = result.data.searchResult;
+          suggestions = results.slice(0, 5);
+          isShowSuggestion = true;
+        }
+      }
+    } else {
+      isShowSuggestion = false;
+    }
+  }
+
+  function handleSuggestionClick(suggestion) {
+    inputHandle.set(suggestion.handle);
+    handleSubmit(suggestion.handle);
+  }
+
+  function closeSuggestions(event) {
+    const isClickInputOrSuggestion = event.target.closest('input', '.suggestion-box');
+    if (!isClickInputOrSuggestion) {
+      isShowSuggestion = false;
+    }
   }
 
   // 相関図半径のセレクトボックス選択肢生成
@@ -251,10 +298,23 @@
 </script>
 
 <!-- フォーム -->
-<form method="post" action="?/generate" on:submit|preventDefault={handleSubmit}>
-  <input type="text" name="handle" autocomplete="off" placeholder="handle.bsky.social" bind:value={$inputHandle} />
-  <button type="submit">Generate!</button>
-</form>
+<div class="form-container">
+  <form method="post" action="?/generate" on:submit|preventDefault={handleSubmit}>
+    <input type="text" name="handle" autocomplete="off" placeholder="表示名 or ハンドル名" on:input={handleInput} bind:value={$inputHandle} />
+    <button type="submit">Generate!</button>
+  </form>
+  {#if isShowSuggestion && suggestions.length > 0}
+    <div class="suggestions-box">
+      <ul>
+        {#each suggestions as suggestion}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+          <li on:click={() => handleSuggestionClick(suggestion)}>{suggestion.handle} ({suggestion.displayName})</li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+</div>
 <div id="selectRadius">
   <div class="icon">
     <IconButton class="material-icons">swap_vertical_circle</IconButton>
@@ -397,11 +457,39 @@
 </div>
 
 <style>
-  form {
+  .form-container {
+    position: relative;
+    width: fit-content;
     margin-top: 16px;
     margin-left: 8px;
+  }
+  .form-container form {
     position: relative;
     z-index: 1;
+  }
+  .suggestions-box {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: none;
+  }
+  .suggestions-box ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .suggestions-box li {
+    padding-left: 5px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  .suggestions-box li:hover {
+    background-color: #f0f0f0;
   }
   #selectRadius {
     display: flex;
