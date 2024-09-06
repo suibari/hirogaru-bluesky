@@ -42,6 +42,7 @@
   let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccessFirstTime;
   let inputHandle = writable('');
   let suggestions = writable([]);
+  let debounceTimeout;
   let errorMessage;
   let isGridMode = false;
   let selectedRadius;
@@ -121,24 +122,31 @@
   async function handleInput(event) {
     const value = event.target.value;
     const form = event.target.form;
-    
-    if (value.length > 0) {
-      const body = new FormData(form);
-      const response = await fetch('?/search', {
-        method: 'POST',
-        body: body,
-      });
-      if (response.ok) {
-        const result = deserialize(await response.text());
-        if (result.type === 'success') {
-          const results = result.data.searchResult;
-          suggestions = results.slice(0, 5);
-          isShowSuggestion = true;
-        }
-      }
-    } else {
-      isShowSuggestion = false;
+
+    // デバウンス: 一定時間入力が止まったらリクエストを送る
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
     }
+
+    debounceTimeout = setTimeout(async () => {
+      if (value.length > 0) {
+        const body = new FormData(form);
+        const response = await fetch('?/search', {
+          method: 'POST',
+          body: body,
+        });
+        if (response.ok) {
+          const result = deserialize(await response.text());
+          if (result.type === 'success') {
+            const results = result.data.searchResult;
+            suggestions = results.slice(0, 5);
+            isShowSuggestion = true;
+          }
+        }
+      } else {
+        isShowSuggestion = false;
+      }
+    }, 300); // 300msデバウンス
   }
 
   function handleSuggestionClick(suggestion) {
