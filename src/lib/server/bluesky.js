@@ -108,7 +108,7 @@ export class MyBlueskyer extends Blueskyer {
         password: password
       });
       await docClient.update(UPDATE_ACCESSJWT(response.data.accessJwt)).promise();
-      await docClient.update(UPDATE_ACCESSJWT(response.data.refreshJwt)).promise();
+      await docClient.update(UPDATE_RESRESHJWT(response.data.refreshJwt)).promise();
       // console.log(this.accessJwt)
       console.log("[INFO] created new session.");
     } else {
@@ -124,7 +124,7 @@ export class MyBlueskyer extends Blueskyer {
             password: password
           });
           await docClient.update(UPDATE_ACCESSJWT(response.data.accessJwt)).promise();
-          await docClient.update(UPDATE_ACCESSJWT(response.data.refreshJwt)).promise();
+          await docClient.update(UPDATE_RESRESHJWT(response.data.refreshJwt)).promise();
           console.log("[INFO] token was expired, so refleshed the session.");
         }
       });
