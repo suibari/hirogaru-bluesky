@@ -2,7 +2,7 @@ import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD } from '$env/static/private';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64 } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
-import { kv } from '$lib/server/vercel_kv.js';
+import { docClient, GET_ELEMENTS, UPDATE_ELEMENTS } from './dynamodb';
 const agent = new MyBlueskyer();
 
 const THRESHOLD_NODES = 36
@@ -14,13 +14,17 @@ const MAX_RADIUS = 10;
 
 export async function getData(handle) {
   try {
+    let elements;
+
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
     let isFirstTime = false;
-    let elements = await kv.get(handle);
-    if (elements === null) {
+    let result = await docClient.get(GET_ELEMENTS(handle)).promise();
+    if (!result.Item) {
       // データがないので同期処理で待って最低限のデータを渡す
       elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false);
       isFirstTime = true;
+    } else {
+      elements = result.Item.elements;
     }
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
@@ -75,7 +79,9 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
 
   // DBセット
   if (setDbEn) {
-    kv.set(handle, elements);
+    await docClient.update(UPDATE_ELEMENTS(handle, elements), (err) => {
+      if (err) console.error("Error", err);
+    }).promise();
   }
 
   console.log(`[WORKER] exec time was ${timeLogger.tac()} [sec]: ${handle}`);

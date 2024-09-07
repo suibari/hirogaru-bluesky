@@ -1,5 +1,5 @@
 import { Blueskyer } from "blueskyer";
-import { kv } from "$lib/server/vercel_kv";
+import { docClient, GET_ACCESSJWT, GET_REFRESHJWT, UPDATE_ACCESSJWT, UPDATE_REFRESHJWT } from './dynamodb';
 
 export class MyBlueskyer extends Blueskyer {
     /**
@@ -98,25 +98,24 @@ export class MyBlueskyer extends Blueskyer {
    * 元のライブラリをオーバーライドしVercel KVに値を保存
    */
   async createOrRefleshSession(identifier, password) {
-    const accessJwt = await kv.get("accessJwt");
-    const refreshJwt = await kv.get("refreshJwt");
+    const result_access = await docClient.get(GET_ACCESSJWT).promise();
+    const result_refresh = await docClient.get(GET_REFRESHJWT).promise();
     
-    if ((!accessJwt) && (!refreshJwt)) {
+    if ((!result_access.Item) && (!result_refresh.Item)) {
       // 初回起動時にaccsessJwt取得
       const response = await this.login({
         identifier: identifier,
         password: password
       });
-      kv.set("accessJwt", response.data.accessJwt);
-      kv.set("refreshJwt", response.data.refreshJwt);
+      await docClient.update(UPDATE_ACCESSJWT(response.data.accessJwt)).promise();
+      await docClient.update(UPDATE_ACCESSJWT(response.data.refreshJwt)).promise();
       // console.log(this.accessJwt)
       console.log("[INFO] created new session.");
     } else {
       // Vercel KVから取ってきた値をインスタンスにセット
-      this.api.setHeader('Authorization', `Bearer ${accessJwt}`);
+      this.api.setHeader('Authorization', `Bearer ${result_access.Item.tokens}`);
     }
     try {
-      const self = this;
       await this.getTimeline().catch(async err => {
         if ((err.status === 400) && (err.error === "ExpiredToken")) {
           // accsessJwt期限切れ
@@ -124,8 +123,8 @@ export class MyBlueskyer extends Blueskyer {
             identifier: identifier,
             password: password
           });
-          kv.set("accessJwt", response.data.accessJwt);
-          kv.set("refreshJwt", response.data.refreshJwt);
+          await docClient.update(UPDATE_ACCESSJWT(response.data.accessJwt)).promise();
+          await docClient.update(UPDATE_ACCESSJWT(response.data.refreshJwt)).promise();
           console.log("[INFO] token was expired, so refleshed the session.");
         }
       });
