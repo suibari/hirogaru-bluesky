@@ -1,5 +1,5 @@
 import { Blueskyer } from "blueskyer";
-import { docClient, GET_ACCESSJWT, GET_REFRESHJWT, UPDATE_ACCESSJWT, UPDATE_REFRESHJWT } from './dynamodb';
+import { docClient, GET_TOKENS, UPDATE_TOKENS } from './dynamodb';
 
 export class MyBlueskyer extends Blueskyer {
     /**
@@ -98,38 +98,34 @@ export class MyBlueskyer extends Blueskyer {
    * 元のライブラリをオーバーライドしVercel KVに値を保存
    */
   async createOrRefleshSession(identifier, password) {
-    const result_access = await docClient.get(GET_ACCESSJWT).promise();
-    const result_refresh = await docClient.get(GET_REFRESHJWT).promise();
+    const result = await docClient.get(GET_TOKENS).promise();
     
-    if ((!result_access.Item) && (!result_refresh.Item)) {
+    if ((!result.Item)) {
       // 初回起動時にaccsessJwt取得
       const response = await this.login({
         identifier: identifier,
         password: password
       });
-      await docClient.update(UPDATE_ACCESSJWT(response.data.accessJwt)).promise();
-      await docClient.update(UPDATE_REFRESHJWT(response.data.refreshJwt)).promise();
-      // console.log(this.accessJwt)
+      await docClient.update(UPDATE_TOKENS(response.data.accessJwt, response.data.refreshJwt)).promise();
       console.log("[INFO] created new session.");
     } else {
-      // Vercel KVから取ってきた値をインスタンスにセット
-      this.api.setHeader('Authorization', `Bearer ${result_access.Item.tokens}`);
-    }
-    try {
-      await this.getTimeline().catch(async err => {
-        if ((err.status === 400) && (err.error === "ExpiredToken")) {
-          // accsessJwt期限切れ
-          const response = await this.login({
-            identifier: identifier,
-            password: password
-          });
-          await docClient.update(UPDATE_ACCESSJWT(response.data.accessJwt)).promise();
-          await docClient.update(UPDATE_REFRESHJWT(response.data.refreshJwt)).promise();
-          console.log("[INFO] token was expired, so refleshed the session.");
-        }
-      });
-    } catch (e) {
-      throw e;
+      // DBから取ってきた値をインスタンスにセット
+      this.api.setHeader('Authorization', `Bearer ${result.Item.tokens.accessJwt}`);
+      try {
+        await this.getTimeline().catch(async err => {
+          if ((err.status === 400) && (err.error === "ExpiredToken")) {
+            // accsessJwt期限切れ
+            const response = await this.login({
+              identifier: identifier,
+              password: password
+            });
+            await docClient.update(UPDATE_TOKENS(response.data.accessJwt, response.data.refreshJwt)).promise();
+            console.log("[INFO] token was expired, so refleshed the session.");
+          }
+        });
+      } catch (e) {
+        throw e;
+      }
     }
   }
 }

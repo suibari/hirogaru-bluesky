@@ -21,6 +21,7 @@
   import Specification from "../components/Specification.svelte";
   import ChangeLog from "../components/ChangeLog.svelte";
   import TitleLogo from "../components/TitleLogo.svelte";
+  import ShareModal from '../components/ShareModal.svelte';
 
   // export let form; // これがないとform actionを受け取れない
   let isNeverRun = true;
@@ -38,15 +39,17 @@
   let isClickShare = false;
   let isClickHelp = false;
   let isShowSuggestion = false;
+  let isLoginModalOpen = false;
+  let isGridMode = false;
+  export let data;
   let activeTab = "使い方";
   let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccessFirstTime;
   let inputHandle = writable('');
   let suggestions = writable([]);
   let debounceTimeout;
   let errorMessage;
-  let isGridMode = false;
   let selectedRadius;
-
+  let handle, password;
   
   onMount(() => {
     // ページ読み込み時ローカルストレージのハンドルをセット
@@ -64,7 +67,7 @@
     };
   })
 
-  // ユーザカードの相関図ボタン用関数
+  // ユーザカードの相関図ボタン用ハンドラ
   async function handleSubmit(event) {
     if (isRunning) {
       snackbarWarningRunning.open();
@@ -119,6 +122,7 @@
     };
   }
 
+  // ハンドル名入力時のハンドラ
   async function handleInput(event) {
     const value = event.target.value;
     const form = event.target.form;
@@ -149,15 +153,48 @@
     }, 300); // 300msデバウンス
   }
 
+  // サジェスト欄クリック時のハンドラ
   function handleSuggestionClick(suggestion) {
     inputHandle.set(suggestion.handle);
     handleSubmit(suggestion.handle);
   }
 
+  // サジェスト欄クローズのハンドラ
   function closeSuggestions(event) {
     const isClickInputOrSuggestion = event.target.closest('input', '.suggestion-box');
     if (!isClickInputOrSuggestion) {
       isShowSuggestion = false;
+    }
+  }
+
+  // ログイン用ハンドラ
+  async function handleLogin(event) {
+    const body = new FormData(event.currentTarget);
+    console.log(body)
+
+    try {
+      const response = await fetch('?/login', {
+        method: 'POST',
+        credentials: 'include',
+        body: body,
+      });
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          // isLoggedIn = true;
+          isLoginModalOpen = false;
+        } else {
+          errorMessage = "認証に失敗しました";
+          snackbarErrorFetch.open();
+        }
+      } else {
+        errorMessage = "サーバーエラーが発生しました";
+        snackbarErrorFetch.open();
+      }
+    } catch (e) {
+      console.error(e);
+      errorMessage = "クライアントエラーが発生しました";
+      snackbarErrorFetch.open();
     }
   }
 
@@ -279,28 +316,11 @@
         blob = await captureConcentric();
       };
 
-      // サーバにblobを投げ合成してもらい、base64uriを受け取る
-      let body = new FormData();
-      // console.log(`${blob.type}, ${blob.size} [Byte]`);
-      body.append('image', blob, "image.png");
-      const response = await fetch('?/upload', {
-        method: 'POST',
-        body: body,
-      });
-      
-      if (response.ok) {
-        const result = deserialize(await response.text());
-        if (result.type === 'success') {
-          srcGraph = result.data.uri;
-          isClickShare = true;
-        };
-        isRunning = false;
-      } else {
-        const json = await response.json();
-        errorMessage = json.error.message;
-        snackbarErrorFetch.open();
-        isRunning = false;
-      };
+      const objectURL = URL.createObjectURL(blob);
+
+      srcGraph = objectURL;
+      isClickShare = true;
+      isRunning = false;
     };
   }
 </script>
@@ -393,9 +413,22 @@
 {/if}
 
 <!-- シェアボタン -->
-<div id="shareButton">
-  <IconButton on:click={() => handleShare()} class="material-icons">photo_camera</IconButton>
-  <!-- <CameraPhotoSolid on:click={() => handleShare()} /> -->
+<div id="shareContainer">
+  <!-- ログイン、ログアウトボタン -->
+  {#if data.isLoggedIn}
+    <div id="logoutButton">
+      <!-- <IconButton on:click={handleLogout} class="material-icons">logout</IconButton> -->
+      <IconButton class="material-icons">logout</IconButton>
+    </div>
+  {:else}
+    <div id="loginButton">
+      <IconButton on:click={() => isLoginModalOpen = true} class="material-icons">login</IconButton>
+    </div>
+  {/if}
+  <div id="shareButton">
+    <IconButton on:click={() => handleShare()} class="material-icons">photo_camera</IconButton>
+    <!-- <CameraPhotoSolid on:click={() => handleShare()} /> -->
+  </div>
 </div>
 
 <!-- ヘルプボタン -->
@@ -405,21 +438,8 @@
 </div>
 
 <!-- シェアモーダル -->
-<Dialog
-  bind:open={isClickShare}
-  aria-describedby="share-message"
->
-  <Header>
-    <IconButton action="close" class="material-icons" style="float: right;">close</IconButton>
-  </Header>
-  <Content id="share-message">  
-    <img id="share-image" src={srcGraph} alt="ひろがるBluesky相関図">
-    <ol>
-      <li>画像を右クリックかロングタップでコピーしてください</li>
-      <li><a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky%0D%0Ahttps%3A%2F%2Fhirogaru-bluesky.vercel.app%2F%0D%0A" target="_blank">こちら</a>をクリックして、開いたポスト画面に画像をペーストしてシェア！</li>
-    </ol>
-  </Content>
-</Dialog>
+<ShareModal bind:isClickShare={isClickShare} bind:isLoggedIn={data.isLoggedIn} srcGraph={srcGraph} />
+
 <!-- シェアエラー -->
 <Snackbar bind:this={snackbarWarningRunning}>
   <Label>グラフ生成中です</Label>
@@ -463,6 +483,24 @@
     </Content>
   </Dialog>
 </div>
+
+<!-- ログインフォーム -->
+<Dialog bind:open={isLoginModalOpen} aria-describedby="login-message">
+  <Header>
+    <IconButton action="close" class="material-icons">close</IconButton>
+  </Header>
+  <Content id="login-message">
+    <form  method="post" action="?/login" on:submit|preventDefault={handleLogin} class="login-form">
+      <label for="handle">ハンドル名:</label>
+      <input type="text" name="handle" bind:value={handle} required />
+      
+      <label for="password">アプリパスワード:</label>
+      <input type="password" name="password" bind:value={password} required />
+
+      <button type="submit">認証</button>
+    </form>
+  </Content>
+</Dialog>
 
 <style>
   .form-container {
@@ -525,20 +563,20 @@
     transform: translate(-50%, -50%);
     z-index: 3;
   }
-  #shareButton {
-    position: fixed;
+  #shareContainer {
+    position: absolute;
     top: 8px;
     right: 8px;
-    width: 50px;
-    height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #loginButton, #logoutButton, #shareButton {
+    display: flex;
+    align-items: center;
     color: white;
-    cursor: pointer;
-    z-index: 2;
   }
-  #share-image {
-    max-width: 100%;
-    height: auto;
-  }
+  
   #helpButton {
     position: fixed;
     bottom: 8px;
@@ -550,5 +588,41 @@
   }
   #helpModal {
     z-index: 10;
+  }
+  /* モーダル全体のスタイル */
+  .dialog {
+    max-width: 500px;
+    width: 100%;
+    padding: 16px;
+  }
+  /* ヘッダーのスタイル */
+  .dialog .header {
+    display: flex;
+    justify-content: flex-end;
+  }
+  /* ログインフォームのスタイル */
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .login-form label {
+    font-weight: bold;
+  }
+  .login-form input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .login-form button {
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .login-form button:hover {
+    background-color: #0056b3;
   }
 </style>

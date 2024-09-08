@@ -1,9 +1,14 @@
-import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD } from '$env/static/private';
+import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD, HIROGARU_SECRET_KEY } from '$env/static/private';
+import bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
+import blueskyer from 'blueskyer';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64 } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
-import { docClient, GET_ELEMENTS, UPDATE_ELEMENTS } from './dynamodb';
+import { docClient, GET_ELEMENTS, GET_USER_USERINFO, UPDATE_ELEMENTS, UPDATE_USER_USERINFO, DELETE_USER_USERINFO } from './dynamodb';
 const agent = new MyBlueskyer();
+const { RichText } = blueskyer;
+const { bcrypt } = bcrypt;
 
 const THRESHOLD_NODES = 36
 const THRESHOLD_TL_TMP = 200;
@@ -95,4 +100,119 @@ export async function doSearchActors(query) {
   const response = await agent.searchActors(params);
   const actors = response.data.actors;
   return actors;
+}
+
+export async function createSession(handle, password) {
+  try {
+    const userAgent = new MyBlueskyer();
+
+    const response = await userAgent.login({
+      identifier: handle,
+      password: password
+    });
+    if (response.success) {
+      console.log(`[INFO] success to log in: ${handle}`);
+      const accessJwtBsky = response.data.accessJwt;
+      const refreshJwtBsky = response.data.refreshJwt;
+
+      // パスワード暗号化
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv('aes-256-cbc', HIROGARU_SECRET_KEY, iv);
+      let encrypted = cipher.update(password, 'utf-8', 'hex');
+      encrypted += cipher.final('hex');
+      const ivWithEncrypted = iv.toString('hex') + ':' + encrypted;
+
+      // セッションID生成
+      const sessionId = crypto.randomUUID();
+
+      // セッション有効期限を設定
+      const expirarion = new Date();
+      expirarion.setFullYear(expirarion.getFullYear() + 1); // 1年後
+      
+      await docClient.update(UPDATE_USER_USERINFO(handle, ivWithEncrypted, accessJwtBsky, refreshJwtBsky, sessionId, expirarion.getTime())).promise();
+
+      return sessionId;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function verifyUser(sessionId) {
+  try {
+    // DBからハンドル名と暗号化パスワード取得
+    const result = await docClient.get(GET_USER_USERINFO(sessionId)).promise();
+    if (result.Item) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function verifyUserAndPostBsky(sessionId, text, imgBlob) {
+  try {
+    // DBからハンドル名と暗号化パスワード取得
+    const result = await docClient.get(GET_USER_USERINFO(sessionId)).promise();
+    const userInfo = result.Item.userInfo;
+
+    if (userInfo && new Date() < new Date(userInfo.expirarion)) {
+      // パスワード複合
+      const [ivHex, encrypted] = userInfo.ivWithEncrypted.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', HIROGARU_SECRET_KEY, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf-8');
+      decrypted += decipher.final('utf-8');
+
+      const userAgent = new MyBlueskyer();
+      const response = await userAgent.login({
+        identifier: userInfo.handle,
+        password: decrypted,
+      });
+      if (response.ok) {
+        // Blobをアップロード
+        const dataArray = new Uint8Array(await imgBlob.arrayBuffer());
+        const {result} = await userAgent.uploadBlob(
+          dataArray,
+          {
+            encoding: imgBlob.type,
+          }
+        );
+        // リッチテキスト変換
+        const rt = new RichText({text: text});
+        // 投稿
+        await userAgent.post({
+          text: rt.text,
+          facets: rt.facets,
+          embed: {
+            $type: 'app.bsky.embed.images',
+            images: [
+              {
+                alt: 'ひろがるBluesky! 相関図',
+                image: result.blob,
+                aspectRatio: {
+                  width: 1,
+                  height: 1,
+                }
+              }
+            ]
+          },
+          langs: ["ja-JP"],
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        // 認証失敗
+        console.error(`[ERROR] cannot log in: ${handle}`)
+      }
+    } else {
+      // セッションが無効または期限切れなので削除
+      await docClient.delete(DELETE_USER_USERINFO(sessionId)).promise();
+    }
+  } catch (e) {
+    throw e;
+  }
 }

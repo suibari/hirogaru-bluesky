@@ -1,4 +1,5 @@
-import { getData, doSearchActors } from '$lib/server/router.js';
+import { NODE_ENV } from '$env/static/private';
+import { getData, doSearchActors, createSession, verifyUser } from '$lib/server/router.js';
 import { addTextToImage } from '$lib/server/imgshaper.js';
 import { error } from '@sveltejs/kit';
 import { inngest } from '$lib/inngest/inngest.js';
@@ -68,5 +69,36 @@ export const actions = {
       console.error("[ERROR] An error occurred: ", e);
       throw error(500, { message: e.message });
     }
+  },
+
+  login: async ({ request, cookies }) => {
+    try {
+      const form = await request.formData();
+      const handle = form.get('handle');
+      const password = form.get('password');
+
+      const sessionId = await createSession(handle, password);
+
+      if (sessionId !== null) {
+        cookies.set('sessionId', sessionId, {
+          path: '/',
+          httpOnly: true,
+          secure: (NODE_ENV === 'development') ? false : true,
+          maxAge: 31536000, // 1 year
+        });
+        return { status: 200, body: { success: true } };
+      } else {
+        return { status: 401, body: { success: false } };
+      }
+    } catch (e) {
+      console.error("[ERROR] An error occurred: ", e);
+      throw error(500, { message: e.message });
+    }
+  },
+}
+
+export async function load(event) {
+  return {
+    isLoggedIn: event.locals.isLoggedIn,
   }
 }

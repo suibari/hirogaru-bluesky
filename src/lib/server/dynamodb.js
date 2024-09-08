@@ -5,6 +5,7 @@ AWS.config.update({
 });
 export const docClient = new AWS.DynamoDB.DocumentClient();
 
+// elements
 export const GET_ELEMENTS = (handle) => ({
   TableName: 'hirogaru-bluesky-db',
   Key: {
@@ -23,35 +24,53 @@ export const UPDATE_ELEMENTS = (handle, elements) => ({
   },
 });
 
-export const GET_ACCESSJWT = {
+// root_accessToken
+export const GET_TOKENS = {
   TableName: 'hirogaru-bluesky-db',
-  Key: { key: 'accessJwt' },
+  Key: { key: 'tokens' },
 }
 
-export const GET_REFRESHJWT = {
-  TableName: 'hirogaru-bluesky-db',
-  Key: { key: 'refreshJwt' },
-
-}
-
-export const UPDATE_ACCESSJWT = (accessJwt) => ({
+export const UPDATE_TOKENS = (accessJwt, refreshJwt) => ({
   TableName: 'hirogaru-bluesky-db',
   Key: {
-    key: 'accessJwt',
+    key: 'tokens',
   },
-  UpdateExpression: 'SET tokens = :newToken',
+  UpdateExpression: 'SET userInfo = :userInfo',
   ExpressionAttributeValues: {
-    ':newToken': accessJwt,
+    ':userInfo': {
+      accessJwt,
+      refreshJwt,
+    }
   },
 });
 
-export const UPDATE_REFRESHJWT = (refreshJwt) => ({
+// user_accessToken
+export const GET_USER_USERINFO = (sessionId) => ({
+  TableName: 'hirogaru-bluesky-db',
+  Key: { key: `${sessionId}` },
+});
+
+export const UPDATE_USER_USERINFO = (handle, ivWithEncrypted, accessJwt, refreshJwt, sessionId, expirarion) => ({
   TableName: 'hirogaru-bluesky-db',
   Key: {
-    key: 'refreshJwt',
+    key: sessionId,
   },
-  UpdateExpression: 'SET tokens = :newToken',
+  UpdateExpression: `SET userInfo = :newToken`,
   ExpressionAttributeValues: {
-    ':newToken': refreshJwt,
+    ':newToken': {
+      handle: handle,
+      ivWithEncrypted: ivWithEncrypted,
+      accessJwt: accessJwt,
+      refreshJwt: refreshJwt,
+      expirarion: expirarion,
+    },
   },
+});
+
+export const DELETE_USER_USERINFO = (sessionId) => ({
+  TableName: 'hirogaru-bluesky-db',
+  Key: {
+    key: sessionId,
+  },
+  ConditionExpression: "attribute_exists(key)",
 });
