@@ -555,10 +555,10 @@
     width: fit-content;
     margin-top: 16px;
     margin-left: 8px;
+    z-index: 1;
   }
   .form-container form {
     position: relative;
-    z-index: 1;
   }
   .suggestions-box {
     position: absolute;
@@ -585,17 +585,16 @@
     background-color: #f0f0f0;
   }
   #selectRadius {
+    position: fixed;
     display: flex;
     align-items: center;
     margin-top: 50px;
     margin-left: 0px;
     color: white;
+    z-index: 1;
   }
   #selectRadius > .icon {
     pointer-events: none;
-  }
-  #selectBox {
-    z-index: 1;
   }
   @media screen and (max-width: 600px) {
     form button {
