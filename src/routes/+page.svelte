@@ -601,6 +601,10 @@
       margin-top: 10px;
       display: block;
     }
+
+    #selectRadius {
+      margin-top: 90px;
+    }
   }
   #loadingSpinner {
     position: absolute;
