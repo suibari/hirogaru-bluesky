@@ -383,6 +383,7 @@
     </div>
   {/if}
 </div>
+
 <div id="selectRadius">
   <div class="icon">
     <IconButton class="material-icons">swap_vertical_circle</IconButton>
@@ -555,10 +556,11 @@
     width: fit-content;
     margin-top: 16px;
     margin-left: 8px;
-    z-index: 1;
+    z-index: 10;
   }
   .form-container form {
     position: relative;
+    z-index: 1;
   }
   .suggestions-box {
     position: absolute;
@@ -569,7 +571,6 @@
     overflow-y: auto;
     z-index: 10;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    max-height: none;
   }
   .suggestions-box ul {
     list-style: none;
