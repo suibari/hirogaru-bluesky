@@ -3,16 +3,24 @@
   import Textfield from '@smui/textfield';
   import Button from '@smui/button';
   import IconButton from "@smui/icon-button";
+  import Snackbar, {Actions} from '@smui/snackbar';
+  import { Label } from "@smui/tab";
 
   export let isClickShare = false;
   export let isLoggedIn;
+  export let isPosting = false;
   export let srcGraph = '';
+  let snackbarSuccess, snackbarErrorFetch, snackbarWarningPosting;
+  let successMessage, errorMessage = '';
   let modifiedImgBlob = null;
   let modifiedImgUrl = '';
   let postText = "\n#ひろがるBluesky\nhttps://hirogaru-bluesky.vercel.app/";
 
-  $: if (isClickShare) {
-    insertLetterToImg();
+  $: {
+    if (isClickShare) {
+      insertLetterToImg();
+    }
+    isClickShare = !isPosting & isClickShare;
   }
 
   async function insertLetterToImg () {
@@ -46,23 +54,34 @@
   }
 
   async function handlePost() {
-    const formData = new FormData();
-    formData.append("image", modifiedImgBlob, "share-image.png");
-    formData.append("text", postText);
+    if (isPosting) {
+      snackbarWarningPosting.open();
+    } else {
+      isPosting = true;
+      isClickShare = false;
 
-    try {
-      const response = await fetch("?/post", {
-        method: "POST",
-        body: formData
-      });
+      const formData = new FormData();
+      formData.append("image", modifiedImgBlob, "share-image.png");
+      formData.append("text", postText);
 
-      if (response.ok) {
-        console.log("Post successful!");
-      } else {
-        console.error("Failed to post", response.statusText);
+      try {
+        const response = await fetch("?/post", {
+          method: "POST",
+          body: formData
+        });
+
+        isPosting = false;
+        if (response.ok) {
+          successMessage = "ポストしました!";
+          snackbarSuccess.open();
+        } else {
+          const json = await response.json();
+          errorMessage = json.error.message;
+          snackbarErrorFetch.open();
+        }
+      } catch (error) {
+        console.error("Error posting:", error);
       }
-    } catch (error) {
-      console.error("Error posting:", error);
     }
   }
 </script>
@@ -103,6 +122,28 @@
     {/if}
   </Content>
 </Dialog>
+
+<!-- 汎用エラー -->
+<Snackbar bind:this={snackbarErrorFetch}>
+  <Label>エラーが発生しました: {errorMessage}</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
+<!-- 汎用成功 -->
+<Snackbar bind:this={snackbarSuccess}>
+  <Label>{successMessage}</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
+<!-- ポスト中 -->
+<Snackbar bind:this={snackbarWarningPosting}>
+  <Label>ポスト処理中です</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
 
 <style>
   @font-face {
