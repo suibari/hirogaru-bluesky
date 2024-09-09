@@ -1,14 +1,10 @@
 import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD, HIROGARU_SECRET_KEY } from '$env/static/private';
-import bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
-import blueskyer from 'blueskyer';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64 } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
 import { docClient, GET_ELEMENTS, GET_USER_USERINFO, UPDATE_ELEMENTS, UPDATE_USER_USERINFO, DELETE_USER_USERINFO } from './dynamodb';
 const agent = new MyBlueskyer();
-const { RichText } = blueskyer;
-const { bcrypt } = bcrypt;
 
 const THRESHOLD_NODES = 36
 const THRESHOLD_TL_TMP = 200;
