@@ -551,7 +551,7 @@
 
 <style>
   .form-container {
-    position: relative;
+    position: fixed;
     width: fit-content;
     margin-top: 16px;
     margin-left: 8px;
@@ -587,7 +587,7 @@
   #selectRadius {
     display: flex;
     align-items: center;
-    margin-top: 0px;
+    margin-top: 50px;
     margin-left: 0px;
     color: white;
   }
@@ -611,7 +611,7 @@
     z-index: 3;
   }
   #shareContainer {
-    position: absolute;
+    position: fixed;
     top: 8px;
     right: 8px;
     display: flex;
