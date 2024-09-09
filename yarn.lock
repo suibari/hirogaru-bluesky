@@ -1004,13 +1004,13 @@
     "@smui/common" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/common@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/common/-/common-7.0.0-beta.18.tgz"
-  integrity sha512-BH70iF23eGKK57YReDG5nerJR/7lomncVAcKCJ35KEso90S+eu7lZwDg5kUdzVzDRNdS+WkTrDKPhKmo3R2sEQ==
+"@smui/common@^7.0.0", "@smui/common@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/common/-/common-7.0.0.tgz"
+  integrity sha512-/JUf25KMIDLFNfiuMSMs2g7dEZZFUnDJDxpbT3FlGEY/HKoEf0W9GnbmIOzPje1wxW9ajKHN2SIYDPx9so1vnw==
   dependencies:
     "@material/dom" "^14.0.0"
-    svelte2tsx "^0.6.27"
+    svelte2tsx "^0.7.8"
 
 "@smui/data-table@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1058,14 +1058,14 @@
     "@smui/ripple" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/floating-label@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/floating-label/-/floating-label-7.0.0-beta.18.tgz"
-  integrity sha512-cSS1SQRQaROd+GOwjDWiJONWS3nuZpHlr36EZ/DKxS1wfGTJ7M4OC5Cmq0bvY0PZ3tvyfYUTqWbuKvoyMJm+Vw==
+"@smui/floating-label@^7.0.0", "@smui/floating-label@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/floating-label/-/floating-label-7.0.0.tgz"
+  integrity sha512-XHm8fNURqQqPnu+TFPIWuD7NtQIfdT2tv0eiyU+1g9Df1pH9pAVWixTiBaj5HKeky1u99+vFJNBslQS2qTxGhg==
   dependencies:
     "@material/floating-label" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/form-field@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1107,14 +1107,14 @@
     "@smui/common" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/line-ripple@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/line-ripple/-/line-ripple-7.0.0-beta.18.tgz"
-  integrity sha512-i0LHYOcAFEjmvSP5BMgf4V/o0O/USiKc8UL9ZWkX2X3kuJGU3Lyc+ZM+hkOSNgw97BdP0xpJumvoHTwZXHv+zg==
+"@smui/line-ripple@^7.0.0", "@smui/line-ripple@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/line-ripple/-/line-ripple-7.0.0.tgz"
+  integrity sha512-Mm5B8xci4SglMehp404veVu3zGlZVHViiYsNPpypaG+4aOrK0dVgBrd1YgqyXHKFSHOama/Olwe2E2YbkQvxlw==
   dependencies:
     "@material/line-ripple" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/linear-progress@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1159,15 +1159,15 @@
     "@smui/menu-surface" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/notched-outline@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/notched-outline/-/notched-outline-7.0.0-beta.18.tgz"
-  integrity sha512-spWtGvIC/naY1O+/s/o/YP+mPXkRBGKqtIdLQZh21SgV+yPGwFGH6UlEG+BUo5h8I3YNubl1Bui/EAt5+p0ymQ==
+"@smui/notched-outline@^7.0.0", "@smui/notched-outline@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/notched-outline/-/notched-outline-7.0.0.tgz"
+  integrity sha512-pE0yWIO0K9wrU+LIbBXCBYJUo1+qq5jiLTFVJEoyLqB7jtl438sylXpti9aLyB9DG5V8rbkNCkyNxyq4ZVhmlw==
   dependencies:
     "@material/notched-outline" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    "@smui/floating-label" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    "@smui/floating-label" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/paper@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1192,15 +1192,15 @@
     "@smui/ripple" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/ripple@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/ripple/-/ripple-7.0.0-beta.18.tgz"
-  integrity sha512-HegU/75nnaORFwrhojzeyYW4M9FD1nh59zgaWkw3lJK61wbo3bPmIkjPnytpItZXW4GsZfTRJ1ooCr9iiX1otQ==
+"@smui/ripple@^7.0.0", "@smui/ripple@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/ripple/-/ripple-7.0.0.tgz"
+  integrity sha512-N42jqgLOleOj3fU1BnkTPbjtWpisp8x9oUgF32SDkVh48ih8J8+/xQ1W5g28WrNDErjSu9G4DTcYN6BJYOng3Q==
   dependencies:
     "@material/dom" "^14.0.0"
     "@material/ripple" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/segmented-button@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1312,22 +1312,22 @@
     "@smui/tab-indicator" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/textfield@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/textfield/-/textfield-7.0.0-beta.18.tgz"
-  integrity sha512-teTZNjC9uu1Ig1UoxJo52WMsCfNA7sdDQTgC/j+t0ZNkJ9oX1epfFFuIdUlwgbuWq3njK1HeVPf/7rK819/niA==
+"@smui/textfield@^7.0.0", "@smui/textfield@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/textfield/-/textfield-7.0.0.tgz"
+  integrity sha512-3p/pipFrj6xuA6YUhIEHf4fxInMENI3EFHVYeF1wU0vERSojtqBw+NnAscgv/PHKv4X6nFY3ZvD/9cVf7S4frA==
   dependencies:
     "@material/dom" "^14.0.0"
     "@material/feature-targeting" "^14.0.0"
     "@material/ripple" "^14.0.0"
     "@material/rtl" "^14.0.0"
     "@material/textfield" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    "@smui/floating-label" "^7.0.0-beta.18"
-    "@smui/line-ripple" "^7.0.0-beta.18"
-    "@smui/notched-outline" "^7.0.0-beta.18"
-    "@smui/ripple" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    "@smui/floating-label" "^7.0.0"
+    "@smui/line-ripple" "^7.0.0"
+    "@smui/notched-outline" "^7.0.0"
+    "@smui/ripple" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/tooltip@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -3356,6 +3356,14 @@ svelte2tsx@^0.6.27:
   version "0.6.27"
   resolved "https://registry.npmjs.org/svelte2tsx/-/svelte2tsx-0.6.27.tgz"
   integrity sha512-E1uPW1o6VsbRz+nUk3fznZ2lSmCITAJoNu8AYefWSvIwE2pSB01i5sId4RMbWNzfcwCQl1DcgGShCPcldl4rvg==
+  dependencies:
+    dedent-js "^1.0.1"
+    pascal-case "^3.1.1"
+
+svelte2tsx@^0.7.8:
+  version "0.7.18"
+  resolved "https://registry.npmjs.org/svelte2tsx/-/svelte2tsx-0.7.18.tgz"
+  integrity sha512-PCOhH7uQaV472ZvNAcnkvShjFRMMkKUc/eNJImQMH9T4CyHeQpdatedFrEjaMCsweFb/oo3a6bv4qtdfaCPw8g==
   dependencies:
     dedent-js "^1.0.1"
     pascal-case "^3.1.1"

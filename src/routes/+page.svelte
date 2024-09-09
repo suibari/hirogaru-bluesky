@@ -12,6 +12,7 @@
   import Tab, { Label } from "@smui/tab";
   import TabBar from "@smui/tab-bar";
   import Snackbar, {Actions} from '@smui/snackbar';
+  import Button from '@smui/button';
   // my components
   import Graph from "../components/Graph.svelte";
   import UserCard from "../components/UserCard.svelte";
@@ -42,11 +43,11 @@
   let isLoginModalOpen = false;
   let isGridMode = false;
   let activeTab = "使い方";
-  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccessFirstTime;
+  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccess;
   let inputHandle = writable('');
   let suggestions = writable([]);
   let debounceTimeout;
-  let errorMessage;
+  let errorMessage, successMessage = "";
   let selectedRadius;
   let handle, password;
   let isLoggedIn = false;
@@ -108,7 +109,8 @@
           elements = result.data.elements;
           const isFirstTime = result.data.isFirstTime;
           if (isFirstTime) {
-            snackbarSuccessFirstTime.open();
+            successMessage = "初回実行なので取得データ数を減らして実行します。<br>数分後にデータ更新されますので、また実行してみてください!";
+            snackbarSuccess.open();
           }
           runConcentric(elements);
 
@@ -175,59 +177,63 @@
 
   // ログイン用ハンドラ
   async function handleLogin(event) {
+    isRunning = true;
+    isLoginModalOpen = false;
+
     const body = new FormData(event.currentTarget);
 
-    try {
-      const response = await fetch('?/login', {
-        method: 'POST',
-        credentials: 'include',
-        body: body,
-      });
-      if (response.ok) {
-        const result = deserialize(await response.text());
-        if (result.type === 'success') {
-          isLoggedIn = true;
-          isLoginModalOpen = false;
-        } else {
-          errorMessage = "認証に失敗しました";
-          snackbarErrorFetch.open();
-        }
+    const response = await fetch('?/login', {
+      method: 'POST',
+      credentials: 'include',
+      body: body,
+    });
+    if (response.ok) {
+      const result = deserialize(await response.text());
+      if (result.type === 'success') {
+        isLoggedIn = true;
+        isRunning = false;
+        successMessage = "ログインに成功しました。シェアボタンで直接画像をポストできます";
+        snackbarSuccess.open();
       } else {
-        errorMessage = "サーバーエラーが発生しました";
+        isRunning = false;
+        errorMessage = "認証に失敗しました";
         snackbarErrorFetch.open();
       }
-    } catch (e) {
-      console.error(e);
-      errorMessage = "クライアントエラーが発生しました";
+    } else {
+      isRunning = false;
+      const json = await response.json();
+      errorMessage = json.error.message;
       snackbarErrorFetch.open();
     }
   }
 
     // ログアウト用ハンドラ
   async function handleLogout() {
+    isRunning = true;
+
     const body = new FormData();
 
-    try {
-      const response = await fetch('?/logout', {
-        method: 'POST',
-        credentials: 'include',
-        body: body,
-      });
-      if (response.ok) {
-        const result = deserialize(await response.text());
-        if (result.type === 'success') {
-          isLoggedIn = false;
-        } else {
-          errorMessage = "認証に失敗しました";
-          snackbarErrorFetch.open();
-        }
+    const response = await fetch('?/logout', {
+      method: 'POST',
+      credentials: 'include',
+      body: body,
+    });
+    if (response.ok) {
+      const result = deserialize(await response.text());
+      if (result.type === 'success') {
+        isLoggedIn = false;
+        isRunning = false;
+        successMessage = "ログアウトしました";
+        snackbarSuccess.open();
       } else {
-        errorMessage = "サーバーエラーが発生しました";
+        isRunning = false;
+        errorMessage = "認証に失敗しました";
         snackbarErrorFetch.open();
       }
-    } catch (e) {
-      console.error(e);
-      errorMessage = "クライアントエラーが発生しました";
+    } else {
+      isRunning = false;
+      const json = await response.json();
+      errorMessage = json.error.message;
       snackbarErrorFetch.open();
     }
   }
@@ -402,8 +408,8 @@
   </Actions>
 </Snackbar>
 <!-- 初回実行の通知 -->
-<Snackbar bind:this={snackbarSuccessFirstTime}>
-  <Label>初回実行なので取得データ数を減らして実行します。<br>数分後にデータ更新されますので、また実行してみてください!</Label>
+<Snackbar bind:this={snackbarSuccess}>
+  <Label>{successMessage}</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
@@ -530,7 +536,15 @@
       <label for="password">アプリパスワード:</label>
       <input type="password" name="password" bind:value={password} required />
 
-      <button type="submit">認証</button>
+      <div style="font-size: small;"><a href="https://bsky.app/settings/app-passwords" target="_blank">アプリパスワード</a>の設定・入力を推奨します。</div>
+
+      <Button
+        type="submit"
+        variant="raised"
+        style="width: 100%; margin-top: 10px;"
+      >
+        ログインする
+      </Button>
     </form>
   </Content>
 </Dialog>
@@ -622,17 +636,6 @@
   #helpModal {
     z-index: 10;
   }
-  /* モーダル全体のスタイル */
-  .dialog {
-    max-width: 500px;
-    width: 100%;
-    padding: 16px;
-  }
-  /* ヘッダーのスタイル */
-  .dialog .header {
-    display: flex;
-    justify-content: flex-end;
-  }
   /* ログインフォームのスタイル */
   .login-form {
     display: flex;
@@ -646,16 +649,5 @@
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
-  }
-  .login-form button {
-    padding: 10px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .login-form button:hover {
-    background-color: #0056b3;
   }
 </style>

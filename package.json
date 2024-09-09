@@ -27,6 +27,7 @@
 		"@smui/snackbar": "^7.0.0-beta.18",
 		"@smui/tab": "^7.0.0-beta.18",
 		"@smui/tab-bar": "^7.0.0-beta.18",
+		"@smui/textfield": "^7.0.0",
 		"@smui/tooltip": "^7.0.0-beta.18",
 		"@sveltejs/adapter-node": "^5.0.1",
 		"@tsparticles/preset-fireworks": "^3.0.2",

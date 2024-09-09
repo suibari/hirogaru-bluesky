@@ -1,5 +1,7 @@
 <script>
   import Dialog, { Content, Header } from '@smui/dialog';
+  import Textfield from '@smui/textfield';
+  import Button from '@smui/button';
   import IconButton from "@smui/icon-button";
 
   export let isClickShare = false;
@@ -75,18 +77,23 @@
   <Content id="share-message">  
     {#if isLoggedIn}
       <img id="share-image" src={modifiedImgUrl} alt="ひろがるBluesky相関図">
-      <textarea
-        id="share-text"
+      <Textfield
+        textarea
+        input$maxlength={300}
         bind:value={postText}
-        style="width: 100%; margin-top: 10px;"
-        rows="4"
-      ></textarea>
-      <button
-        style="width: 100%; margin-top: 10px;"
+        style="width: 100%; margin-top: 10px; height: 130px;" 
+      >        
+      </Textfield>
+      <div style="text-align: right; margin-top: 5px;">
+        {postText.length} / 300
+      </div>
+      <Button
+        style="width: 100%; margin-top: 10px; text-transform: none;"
         on:click={handlePost}
+        variant="raised"
       >
-        ポストする
-      </button>
+        Blueskyにポストする
+      </Button>
     {:else}
       <img id="share-image" src={modifiedImgUrl} alt="ひろがるBluesky相関図">
       <ol>
