@@ -1,5 +1,7 @@
 import { Blueskyer } from "blueskyer";
 import { docClient, GET_TOKENS, UPDATE_TOKENS } from './dynamodb';
+import atproto from '@atproto/api';
+const { RichText } = atproto;
 
 export class MyBlueskyer extends Blueskyer {
     /**
@@ -127,5 +129,41 @@ export class MyBlueskyer extends Blueskyer {
         throw e;
       }
     }
+  }
+
+  async postWithImage(text, imgBlob) {
+    // Blobをアップロード
+    const dataArray = new Uint8Array(await imgBlob.arrayBuffer());
+    const result = await this.uploadBlob(
+      dataArray,
+      {
+        encoding: imgBlob.type,
+      }
+    );
+
+    // リッチテキスト変換
+    const rt = new RichText({text: text});
+    await rt.detectFacets(this);
+
+    // 投稿
+    await this.post({
+      text: rt.text,
+      facets: rt.facets,
+      embed: {
+        $type: 'app.bsky.embed.images',
+        images: [
+          {
+            alt: 'ひろがるBluesky! 相関図',
+            image: result.data.blob,
+            aspectRatio: {
+              width: 1,
+              height: 1,
+            }
+          }
+        ]
+      },
+      langs: ["ja-JP"],
+      createdAt: new Date().toISOString(),
+    });
   }
 }

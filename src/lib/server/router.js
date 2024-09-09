@@ -140,11 +140,12 @@ export async function createSession(handle, password) {
   }
 }
 
-export async function verifyUser(sessionId) {
+export async function deleteSession(sessionId) {
   try {
-    // DBからハンドル名と暗号化パスワード取得
-    const result = await docClient.get(GET_USER_USERINFO(sessionId)).promise();
-    if (result.Item) {
+    const result = await docClient.delete(DELETE_USER_USERINFO(sessionId)).promise();
+    
+    if (result.Attributes) {
+      console.log(`[INFO] Deleted session ID: ${sessionId}, ${result.Attributes.userInfo.handle}`);
       return true;
     } else {
       return false;
@@ -154,15 +155,34 @@ export async function verifyUser(sessionId) {
   }
 }
 
-export async function verifyUserAndPostBsky(sessionId, text, imgBlob) {
+export async function verifyUser(sessionId) {
   try {
     // DBからハンドル名と暗号化パスワード取得
     const result = await docClient.get(GET_USER_USERINFO(sessionId)).promise();
-    const userInfo = result.Item.userInfo;
+    if (result.Item) {
+      const userInfo = result.Item.userInfo;
+      if (userInfo && new Date() < new Date(userInfo.expirarion)) {
+        return { success: true, handle: userInfo.handle, ivWithEncrypted: userInfo.ivWithEncrypted };
+      } else {
+        // セッションIDはあるが、期限切れなので削除
+        await docClient.delete(DELETE_USER_USERINFO(sessionId)).promise();
+        return { success: false };
+      }
+    } else {
+      return { success: false };
+    }
+  } catch (e) {
+    throw e;
+  }
+}
 
-    if (userInfo && new Date() < new Date(userInfo.expirarion)) {
-      // パスワード複合
-      const [ivHex, encrypted] = userInfo.ivWithEncrypted.split(':');
+export async function verifyUserAndPostBsky(sessionId, text, imgBlob) {
+  try {
+    const result = await verifyUser(sessionId);
+
+    if (result.success) {
+      // パスワード復号
+      const [ivHex, encrypted] = result.ivWithEncrypted.split(':');
       const iv = Buffer.from(ivHex, 'hex');
       const decipher = crypto.createDecipheriv('aes-256-cbc', HIROGARU_SECRET_KEY, iv);
       let decrypted = decipher.update(encrypted, 'hex', 'utf-8');
@@ -170,47 +190,10 @@ export async function verifyUserAndPostBsky(sessionId, text, imgBlob) {
 
       const userAgent = new MyBlueskyer();
       const response = await userAgent.login({
-        identifier: userInfo.handle,
+        identifier: result.handle,
         password: decrypted,
       });
-      if (response.ok) {
-        // Blobをアップロード
-        const dataArray = new Uint8Array(await imgBlob.arrayBuffer());
-        const {result} = await userAgent.uploadBlob(
-          dataArray,
-          {
-            encoding: imgBlob.type,
-          }
-        );
-        // リッチテキスト変換
-        const rt = new RichText({text: text});
-        // 投稿
-        await userAgent.post({
-          text: rt.text,
-          facets: rt.facets,
-          embed: {
-            $type: 'app.bsky.embed.images',
-            images: [
-              {
-                alt: 'ひろがるBluesky! 相関図',
-                image: result.blob,
-                aspectRatio: {
-                  width: 1,
-                  height: 1,
-                }
-              }
-            ]
-          },
-          langs: ["ja-JP"],
-          createdAt: new Date().toISOString(),
-        });
-      } else {
-        // 認証失敗
-        console.error(`[ERROR] cannot log in: ${handle}`)
-      }
-    } else {
-      // セッションが無効または期限切れなので削除
-      await docClient.delete(DELETE_USER_USERINFO(sessionId)).promise();
+      await userAgent.postWithImage(text, imgBlob);
     }
   } catch (e) {
     throw e;

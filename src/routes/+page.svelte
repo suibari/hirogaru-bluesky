@@ -41,7 +41,6 @@
   let isShowSuggestion = false;
   let isLoginModalOpen = false;
   let isGridMode = false;
-  export let data;
   let activeTab = "使い方";
   let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccessFirstTime;
   let inputHandle = writable('');
@@ -50,7 +49,14 @@
   let errorMessage;
   let selectedRadius;
   let handle, password;
-  
+  let isLoggedIn = false;
+  export let data;
+
+  // ページ読み込み時の処理
+  // リロード時にサーバからログイン状態を貰う
+  isLoggedIn = data.isLoggedIn;
+
+  // ページレンダリング後の処理
   onMount(() => {
     // ページ読み込み時ローカルストレージのハンドルをセット
     const storedValue = localStorage.getItem('handle');
@@ -170,7 +176,6 @@
   // ログイン用ハンドラ
   async function handleLogin(event) {
     const body = new FormData(event.currentTarget);
-    console.log(body)
 
     try {
       const response = await fetch('?/login', {
@@ -181,8 +186,37 @@
       if (response.ok) {
         const result = deserialize(await response.text());
         if (result.type === 'success') {
-          // isLoggedIn = true;
+          isLoggedIn = true;
           isLoginModalOpen = false;
+        } else {
+          errorMessage = "認証に失敗しました";
+          snackbarErrorFetch.open();
+        }
+      } else {
+        errorMessage = "サーバーエラーが発生しました";
+        snackbarErrorFetch.open();
+      }
+    } catch (e) {
+      console.error(e);
+      errorMessage = "クライアントエラーが発生しました";
+      snackbarErrorFetch.open();
+    }
+  }
+
+    // ログアウト用ハンドラ
+  async function handleLogout() {
+    const body = new FormData();
+
+    try {
+      const response = await fetch('?/logout', {
+        method: 'POST',
+        credentials: 'include',
+        body: body,
+      });
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          isLoggedIn = false;
         } else {
           errorMessage = "認証に失敗しました";
           snackbarErrorFetch.open();
@@ -415,10 +449,9 @@
 <!-- シェアボタン -->
 <div id="shareContainer">
   <!-- ログイン、ログアウトボタン -->
-  {#if data.isLoggedIn}
+  {#if isLoggedIn}
     <div id="logoutButton">
-      <!-- <IconButton on:click={handleLogout} class="material-icons">logout</IconButton> -->
-      <IconButton class="material-icons">logout</IconButton>
+      <IconButton on:click={handleLogout} class="material-icons">logout</IconButton>
     </div>
   {:else}
     <div id="loginButton">
@@ -438,7 +471,7 @@
 </div>
 
 <!-- シェアモーダル -->
-<ShareModal bind:isClickShare={isClickShare} bind:isLoggedIn={data.isLoggedIn} srcGraph={srcGraph} />
+<ShareModal bind:isClickShare={isClickShare} bind:isLoggedIn={isLoggedIn} srcGraph={srcGraph} />
 
 <!-- シェアエラー -->
 <Snackbar bind:this={snackbarWarningRunning}>

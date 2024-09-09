@@ -27,8 +27,8 @@ export const handle = async ({ event, resolve }) => {
     const sessionId = event.cookies.get('sessionId');
     if (sessionId) {
       const result = await verifyUser(sessionId);
-      if (result) {
-        console.log(sessionId, result);
+      if (result.success) {
+        // console.log(sessionId, result);
 
         event.locals.isLoggedIn = true;
       } else {

@@ -4,7 +4,6 @@
   import GraphStylesConcentric from './GraphStylesConcentric.js'
   import Gauge from './Gauge.svelte';
   import { createEventDispatcher } from 'svelte';
-    import { createImageData } from 'canvas';
   export let selectedRadius;
   const dispatch = createEventDispatcher();
   

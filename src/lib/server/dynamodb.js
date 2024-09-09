@@ -72,5 +72,9 @@ export const DELETE_USER_USERINFO = (sessionId) => ({
   Key: {
     key: sessionId,
   },
-  ConditionExpression: "attribute_exists(key)",
+  ConditionExpression: "attribute_exists(#k)",
+  ExpressionAttributeNames: {
+    '#k': 'key',
+  },
+  ReturnValues: 'ALL_OLD',
 });
