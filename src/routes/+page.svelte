@@ -27,6 +27,7 @@
   // export let form; // これがないとform actionを受け取れない
   let isNeverRun = true;
   let isRunning = false; // フェッチ&描画実行中のフラグ
+  let isPosting = false; // ポスト中のフラグ
   let tappedNode = null; // ノードタップフラグ
   let runConcentric; // 同心円相関図描画関数
   let runGrid; // 関係図描画関数
@@ -209,32 +210,34 @@
 
     // ログアウト用ハンドラ
   async function handleLogout() {
-    isRunning = true;
+    if (!isRunning) {
+      isRunning = true;
 
-    const body = new FormData();
+      const body = new FormData();
 
-    const response = await fetch('?/logout', {
-      method: 'POST',
-      credentials: 'include',
-      body: body,
-    });
-    if (response.ok) {
-      const result = deserialize(await response.text());
-      if (result.type === 'success') {
-        isLoggedIn = false;
-        isRunning = false;
-        successMessage = "ログアウトしました";
-        snackbarSuccess.open();
+      const response = await fetch('?/logout', {
+        method: 'POST',
+        credentials: 'include',
+        body: body,
+      });
+      if (response.ok) {
+        const result = deserialize(await response.text());
+        if (result.type === 'success') {
+          isLoggedIn = false;
+          isRunning = false;
+          successMessage = "ログアウトしました";
+          snackbarSuccess.open();
+        } else {
+          isRunning = false;
+          errorMessage = "認証に失敗しました";
+          snackbarErrorFetch.open();
+        }
       } else {
         isRunning = false;
-        errorMessage = "認証に失敗しました";
+        const json = await response.json();
+        errorMessage = json.error.message;
         snackbarErrorFetch.open();
       }
-    } else {
-      isRunning = false;
-      const json = await response.json();
-      errorMessage = json.error.message;
-      snackbarErrorFetch.open();
     }
   }
 
@@ -447,7 +450,7 @@
 {/if}
 
 <!-- ローディングスピナー -->
-{#if isRunning !== false}
+{#if (isRunning | isPosting)}
   <div id="loadingSpinner">
     <CircularProgress style="height: 100px; width: 100px;" indeterminate />
   </div>
@@ -462,7 +465,7 @@
     </div>
   {:else}
     <div id="loginButton">
-      <IconButton on:click={() => isLoginModalOpen = true} class="material-icons">login</IconButton>
+      <IconButton on:click={() => (!isRunning) ? (isLoginModalOpen = true) : (isLoginModalOpen = false) } class="material-icons">login</IconButton>
     </div>
   {/if}
   <div id="shareButton">
@@ -478,7 +481,14 @@
 </div>
 
 <!-- シェアモーダル -->
-<ShareModal bind:isClickShare={isClickShare} bind:isLoggedIn={isLoggedIn} srcGraph={srcGraph} />
+<ShareModal
+  bind:isClickShare={isClickShare}
+  bind:isLoggedIn={isLoggedIn}
+  bind:isRunning={isRunning}
+  bind:isPosting={isPosting}
+  srcGraph={srcGraph}
+  on:stopRun={stopRun}
+/>
 
 <!-- シェアエラー -->
 <Snackbar bind:this={snackbarWarningRunning}>
