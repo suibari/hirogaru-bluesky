@@ -3,9 +3,8 @@
   import Textfield from '@smui/textfield';
   import Button from '@smui/button';
   import IconButton from "@smui/icon-button";
-  import Snackbar, {Actions} from '@smui/snackbar';
-  import { Label } from "@smui/tab";
-
+  import Snackbar, { Actions, Label } from '@smui/snackbar';
+  
   export let isClickShare = false;
   export let isLoggedIn;
   export let isPosting = false;
@@ -20,7 +19,7 @@
     if (isClickShare) {
       insertLetterToImg();
     }
-    isClickShare = !isPosting & isClickShare;
+    isClickShare = !isPosting && isClickShare;
   }
 
   async function insertLetterToImg () {
@@ -39,7 +38,7 @@
       ctx.drawImage(image, 0, 0);
 
       // テキストを描画
-      ctx.font = '18px myFont';
+      ctx.font = '24px myFont';
       ctx.fillStyle = 'white';
       const text = '#ひろがるBluesky!';
       const margin = 10;
@@ -49,39 +48,45 @@
       canvas.toBlob(blob => {
         modifiedImgBlob = blob;
         modifiedImgUrl = URL.createObjectURL(blob);
+
+        isClickShare = true;
       }, 'image/png');
     };
   }
 
+  $: {
+    if (!isClickShare && modifiedImgUrl) {
+      // Revoke the object URL when the dialog is closed
+      URL.revokeObjectURL(modifiedImgUrl);
+      modifiedImgUrl = ''; // Reset the URL after revoking
+    }
+  }
+
   async function handlePost() {
-    if (isPosting) {
-      snackbarWarningPosting.open();
-    } else {
-      isPosting = true;
-      isClickShare = false;
+    isPosting = true;
+    isClickShare = false;
 
-      const formData = new FormData();
-      formData.append("image", modifiedImgBlob, "share-image.png");
-      formData.append("text", postText);
+    const formData = new FormData();
+    formData.append("image", modifiedImgBlob, "share-image.png");
+    formData.append("text", postText);
 
-      try {
-        const response = await fetch("?/post", {
-          method: "POST",
-          body: formData
-        });
+    try {
+      const response = await fetch("?/post", {
+        method: "POST",
+        body: formData
+      });
 
-        isPosting = false;
-        if (response.ok) {
-          successMessage = "ポストしました!";
-          snackbarSuccess.open();
-        } else {
-          const json = await response.json();
-          errorMessage = json.error.message;
-          snackbarErrorFetch.open();
-        }
-      } catch (error) {
-        console.error("Error posting:", error);
+      isPosting = false;
+      if (response.ok) {
+        successMessage = "ポストしました!";
+        snackbarSuccess.open();
+      } else {
+        const json = await response.json();
+        errorMessage = json.error.message;
+        snackbarErrorFetch.open();
       }
+    } catch (error) {
+      console.error("Error posting:", error);
     }
   }
 </script>

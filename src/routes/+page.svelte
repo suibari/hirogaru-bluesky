@@ -44,7 +44,7 @@
   let isLoginModalOpen = false;
   let isGridMode = false;
   let activeTab = "使い方";
-  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccess;
+  let snackbarWarningRunning, snackbarWarningNeverRun, snackbarErrorFetch, snackbarSuccess, snackbarWarningPosting;
   let inputHandle = writable('');
   let suggestions = writable([]);
   let debounceTimeout;
@@ -348,6 +348,9 @@
     } else if (isNeverRun) {
       snackbarWarningNeverRun.open();
 
+    } else if (isPosting) {
+      snackbarWarningPosting.open();
+
     } else {
       let blob;
 
@@ -503,6 +506,12 @@
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
 </Snackbar>
+<Snackbar bind:this={snackbarWarningPosting}>
+  <Label>ポスト中です</Label>
+  <Actions>
+    <IconButton class="material-icons" title="Dismiss">close</IconButton>
+  </Actions>
+</Snackbar>
 
 <!-- ヘルプモーダル -->
 <div id="helpModal">
@@ -566,7 +575,7 @@
     width: fit-content;
     margin-top: 16px;
     margin-left: 8px;
-    z-index: 10;
+    z-index: 5;
   }
   .form-container form {
     position: relative;
