@@ -1,5 +1,5 @@
 import { Blueskyer } from "blueskyer";
-import { docClient, GET_TOKENS, UPDATE_TOKENS } from './dynamodb';
+import { supabase } from "./supabase";
 import atproto from '@atproto/api';
 const { RichText } = atproto;
 
@@ -100,19 +100,19 @@ export class MyBlueskyer extends Blueskyer {
    * 元のライブラリをオーバーライドしVercel KVに値を保存
    */
   async createOrRefleshSession(identifier, password) {
-    const result = await docClient.get(GET_TOKENS).promise();
+    const {data, err} = await supabase.from('tokens').select('access_jwt').eq('handle', identifier);
     
-    if ((!result.Item)) {
+    if (data.length === 0) {
       // 初回起動時にaccsessJwt取得
       const response = await this.login({
         identifier: identifier,
         password: password
       });
-      await docClient.update(UPDATE_TOKENS(response.data.accessJwt, response.data.refreshJwt)).promise();
+      const {err} = await supabase.from('tokens').insert({ handle: identifier, access_jwt: response.data.accessJwt });
       console.log("[INFO] created new session.");
     } else {
       // DBから取ってきた値をインスタンスにセット
-      this.api.setHeader('Authorization', `Bearer ${result.Item.tokens.accessJwt}`);
+      this.api.setHeader('Authorization', `Bearer ${data[0].access_jwt}`);
       try {
         await this.getTimeline().catch(async err => {
           if ((err.status === 400) && (err.error === "ExpiredToken")) {
@@ -121,7 +121,7 @@ export class MyBlueskyer extends Blueskyer {
               identifier: identifier,
               password: password
             });
-            await docClient.update(UPDATE_TOKENS(response.data.accessJwt, response.data.refreshJwt)).promise();
+            const {err} = await supabase.from('tokens').update({ access_jwt: response.data.accessJwt }).eq('handle', identifier);
             console.log("[INFO] token was expired, so refleshed the session.");
           }
         });

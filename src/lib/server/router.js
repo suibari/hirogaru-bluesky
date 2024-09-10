@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64 } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
-import { docClient, GET_ELEMENTS, GET_USER_USERINFO, UPDATE_ELEMENTS, UPDATE_USER_USERINFO, DELETE_USER_USERINFO } from './dynamodb';
+import { supabase } from './supabase';
 const agent = new MyBlueskyer();
 
 const THRESHOLD_NODES = 36
@@ -19,13 +19,14 @@ export async function getData(handle) {
 
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
     let isFirstTime = false;
-    let result = await docClient.get(GET_ELEMENTS(handle)).promise();
-    if (!result.Item) {
+    const {data, err} = await supabase.from('elements').select('elements').eq('handle', handle);
+
+    if (data.length === 0) {
       // データがないので同期処理で待って最低限のデータを渡す
       elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false);
       isFirstTime = true;
     } else {
-      elements = result.Item.elements;
+      elements = data[0].elements;
     }
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
@@ -80,9 +81,8 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
 
   // DBセット
   if (setDbEn) {
-    await docClient.update(UPDATE_ELEMENTS(handle, elements), (err) => {
-      if (err) console.error("Error", err);
-    }).promise();
+    const {data, err} = await supabase.from('elements').upsert({ handle: handle, elements: elements, updated_at: new Date() }).select();
+    if (err) console.error("Error", err);
   }
 
   console.log(`[WORKER] exec time was ${timeLogger.tac()} [sec]: ${handle}`);
@@ -125,8 +125,15 @@ export async function createSession(handle, password) {
       const expirarion = new Date();
       expirarion.setFullYear(expirarion.getFullYear() + 1); // 1年後
       
-      await docClient.update(UPDATE_USER_USERINFO(handle, ivWithEncrypted, accessJwtBsky, refreshJwtBsky, sessionId, expirarion.getTime())).promise();
-
+      const {err} = await supabase.from('sessions').insert({
+        session_id: sessionId,
+        user_info: {
+          handle: handle,
+          iv_with_encrypted: ivWithEncrypted,
+          expirarion: expirarion.getTime(),
+        },
+      });
+      
       return sessionId;
     } else {
       return null;
@@ -138,10 +145,10 @@ export async function createSession(handle, password) {
 
 export async function deleteSession(sessionId) {
   try {
-    const result = await docClient.delete(DELETE_USER_USERINFO(sessionId)).promise();
+    const response = await supabase.from('sessions').delete().eq('session_id', sessionId).select();
     
-    if (result.Attributes) {
-      console.log(`[INFO] Deleted session ID: ${sessionId}, ${result.Attributes.userInfo.handle}`);
+    if (response.status === 200) {
+      console.log(`[INFO] Deleted session ID: ${response.data[0].sessionId}, ${response.data[0].handle}`);
       return true;
     } else {
       return false;
@@ -154,14 +161,15 @@ export async function deleteSession(sessionId) {
 export async function verifyUser(sessionId) {
   try {
     // DBからハンドル名と暗号化パスワード取得
-    const result = await docClient.get(GET_USER_USERINFO(sessionId)).promise();
-    if (result.Item) {
-      const userInfo = result.Item.userInfo;
+    const {data, err} = await supabase.from('sessions').select('user_info');
+    if (data.length === 1) {
+      const userInfo = data[0].user_info;
       if (userInfo && new Date() < new Date(userInfo.expirarion)) {
         return { success: true, handle: userInfo.handle, ivWithEncrypted: userInfo.ivWithEncrypted };
       } else {
         // セッションIDはあるが、期限切れなので削除
-        await docClient.delete(DELETE_USER_USERINFO(sessionId)).promise();
+        const response = await supabase.from('sessions').delete().eq('session_id', sessionId).select();
+        console.log(`[INFO] Deleted session ID: ${response.data[0].sessionId}, ${response.data[0].handle}`);
         return { success: false };
       }
     } else {

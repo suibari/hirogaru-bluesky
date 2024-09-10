@@ -11,7 +11,6 @@
 		"start": "node build"
 	},
 	"devDependencies": {
-		"@flydotio/dockerfile": "^0.5.4",
 		"@sveltejs/adapter-vercel": "^5.4.3",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
@@ -29,10 +28,10 @@
 		"@smui/tab-bar": "^7.0.0-beta.18",
 		"@smui/textfield": "^7.0.0",
 		"@smui/tooltip": "^7.0.0-beta.18",
+		"@supabase/supabase-js": "^2.45.3",
 		"@sveltejs/adapter-node": "^5.0.1",
 		"@tsparticles/preset-fireworks": "^3.0.2",
 		"@tsparticles/svelte": "^3.0.0",
-		"aws-sdk": "^2.1691.0",
 		"bcrypt": "^5.1.1",
 		"blueskyer": "^1.2.6",
 		"canvas": "^2.11.2",
@@ -40,8 +39,6 @@
 		"dotenv": "^16.4.5",
 		"file-type": "^16.5.4",
 		"inngest": "^3.22.8",
-		"jsonwebtoken": "^9.0.2",
-		"jwt-decode": "^4.0.0",
 		"smui-theme": "^7.0.0-beta.18",
 		"svelte-confetti": "^1.4.0",
 		"svelte-material-ui": "^7.0.0-beta.18",
