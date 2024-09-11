@@ -110,7 +110,7 @@
           elements = result.data.elements;
           const isFirstTime = result.data.isFirstTime;
           if (isFirstTime) {
-            successMessage = "初回実行なので取得データ数を減らして実行します。<br>数分後にデータ更新されますので、また実行してみてください!";
+            successMessage = "初回実行なので取得データ数を減らして実行します。数分後にデータ更新されますので、また実行してみてください!";
             snackbarSuccess.open();
           }
           runConcentric(elements);
@@ -399,7 +399,7 @@
     bind:value={selectedRadius}
     on:change={() => {
       isRunning = true;
-      runConcentric(elements);
+      runConcentric(elements, true); // 第2引数trueで既存ノードをそのままにする
     }}
     disabled={isRunning||isNeverRun} >
     {#each options as option}

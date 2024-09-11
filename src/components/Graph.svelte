@@ -48,23 +48,35 @@
   // ---------------------
   // 同心円グラフ描画
   // ---------------------
-  export function runConcentric(elements) {
+  export function runConcentric(elements, isNodeStable) {
     isGauge = false;
 
-    cyInstance.elements().remove();
-    
+    if (!isNodeStable) {
+      cyInstance.elements().remove();
+    }
+
+    cyInstance.add(elements);
+
+    // 表示しきい値算出
     const maxLevel = elements.reduce((max, obj) => {
       return obj.data.level > max ? obj.data.level : max;
     }, -Infinity);
     const thrdLevel = maxLevel - selectedRadius;
-    const filteredElements = elements.filter(obj => obj.data.level > thrdLevel);
-    cyInstance.add(filteredElements);
-    
+
+    // しきい値以下のnodesを非表示
+    cyInstance.nodes().forEach(node => {
+      if (node.data('level') <= thrdLevel) {
+        node.hide();
+      } else {
+        node.show();
+      }
+    });
+
     cyInstance.style(GraphStylesConcentric);
     cyInstance
       .layout({
         name: 'concentric',
-        animate: false,
+        animate: true,
         padding: 10,
         startAngle: Math.PI * 2 * Math.random(), // ノードの開始位置を360度ランダムに
         concentric: node => {
