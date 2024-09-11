@@ -203,3 +203,34 @@ export async function verifyUserAndPostBsky(sessionId, text, imgBlob) {
     throw e;
   }
 }
+
+export async function getLatestPostsAndLikesAndSetDb(handle) {
+  let response;
+
+  await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
+
+  // ポスト100件取得
+  response = await agent.listRecords({repo: handle, collection: "app.bsky.feed.post", limit: 100}).catch(e => {
+    console.error(e);
+    console.warn(`[WARN] fetch error handle: ${handle}, so set empty object`);
+    return { records: [] };
+  });
+  const postRecords = response.records;
+
+  // いいね100件取得
+  response = await agent.listRecords({repo: handle, collection: "app.bsky.feed.like", limit: 100}).catch(e => {
+    console.error(e);
+    console.warn(`[WARN] fetch error handle: ${handle}, so set empty object`);
+    return { records: [] };
+  });
+  const likeRecords = response.records;
+
+  // DBにセット
+  const records = {
+    posts: postRecords,
+    likes: likeRecords,
+  }
+  
+  const {data, err} = await supabase.from('records').upsert({ handle: handle, records: records, updated_at: new Date() }).select();
+  if (err) console.error("Error", err);
+}

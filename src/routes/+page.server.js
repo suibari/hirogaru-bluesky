@@ -42,10 +42,11 @@ export const actions = {
       console.log(`[INFO] updating DB for handle: ${handle}`);
 
       // Inngestトリガー
-      await inngest.send({
-        name: 'hirogaru/update.db', 
-        data: { handle },
-      });
+      await Promise.all([
+        inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } }),
+        inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G0', data: { handle } }),
+        inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G1', data: { handle } }),
+      ]);
       console.log("[INFO] Inngest event sent.");
 
       return { success: true, message: "Update successful" };

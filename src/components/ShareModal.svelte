@@ -18,8 +18,6 @@
   
   let postText = "\n#ひろがるBluesky\nhttps://hirogaru-bluesky.vercel.app/";
 
-
-
   $: {
     if (isClickShare) {
       insertLetterToImg();
