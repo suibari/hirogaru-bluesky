@@ -165,7 +165,7 @@ export async function verifyUser(sessionId) {
     if (data.length === 1) {
       const userInfo = data[0].user_info;
       if (userInfo && new Date() < new Date(userInfo.expirarion)) {
-        return { success: true, handle: userInfo.handle, ivWithEncrypted: userInfo.ivWithEncrypted };
+        return { success: true, handle: userInfo.handle, ivWithEncrypted: userInfo.iv_with_encrypted };
       } else {
         // セッションIDはあるが、期限切れなので削除
         const response = await supabase.from('sessions').delete().eq('session_id', sessionId).select();
