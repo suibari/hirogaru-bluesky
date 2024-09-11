@@ -74,19 +74,19 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
 
   // ProfにDBから取得した最新ポストいいねがあればセットする (！！ここの処理でものすごく時間がかかってる！！)
-  for (const actor of slicedAllWithProf) {
-    const postslikes = await kv.get(`${actor.handle}_activity`);
-    if (postslikes) {
-      if (postslikes.posts) {
-        actor.posts = postslikes.posts;
-      }
-    }
-    if (postslikes) {
-      if (postslikes.likes) {
-        actor.likes = postslikes.likes;
-      }
-    }
-  }
+  // for (const actor of slicedAllWithProf) {
+  //   const postslikes = await kv.get(`${actor.handle}_activity`);
+  //   if (postslikes) {
+  //     if (postslikes.posts) {
+  //       actor.posts = postslikes.posts;
+  //     }
+  //   }
+  //   if (postslikes) {
+  //     if (postslikes.likes) {
+  //       actor.likes = postslikes.likes;
+  //     }
+  //   }
+  // }
 
   // node, edge取得
   let elements = await getElements(slicedAllWithProf);
