@@ -2,8 +2,13 @@ import { getElementsAndUpdateDbFunction, getPostsLikesAndUpdateDbFunction } from
 
 export const functions = [
   getElementsAndUpdateDbFunction,
+<<<<<<< HEAD
   getPostsLikesAndUpdateDbFunction(0), // elements  [0] ~ [18]
   getPostsLikesAndUpdateDbFunction(1), //          [19] ~ [37]
+=======
+  getPostsLikesAndUpdateDbFunction(0), // elements  [0] ~ [17]
+  getPostsLikesAndUpdateDbFunction(1), //          [18] ~ [35]
+>>>>>>> 5ec88fc (ポスト100いいね100をDB保存することは成功、しかし処理が悪く時間がかかるので要改善)
   getPostsLikesAndUpdateDbFunction(2), //              ...
   getPostsLikesAndUpdateDbFunction(3),
   getPostsLikesAndUpdateDbFunction(4),
