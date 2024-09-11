@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import Dialog, { Content, Header } from '@smui/dialog';
   import Textfield from '@smui/textfield';
   import Button from '@smui/button';
@@ -9,18 +10,32 @@
   export let isLoggedIn;
   export let isPosting = false;
   export let srcGraph = '';
+  let isShowTimeStamp, isShowLogo = true;
   let snackbarSuccess, snackbarErrorFetch, snackbarWarningPosting;
   let successMessage, errorMessage = '';
   let modifiedImgBlob = null;
   let modifiedImgUrl = '';
+  
   let postText = "\n#ひろがるBluesky\nhttps://hirogaru-bluesky.vercel.app/";
+
+
 
   $: {
     if (isClickShare) {
       insertLetterToImg();
     }
-    isClickShare = !isPosting && isClickShare;
   }
+
+  $: {
+    if ((isShowLogo || isShowTimeStamp) || (!isShowLogo && !isShowTimeStamp)) {
+      insertLetterToImg();
+    }
+  }
+
+  onMount(() => {
+    isShowTimeStamp = JSON.parse(localStorage.getItem('isShowTimestamp'));
+    isShowLogo = JSON.parse(localStorage.getItem('isShowLogo'));
+  });
 
   async function insertLetterToImg () {
     if (!srcGraph) return;
@@ -37,12 +52,24 @@
       // 画像を描画
       ctx.drawImage(image, 0, 0);
 
-      // テキストを描画
-      ctx.font = '24px myFont';
+      ctx.font = '18px myFont';
       ctx.fillStyle = 'white';
-      const text = '#ひろがるBluesky!';
       const margin = 10;
-      ctx.fillText(text, margin, image.height - margin);
+
+      // ロゴを描画
+      if (isShowLogo) {
+        const text = '#ひろがるBluesky!';
+        ctx.fillText(text, margin, image.height - margin);
+      }
+
+      // タイムスタンプを描画
+      if (isShowTimeStamp) {
+        const now = new Date();
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const formattedDate = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')}(${daysOfWeek[now.getDay()]}) ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const textWidth = ctx.measureText(formattedDate).width;
+        ctx.fillText(formattedDate, image.width - textWidth - margin, image.height - margin);
+      }
 
       // blobに変換し、createObjectURLで表示
       canvas.toBlob(blob => {
@@ -69,6 +96,10 @@
     const formData = new FormData();
     formData.append("image", modifiedImgBlob, "share-image.png");
     formData.append("text", postText);
+
+    // ロゴ、タイムスタンプのチェック状態を保存
+    localStorage.setItem('isShowTimestamp', JSON.stringify(isShowTimeStamp));
+    localStorage.setItem('isShowLogo', JSON.stringify(isShowLogo));
 
     try {
       const response = await fetch("?/post", {
@@ -99,8 +130,16 @@
     <IconButton action="close" class="material-icons" style="float: right;">close</IconButton>
   </Header>
   <Content id="share-message">  
+    <img id="share-image" src={modifiedImgUrl} alt="ひろがるBluesky相関図">
+    <div style="text-align: right; margin: 5px 0px 5px;">
+      <label style="margin-left: 8px;">
+        <input type="checkbox" bind:checked={isShowLogo} /> ロゴ
+      </label>
+      <label style="margin-left: 8px;">
+        <input type="checkbox" bind:checked={isShowTimeStamp} /> タイムスタンプ
+      </label>
+    </div>
     {#if isLoggedIn}
-      <img id="share-image" src={modifiedImgUrl} alt="ひろがるBluesky相関図">
       <Textfield
         textarea
         input$maxlength={300}
@@ -108,7 +147,7 @@
         style="width: 100%; margin-top: 10px; height: 130px;" 
       >        
       </Textfield>
-      <div style="text-align: right; margin-top: 5px;">
+      <div style="text-align: right; margin-top: 5px; font-size: small;">
         {postText.length} / 300
       </div>
       <Button
@@ -119,7 +158,6 @@
         Blueskyにポストする
       </Button>
     {:else}
-      <img id="share-image" src={modifiedImgUrl} alt="ひろがるBluesky相関図">
       <ol>
         <li>画像を右クリックかロングタップでコピーしてください</li>
         <li><a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky%0D%0Ahttps%3A%2F%2Fhirogaru-bluesky.vercel.app%2F%0D%0A" target="_blank">こちら</a>をクリックして、開いたポスト画面に画像をペーストしてシェア！</li>

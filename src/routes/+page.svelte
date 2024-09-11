@@ -407,6 +407,7 @@
     {/each}
   </select>
 </div>
+
 <!-- フェッチエラー -->
 <Snackbar bind:this={snackbarErrorFetch}>
   <Label>エラーが発生しました: {errorMessage}</Label>

@@ -161,7 +161,7 @@ export async function deleteSession(sessionId) {
 export async function verifyUser(sessionId) {
   try {
     // DBからハンドル名と暗号化パスワード取得
-    const {data, err} = await supabase.from('sessions').select('user_info');
+    const {data, err} = await supabase.from('sessions').select('user_info').eq('session_id', sessionId);
     if (data.length === 1) {
       const userInfo = data[0].user_info;
       if (userInfo && new Date() < new Date(userInfo.expirarion)) {
