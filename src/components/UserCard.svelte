@@ -11,10 +11,12 @@
   import Button, { Label } from '@smui/button';
   import { createEventDispatcher, onMount } from 'svelte';
   import IconButton from "@smui/icon-button";
+  import ActiveHistgram from './ActiveHistgram.svelte';
   const dispatch = createEventDispatcher();
 
   export let tappedNode;
   export let handleSubmit;
+  let lastActionTimeText = '';
 
   onMount(() => {
     function handleClickSocialAnalysis() {
@@ -22,6 +24,32 @@
     dispatch('doSocialAnalysis');
     }
   })
+
+  function getLastActionText(lastActionTime) {
+    const now = new Date();
+    const actionTime = new Date(lastActionTime);
+    const diffInMilliseconds = now - actionTime;
+    const diffInMinutes = Math.floor(diffInMilliseconds / 60000);
+    const diffInHours = Math.floor(diffInMilliseconds / (60000 * 60));
+    const diffInDays = Math.floor(diffInMilliseconds / (60000 * 60 * 24));
+    const diffInMonths = Math.floor(diffInDays / 30); // おおよそ1ヶ月を30日とする
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h`;
+    } else if (diffInDays < 30) {
+      return `${diffInDays}d`;
+    } else {
+      return `${diffInMonths}month`;
+    }
+  }
+
+  $: {
+    if (tappedNode && tappedNode.data('lastActionTime')) {
+      lastActionTimeText = getLastActionText(tappedNode.data('lastActionTime'));
+    }
+  }
 </script>
 
 <!-- {#if tappedNode} -->
@@ -41,22 +69,31 @@
         </div>
       </Media>
     </PrimaryAction>
-    {#if tappedNode.data('level') !== 0}
-      <div id="replylike">
-        <div class="icon">
-          <IconButton class="material-icons">reply</IconButton>
-        </div>
-        <h4>
-          {tappedNode.data('reply') || "-"}
-        </h4>
-        <div class="icon">
-          <IconButton class="material-icons">favorite</IconButton>
-        </div>
-        <h4>
-          {tappedNode.data('like') || "-"}
-        </h4>
+    <div id="cardinfo-container">
+      <div class="last-action-time" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 10px; gap: 5px;">
+        <h5>Last Active:</h5>
+        <h4>{lastActionTimeText}</h4>
       </div>
-    {/if}
+      {#if tappedNode.data('activeHistgram')}
+        <ActiveHistgram {tappedNode}/>
+      {/if}
+      {#if tappedNode.data('level') !== 0}
+        <div id="replylike">
+          <div class="icon">
+            <IconButton class="material-icons">reply</IconButton>
+          </div>
+          <h4>
+            {tappedNode.data('replyFromCenter') || "-"}
+          </h4>
+          <div class="icon">
+            <IconButton class="material-icons">favorite</IconButton>
+          </div>
+          <h4>
+            {tappedNode.data('likeFromCenter') || "-"}
+          </h4>
+        </div>
+      {/if}
+    </div>
     <Actions>
       <ActionButtons style="width: 100%;">
         <Button variant="raised" style="width: 100%">
@@ -94,6 +131,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  #cardinfo-container {
+    position: relative;
+    width: 100%;
   }
   #replylike {
     display: flex;

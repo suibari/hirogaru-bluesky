@@ -83,9 +83,12 @@ async function pushActorToNodes(actor, elements, level) {
       level: level, // 同心円の階層
       rank: rank, // アイコンサイズ
       engagement: actor.engagement||undefined,
-      reply: actor.replyCount||0,
-      like: actor.likeCount||0,
+      replyFromCenter: actor.replyCount||0,
+      likeFromCenter: actor.likeCount||0,
       following: actor.following,
+      activeHistgram: actor.activeHistgram,
+      averageInterval: actor.averageInterval,
+      lastActionTime: actor.lastActionTime,
     },
     group: 'nodes',
   });
@@ -189,4 +192,44 @@ export async function imageUrlToBase64(imageUrl) {
 
     return base64StringWithMime;
   }
+}
+
+export function analyseRecords(records, actor) {
+
+  const allRecords = [...records.posts, ...records.likes];
+
+  // 活動ヒートマップ
+  const histgram = new Array(24).fill(0);
+  allRecords.forEach(record => {
+    const utcDate = new Date(record.value.createdAt);
+    const jstDate = new Date(utcDate.getTime() + 9*60*60*1000);
+
+    const hourKey =jstDate.getHours();
+
+    if (histgram[hourKey]) {
+      histgram[hourKey]++;
+    } else {
+      histgram[hourKey] = 1;
+    }
+  });
+  actor.activeHistgram = histgram;
+
+  // 平均活動間隔
+  allRecords.sort((a, b) => new Date(a.value.createdAt) - new Date(b.value.createdAt));
+  let totalInterval = 0;
+  let intervalsCount = 0;
+  for (let i = 1; i < allRecords.length; i++) {
+    const currentTime = new Date(allRecords[i].value.createdAt).getTime();
+    const previousTime = new Date(allRecords[i - 1].value.createdAt).getTime();
+    const interval = currentTime - previousTime;
+
+    totalInterval += interval;
+    intervalsCount++;
+  }
+  const averageIntervalInSeconds = intervalsCount > 0 ? totalInterval / intervalsCount / 1000 : 0;
+  actor.averageInterval = averageIntervalInSeconds;
+
+  // 最終活動時間
+  const lastActionTime = allRecords.length > 0 ? new Date(allRecords[allRecords.length - 1].value.createdAt) : null;
+  actor.lastActionTime = lastActionTime;
 }

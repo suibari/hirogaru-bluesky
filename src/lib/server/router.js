@@ -1,7 +1,7 @@
 import { BSKY_IDENTIFIER, BSKY_APP_PASSWORD, HIROGARU_SECRET_KEY } from '$env/static/private';
 import * as crypto from 'crypto';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
-import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64 } from '$lib/server/databuilder.js';
+import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64, analyseRecords } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
 import { supabase } from './supabase';
 const agent = new MyBlueskyer();
@@ -12,6 +12,7 @@ const THRESHOLD_LIKES_TMP = 20;
 const SCORE_REPLY = 10;
 const SCORE_LIKE = 1;
 const MAX_RADIUS = 10;
+const NUM_ANALYSIS = 37;
 
 export async function getData(handle) {
   try {
@@ -73,20 +74,13 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
   const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
 
-  // ProfにDBから取得した最新ポストいいねがあればセットする (！！ここの処理でものすごく時間がかかってる！！)
-  // for (const actor of slicedAllWithProf) {
-  //   const postslikes = await kv.get(`${actor.handle}_activity`);
-  //   if (postslikes) {
-  //     if (postslikes.posts) {
-  //       actor.posts = postslikes.posts;
-  //     }
-  //   }
-  //   if (postslikes) {
-  //     if (postslikes.likes) {
-  //       actor.likes = postslikes.likes;
-  //     }
-  //   }
-  // }
+  // ProfにDBから取得した最新ポストいいねがあればセットする
+  const {data, err} = await supabase.from('records').select(); // 取得済み全ユーザのポストいいね取得
+  for (let i=0; i<NUM_ANALYSIS; i++) {
+    const actorTgt = slicedAllWithProf[i];
+    const dataSrc = data.find(d => d.handle === actorTgt.handle);
+    analyseRecords(dataSrc.records, actorTgt);
+  }
 
   // node, edge取得
   let elements = await getElements(slicedAllWithProf);
