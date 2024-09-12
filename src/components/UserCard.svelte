@@ -17,6 +17,7 @@
   export let tappedNode;
   export let handleSubmit;
   let lastActionTimeText = '';
+  let timeOnBskyText = '';
 
   onMount(() => {
     function handleClickSocialAnalysis() {
@@ -41,7 +42,7 @@
     } else if (diffInDays < 30) {
       return `${diffInDays}d`;
     } else {
-      return `${diffInMonths}month`;
+      return `${diffInMonths}M`;
     }
   }
 
@@ -50,35 +51,67 @@
       lastActionTimeText = getLastActionText(tappedNode.data('lastActionTime'));
     }
   }
+
+  function calculateDaysSince(utcString) {
+    const pastDate = new Date(utcString);
+    
+    const currentDate = new Date();
+    const diffInMilliseconds = currentDate - pastDate;
+    const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
+  
+    return diffInDays;
+  }
+
+  $: {
+    if (tappedNode && tappedNode.data('createdAt')) {
+      timeOnBskyText = calculateDaysSince(tappedNode.data('createdAt'));
+    }
+  }
+
 </script>
 
 <!-- {#if tappedNode} -->
 <div class="card-container">
   <Card>
-    <PrimaryAction on:click={window.open(`https://bsky.app/profile/${tappedNode.data('handle')}`, "_blank")}>
-      <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}">
-        <div class="cardtext-bg">
-          <div class="cardtext-container">
-            <h3 class="cardtext">
-              {tappedNode.data('name')}
-            </h3>
-            <h6 class="cardtext">
-              {tappedNode.data('handle')}
-            </h6>
+    <div class="avatar">
+      <PrimaryAction on:click={window.open(`https://bsky.app/profile/${tappedNode.data('handle')}`, "_blank")}>
+        <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}">
+          <div class="cardtext-bg">
+            <div class="cardtext-container">
+              <h3 class="cardtext">
+                {tappedNode.data('name')}
+              </h3>
+              <h6 class="cardtext">
+                {tappedNode.data('handle')}
+              </h6>
+            </div>
           </div>
-        </div>
-      </Media>
-    </PrimaryAction>
+        </Media>
+      </PrimaryAction>
+    </div>
     <div id="cardinfo-container">
-      <div class="last-action-time" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 10px; gap: 5px;">
-        <h5>Last Active:</h5>
-        <h4>{lastActionTimeText}</h4>
+      <div style="display: flex; justify-content: center;">
+        {#if tappedNode.data('lastActionTime')}
+          <div class="last-action-time" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 10px; gap: 5px;">
+            <h6 class="full">Last<br>Active:</h6>
+            <h6 class="short">Last:</h6>
+            <h4>{lastActionTimeText}</h4>
+          </div>
+        {/if}
+        {#if tappedNode.data('createdAt')}
+          <div class="time-on-bsky" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 10px; gap: 5px;">
+            <h6 class="full">Days on<br>Bluesky:</h6>
+            <h6 class="short">Days:</h6>
+            <h4>{timeOnBskyText}</h4>
+          </div>
+        {/if}
       </div>
       {#if tappedNode.data('activeHistgram')}
         <ActiveHistgram {tappedNode}/>
       {/if}
       {#if tappedNode.data('level') !== 0}
         <div id="replylike">
+          <h6>To you:</h6>
           <div class="icon">
             <IconButton class="material-icons">reply</IconButton>
           </div>
@@ -110,7 +143,7 @@
     position: fixed;
     bottom: 10px;
     left: 10px;
-    width: 230px;
+    width: 300px;
     z-index: 1;
   }
   .cardtext-bg {
@@ -145,12 +178,40 @@
     font-size: 24px;
     flex-shrink: 0;
     color: #333;
-    margin-left: 10px;
     pointer-events: none;
   }
   #replylike h4 {
     margin: 0;
     flex-shrink: 0;
     margin-right: 20px;
+  }
+  .last-action-time h6.short {
+    display: none;
+  }
+  .time-on-bsky h6.short {
+    display: none;
+  }
+  @media screen and (max-width: 600px) {
+    .card-container {
+      width: 200px;
+    }
+
+    .last-action-time h6.full {
+      display: none;
+    }
+    .last-action-time h6.short {
+      display: inline;
+    }
+
+    .time-on-bsky h6.full {
+      display: none;
+    }
+    .time-on-bsky h6.short {
+      display: inline;
+    }
+
+    #replylike h6 {
+      display: none;
+    }
   }
 </style>

@@ -5,7 +5,7 @@ import { supabase } from '$lib/server/supabase';
 
 const THRESHOLD_TL_MAX = 4000;
 const THRESHOLD_LIKES_MAX = 1000;
-const ELEM_NUM_PER_GROUP = 19;
+const ELEM_NUM_PER_GROUP = 20;
 
 // Inngestの関数を定義
 export const getElementsAndUpdateDbFunction = inngest.createFunction(

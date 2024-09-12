@@ -89,6 +89,7 @@ async function pushActorToNodes(actor, elements, level) {
       activeHistgram: actor.activeHistgram,
       averageInterval: actor.averageInterval,
       lastActionTime: actor.lastActionTime,
+      createdAt: actor.createdAt,
     },
     group: 'nodes',
   });

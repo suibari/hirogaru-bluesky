@@ -67,4 +67,9 @@
   .max-bar {
     background-color: #ff8a80 !important;
   }
+  @media screen and (max-width: 600px) {
+    .histogram-container {
+      height: 100px;
+    }
+  }
 </style>
