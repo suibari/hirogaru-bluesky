@@ -3,7 +3,7 @@ import kuromoji from 'kuromoji';
 import path from 'path';
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '/dict' ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : './dict' ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
