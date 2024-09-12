@@ -1,10 +1,10 @@
 import { NODE_ENV } from '$env/static/private';
 import kuromoji from 'kuromoji';
 import path from 'path';
-import prodDictPath from '$static/dict?raw';
+// import prodDictPath from '$static/dict?raw';
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : prodDictPath ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '../dict' ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
