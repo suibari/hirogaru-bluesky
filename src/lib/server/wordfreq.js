@@ -1,7 +1,10 @@
+import { NODE_ENV } from '$env/static/private';
 import kuromoji from 'kuromoji';
+import path from 'path';
 
 // Kuromoji tokenizerのビルダー
-const tokenizerBuilder = kuromoji.builder({ dicPath: "node_modules/kuromoji/dict" });
+const dicPath = NODE_ENV ? "node_modules/kuromoji/dict" : path.resolve(require.resolve('kuromoji'), '../../dict') ;
+const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
  * テキストの配列から名詞の頻出数をカウントする関数
