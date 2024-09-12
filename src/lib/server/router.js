@@ -79,7 +79,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   for (let i=0; i<NUM_ANALYSIS; i++) {
     const actorTgt = slicedAllWithProf[i];
     const dataSrc = data.find(d => d.handle === actorTgt.handle);
-    analyseRecords(dataSrc.records, actorTgt);
+    await analyseRecords(dataSrc.records, actorTgt);
   }
 
   // node, edge取得

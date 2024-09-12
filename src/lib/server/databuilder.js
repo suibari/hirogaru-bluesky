@@ -1,5 +1,6 @@
 import FileType from 'file-type';
 import { base64DefaultAvatorImage } from '$lib/img/defaultavator.js';
+import { getNounFrequencies } from './wordfreq';
 const DEFFAULT_AVATOR = `url(${base64DefaultAvatorImage})`;
 
 export async function getElements(allWithProf) {
@@ -90,6 +91,7 @@ async function pushActorToNodes(actor, elements, level) {
       averageInterval: actor.averageInterval,
       lastActionTime: actor.lastActionTime,
       createdAt: actor.createdAt,
+      wordFreqMap: actor.wordFreqMap,
     },
     group: 'nodes',
   });
@@ -195,7 +197,8 @@ export async function imageUrlToBase64(imageUrl) {
   }
 }
 
-export function analyseRecords(records, actor) {
+export async function analyseRecords(records, actor) {
+  const WORDFREQ_SLICE_NUM = 3;
 
   const allRecords = [...records.posts, ...records.likes];
 
@@ -233,4 +236,7 @@ export function analyseRecords(records, actor) {
   // 最終活動時間
   const lastActionTime = allRecords.length > 0 ? new Date(allRecords[allRecords.length - 1].value.createdAt) : null;
   actor.lastActionTime = lastActionTime;
+
+  // 頻出単語分析
+  actor.wordFreqMap = await getNounFrequencies(records.posts, WORDFREQ_SLICE_NUM);
 }

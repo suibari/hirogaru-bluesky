@@ -106,6 +106,14 @@
           </div>
         {/if}
       </div>
+      {#if tappedNode.data('wordFreqMap')}
+        <h6 class="word-freq-map" style="margin-left: 10px;">Favorite words:</h6>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+          <h5>#{tappedNode.data('wordFreqMap')[0]}</h5>
+          <h5>#{tappedNode.data('wordFreqMap')[1]}</h5>
+          <h5>#{tappedNode.data('wordFreqMap')[2]}</h5>
+        </div>
+      {/if}
       {#if tappedNode.data('activeHistgram')}
         <ActiveHistgram {tappedNode}/>
       {/if}
@@ -208,6 +216,10 @@
     }
     .time-on-bsky h6.short {
       display: inline;
+    }
+
+    .word-freq-map {
+      display: none;
     }
 
     #replylike h6 {
