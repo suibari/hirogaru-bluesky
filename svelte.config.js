@@ -7,7 +7,7 @@ export default {
 			maxDuration: 60
 		}),
 		alias: {
-			'static': 'static'
+			'$static': 'static'
 		}
 	}
 };
