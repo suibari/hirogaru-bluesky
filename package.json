@@ -4,8 +4,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "npm run copy-dict && vite preview",
+		"build": "npm run copy-dict && vite build",
+		"preview": "vite preview",
 		"prepare": "npm run smui-theme",
 		"smui-theme": "smui-theme compile static/smui.css -i src/theme",
 		"start": "node build",
