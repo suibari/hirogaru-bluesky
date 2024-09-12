@@ -5,6 +5,9 @@ export default {
 		adapter: adapter({
 			// see below for options that can be set here
 			maxDuration: 60
-		})
+		}),
+		alias: {
+			'static': 'static'
+		}
 	}
 };
