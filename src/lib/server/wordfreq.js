@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import {exec} from 'child_process';
-exec('ls . -lah', (err, stdout, stderr) => {
+exec('ls ./ -lah', (err, stdout, stderr) => {
   console.log(`[DEBUG] stdout: ${stdout}`);
 });
 
@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = resolve(__filename);
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '.svelte-kit/output/dict' ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : './dict' ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
