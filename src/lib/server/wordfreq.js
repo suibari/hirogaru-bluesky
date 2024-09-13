@@ -12,8 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = resolve(__filename);
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : './dict' ;
-const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '.svelte-kit/output/dict' ;
+const tokenizerBuilder = kuromoji.builder({ dicPath: null });
 
 /**
  * テキストの配列から名詞の頻出数をカウントする関数
