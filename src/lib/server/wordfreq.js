@@ -4,8 +4,17 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import {exec} from 'child_process';
-exec('ls ./node_modules/kuromoji -lah', (err, stdout, stderr) => {
-  console.log(`[DEBUG] stdout: ${stdout}`);
+const command = `pwd; find . | sort | sed '1d;s/^\\.//;s/\\/\\([^/]*\\)$/|--\\1/;s/\\/[^/|]*/|  /g'`;
+exec(command, (error, stdout, stderr) => {
+  if (error) {
+    console.error(`exec error: ${error}`);
+    return;
+  }
+  if (stderr) {
+    console.error(`stderr: ${stderr}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
 });
 
 const __filename = fileURLToPath(import.meta.url);
