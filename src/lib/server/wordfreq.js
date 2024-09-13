@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = resolve(__filename, '..');
-const dicPathProd = resolve(__dirname, '../lib/dict');
+const dicPathProd = resolve(__dirname, '../dict');
 
 // Kuromoji tokenizerのビルダー
 const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : dicPathProd ;
