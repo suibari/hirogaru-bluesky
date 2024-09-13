@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import {exec} from 'child_process';
-exec('ls ./.svelte-kit/output/server -lah', (err, stdout, stderr) => {
+exec('ls ./node_modules/kuromoji -lah', (err, stdout, stderr) => {
   console.log(`[DEBUG] stdout: ${stdout}`);
 });
 
