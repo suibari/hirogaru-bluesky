@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import {exec} from 'child_process';
-const command = `pwd; find . | sort | sed '1d;s/^\\.//;s/\\/\\([^/]*\\)$/|--\\1/;s/\\/[^/|]*/|  /g'`;
+const command = `ls -R | grep ":$" | sed -e 's/:$//' -e 's/^/|-- /' -e 's/|-- /|  /' -e 's/^[^|]/|-- /'`;
 exec(command, (error, stdout, stderr) => {
   if (error) {
     console.error(`exec error: ${error}`);
