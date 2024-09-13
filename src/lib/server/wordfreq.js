@@ -8,7 +8,7 @@ const __dirname = resolve(__filename);
 const dicPathProd = resolve(__dirname, '../dict');
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : dicPathProd ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '.svelte-kit/output/dict' ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
