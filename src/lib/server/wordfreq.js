@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import {exec} from 'child_process';
-const command = `ls -R | grep ":$" | sed -e 's/:$//' -e 's/^/|-- /' -e 's/|-- /|  /' -e 's/^[^|]/|-- /'`;
+const command = `ls .. -R | grep ":$" | sed -e 's/:$//' -e 's/^/|-- /' -e 's/|-- /|  /' -e 's/^[^|]/|-- /'`;
 exec(command, (error, stdout, stderr) => {
   if (error) {
     console.error(`exec error: ${error}`);
@@ -22,7 +22,7 @@ const __dirname = resolve(__filename);
 const dicPathProd = resolve(__dirname, '../dict');
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : './.svelte-kit/output/server/dict' ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : 'node_modules/kuromoji/src/dict' ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
