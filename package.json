@@ -9,7 +9,7 @@
 		"prepare": "npm run smui-theme",
 		"smui-theme": "smui-theme compile static/smui.css -i src/theme",
 		"start": "node build",
-		"copy-dict": "cp -r node_modules/kuromoji/dict ./static/dict"
+		"copy-dict": "cp -r node_modules/kuromoji/dict src/lib/dict"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-vercel": "^5.4.3",

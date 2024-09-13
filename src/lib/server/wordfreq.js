@@ -1,20 +1,14 @@
 import { NODE_ENV } from '$env/static/private';
 import kuromoji from 'kuromoji';
-import path from 'path';
-import {exec} from 'child_process';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-exec('ls -lh', (err, stdout, stderr) => {
-  console.log(`[DEBUG] ls stdout: ${stdout}`);
-});
-exec('ls .. -lh', (err, stdout, stderr) => {
-  console.log(`[DEBUG] ls .. stdout: ${stdout}`);
-});
-exec('ls ../.. -lh', (err, stdout, stderr) => {
-  console.log(`[DEBUG] ls ../.. stdout: ${stdout}`);
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = resolve(__filename, '..');
+const dicPathProd = resolve(__dirname, '../lib/dict');
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '../../../static/dict' ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : dicPathProd ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
