@@ -1,15 +1,18 @@
 import { NODE_ENV } from '$env/static/private';
 import kuromoji from 'kuromoji';
-import { resolve } from 'path';
+import path, { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import {exec} from 'child_process';
-exec('ls .svelte-kit/output/server/ -lah', (err, stdout, stderr) => {
+exec('ls ./node_modules/kuromoji -lah', (err, stdout, stderr) => {
   console.log(`[DEBUG] stdout: ${stdout}`);
 });
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : '.svelte-kit/output/server/dict' ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : resolve(__dirname, 'node_modules/kuromoji/dict') ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
