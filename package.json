@@ -40,6 +40,8 @@
 		"cytoscape": "^3.28.1",
 		"dotenv": "^16.4.5",
 		"file-type": "^16.5.4",
+		"flowbite": "^2.5.1",
+		"flowbite-svelte": "^0.46.16",
 		"inngest": "^3.22.8",
 		"kuromoji": "^0.1.2",
 		"smui-theme": "^7.0.0-beta.18",

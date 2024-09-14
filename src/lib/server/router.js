@@ -13,8 +13,9 @@ const SCORE_REPLY = 10;
 const SCORE_LIKE = 1;
 const MAX_RADIUS = 10;
 const NUM_ANALYSIS = 37;
+const PERCENT_PREPARE_ELEMENT = 80;
 
-export async function getData(handle) {
+export async function getData(handle, progressCallback) {
   try {
     let elements;
 
@@ -26,6 +27,9 @@ export async function getData(handle) {
       // データがないので同期処理で待って最低限のデータを渡す
       elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false);
       isFirstTime = true;
+
+      // 進捗
+      if (progressCallback) progressCallback(PERCENT_PREPARE_ELEMENT);
     } else {
       elements = data[0].elements;
       const nodes = elements.filter(element => (element.group === 'nodes'));
@@ -41,6 +45,10 @@ export async function getData(handle) {
           nodeTgt.data.lastActionTime = data[0].result_analyze.lastActionTime;
           nodeTgt.data.wordFreqMap = data[0].result_analyze.wordFreqMap;
         }
+
+        // 進捗をiに応じて加算
+        const progress = Math.floor(((i+1) / NUM_ANALYSIS) * PERCENT_PREPARE_ELEMENT);
+        if (progressCallback) progressCallback(progress);
       }
     }
 
@@ -50,6 +58,9 @@ export async function getData(handle) {
         elem.data.img = await imageUrlToBase64(elem.data.img);
       }
     }));
+
+    // 処理完了 (100%進捗)
+    if (progressCallback) progressCallback(100);
     
     // console.log(elements.length, isFirstTime);
     return {elements: elements, isFirstTime: isFirstTime};

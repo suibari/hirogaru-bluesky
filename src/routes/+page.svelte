@@ -13,6 +13,8 @@
   import TabBar from "@smui/tab-bar";
   import Snackbar, {Actions} from '@smui/snackbar';
   import Button from '@smui/button';
+  import { Progressbar } from 'flowbite-svelte';
+  import { sineOut } from 'svelte/easing';
   // my components
   import Graph from "../components/Graph.svelte";
   import UserCard from "../components/UserCard.svelte";
@@ -28,6 +30,7 @@
   let isNeverRun = true;
   let isRunning = false; // フェッチ&描画実行中のフラグ
   let isPosting = false; // ポスト中のフラグ
+  let isGenerating = false;
   let tappedNode = null; // ノードタップフラグ
   let runConcentric; // 同心円相関図描画関数
   let runGrid; // 関係図描画関数
@@ -52,6 +55,7 @@
   let selectedRadius;
   let handle, password;
   let isLoggedIn = false;
+  let progressGenerate = 0;
   export let data;
 
   // ページ読み込み時の処理
@@ -77,7 +81,7 @@
 
   // ユーザカードの相関図ボタン用ハンドラ
   async function handleSubmit(event) {
-    if (isRunning) {
+    if (isGenerating) {
       snackbarWarningRunning.open();
 
     } else {
@@ -91,7 +95,7 @@
       let body;
 
       isNeverRun = false;
-      isRunning = true;
+      isGenerating = true;
       isGridMode = false;
       isShowSuggestion = false;
 
@@ -103,17 +107,23 @@
         body = new FormData();
         body.append("handle", event);
       }
-      const response = await fetch('?/generate', {
-        method: 'POST',
-        body: body,
-      });
 
-      if (response.ok) {
-        const result = deserialize(await response.text());
-        if (result.type === 'success') {
-          // await invalidateAll();
-          elements = result.data.elements;
-          const isFirstTime = result.data.isFirstTime;
+      // サーバーとの通信をEventSourceに変更して進捗を受け取る
+      const url = new URL('/generate', window.location.origin);
+      const searchParams = new URLSearchParams(body);
+      url.search = searchParams.toString();
+
+      const eventSource = new EventSource(url);
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.progress) {
+          progressGenerate = data.progress;
+          console.log(`progress: ${data.progress}`);
+        } else if (data.success) {
+          elements = data.elements;
+          const isFirstTime = data.isFirstTime;
           if (isFirstTime) {
             successMessage = "初回実行なので取得データ数を減らして実行します。数分後にデータ更新されますので、また実行してみてください!";
             snackbarSuccess.open();
@@ -124,19 +134,22 @@
           localStorage.setItem("handle", body.get('handle'));
 
           // 裏でinngestに更新リクエスト
-          const response = await fetch('?/update', {
+          const response = fetch('?/update', {
             method: 'POST',
             body: body,
           });
-        };
-        // applyAction(result); // formへのresult格納
-      } else {
-        const json = await response.json();
-        errorMessage = json.error.message;
+
+          isGenerating = false;
+          eventSource.close();
+        }
+      };
+
+      eventSource.onerror = (event) => {
+        errorMessage = event;
         snackbarErrorFetch.open();
-        isRunning = false;
+        isGenerating = false;
       }
-    };
+    }
   }
 
   // ハンドル名入力時のハンドラ
@@ -510,6 +523,21 @@
     <CircularProgress style="height: 100px; width: 100px;" indeterminate />
   </div>
 {/if}
+<!-- プログレスバー -->
+<!-- {#if (isGenerating)} -->
+<Progressbar
+  progress={progressGenerate}
+  animate
+  precision={2}
+  labelOutside="相関図を作っています..."
+  labelInside
+  tweenDuration={1500}
+  easing={sineOut}
+  size="h-6"
+  labelInsideClass="bg-blue-600 text-blue-100 text-base font-medium text-center p-1 leading-none rounded-full"
+  class="mb-8"
+/>
+<!-- {/if} -->
 
 <!-- シェアボタン -->
 <div id="shareContainer">

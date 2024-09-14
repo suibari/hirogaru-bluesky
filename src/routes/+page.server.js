@@ -5,20 +5,40 @@ import { inngest } from '$lib/inngest/inngest.js';
 import { verifyUser } from '../lib/server/router.js';
 
 export const actions = {
-  generate: async ({request}) => {
-    try {
-      const data = await request.formData();
-      const handle = data.get('handle');
-      console.log(`[INFO] receive query from client. handle: ${data.get('handle')}.`);
-      const {elements, isFirstTime} = await getData(handle);
-      console.log("[INFO] send data to client. total elements: "+elements.length);
+  // generate: async ({request}) => {
+  //   try {
+  //     const data = await request.formData();
+  //     const handle = data.get('handle');
+  //     console.log(`[INFO] receive query from client. handle: ${data.get('handle')}.`);
 
-      return { success: true, elements: elements, isFirstTime: isFirstTime };
-    } catch (e) {
-      console.error("[ERROR] An error occured: ", e);
-      error(500, { message: e.error });
-    }
-  },
+  //     const stream = new ReadableStream({
+  //       async start(controller) {
+
+  //         // 進捗をクライアントに送信する関数
+  //         const sendProgress = (progress) => {
+  //           controller.enqueue(`data: ${JSON.stringify({progress})}\n\n`);
+  //         }
+
+  //         const {elements, isFirstTime} = await getData(handle, sendProgress);
+  //         console.log("[INFO] send data to client. total elements: "+elements.length);
+
+  //         controller.enqueue(`data: ${JSON.stringify({ success: true, elements: elements, isFirstTime: isFirstTime })}\n\n`);
+  //         controller.close();
+  //       }
+  //     });
+
+  //     return new Response(stream, {
+  //       headers: {
+  //         'Content-Type': 'text/event-stream',
+  //         'Cache-Control': 'no-cache',
+  //         'Connection': 'keep-alive',
+  //       },
+  //     });
+  //   } catch (e) {
+  //     console.error("[ERROR] An error occured: ", e);
+  //     error(500, { message: e.error });
+  //   }
+  // },
 
   post: async ({ request, cookies }) => {
     try {
