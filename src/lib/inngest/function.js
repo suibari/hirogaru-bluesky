@@ -1,5 +1,5 @@
 import { inngest } from './inngest';
-import { getElementsAndSetDb, getLatestPostsAndLikesAndSetDb } from '$lib/server/router';
+import { getElementsAndSetDb, getLatestPostsAndLikes } from '$lib/server/router';
 import { analyzeRecords } from '$lib/server/databuilder';
 import { TimeLogger } from '$lib/server/logger';
 import { supabase } from '$lib/server/supabase';
@@ -15,7 +15,7 @@ export const getElementsAndUpdateDbFunction = inngest.createFunction(
   async ({ event }) => {
     const { handle } = event.data;
 
-    console.log(`[INNGEST] ELEM: Executing getElementsAndUpdateDbFunction for elements: ${handle}`);
+    console.log(`[INNGEST] ELEM: Executing update elements: ${handle}`);
 
     try {
       await getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
@@ -36,68 +36,104 @@ export function getPostsLikesAndUpdateDbFunction(group) {
       const timeLogger = new TimeLogger();
       timeLogger.tic();
 
-      const { handle } = event.data;
+      const { handle: handleCenter } = event.data;
 
-      const {data, err} = await supabase.from('elements').select('elements').eq('handle', handle);
+      console.log(`[INNGEST] RECORDS G${group}: Executing get posts and likes: ${handleCenter}`);
+      
+      const {data, err} = await supabase.from('elements').select('elements').eq('handle', handleCenter);
       
       if (data.length === 1) {
         const nodes = data[0].elements.filter(element => (element.group === 'nodes'));
         const endIndex = Math.min(ELEM_NUM_PER_GROUP*(group+1), nodes.length);
         for (let i = ELEM_NUM_PER_GROUP*group; i < endIndex; i++) {
+          const handleAround = nodes[i].data.handle;
           // console.log(`[INNGEST] RECORDS G${group}: get posts and likes: ${nodes[i].data.handle}`);
 
           try {
-            await getLatestPostsAndLikesAndSetDb(nodes[i].data.handle);
+            const records = await getLatestPostsAndLikes(handleAround);
+
+            // DBセット
+            // const {data, error} = await supabase.from('records').upsert({ handle: handle, records: records, updated_at: new Date() }).select();
+            // if (error) console.error("Error", error);
             // console.log(`[INNGEST] RECORDS G${group}: Successfully get posts and likes: ${nodes[i].data.handle}`);
+
+            // ポスト解析イベントを駆動
+            await inngest.send({ name: 'hirogaru/updateDb.analyzeRecords', data: { handle: handleAround, records } });
+
           } catch (e) {
-            console.error(`[INNGEST] RECORDS G${group}: Failed to get posts and likes: ${nodes[i].data.handle}`, e);
+            console.error(`[INNGEST] RECORDS G${group}: Failed to get posts and likes: ${handleAround}`, e);
             return { success: false, error: e.message };
           }
         }
-        console.log(`[INNGEST] RECORDS G${group}: exec time was ${timeLogger.tac()} [sec]: ${handle}`);
 
+        console.log(`[INNGEST] RECORDS G${group}: exec time was ${timeLogger.tac()} [sec]: ${handleCenter}`);
         return { success: true };
       } else {
-        console.warn(`[INNGEST] RECORDS: Cannot get elements from DB: ${handle}`, e);
+        console.warn(`[INNGEST] RECORDS G${group}: Cannot get elements from DB: ${handleCenter}`, e);
       }
     }
   );
 }
 
-export function analyzeRecordsFunction(group) {
-  return inngest.createFunction(
-    { id: `Analysis Records About A Handle: ${group}` },
-    { event: `hirogaru/updateDb.analyzeRecords.G${group}` },
-    async ({event}) => {
-      const timeLogger = new TimeLogger();
-      timeLogger.tic();
+// export function analyzeRecordsFunction(group) {
+//   return inngest.createFunction(
+//     { id: `Analysis Records About A Handle: ${group}` },
+//     { event: `hirogaru/updateDb.analyzeRecords.G${group}` },
+//     async ({event}) => {
+//       const timeLogger = new TimeLogger();
+//       timeLogger.tic();
 
-      const { handle } = event.data;
+//       const { handle } = event.data;
 
-      let {data, err} = await supabase.from('elements').select('elements').eq('handle', handle);
+//       console.log(`[INNGEST] ANALYZE G${group}: Executing analyze records: ${handle}`);
+      
+//       let {data, error} = await supabase.from('elements').select('elements').eq('handle', handle);
 
-      if (data.length === 1) {
-        const nodes = data[0].elements.filter(element => (element.group === 'nodes'));
-        const endIndex = Math.min(ELEM_NUM_PER_GROUP*(group+1), nodes.length);
-        for (let i = ELEM_NUM_PER_GROUP*group; i < endIndex; i++) {
-          const handle = nodes[i].data.handle;
+//       if (data.length === 1) {
+//         const nodes = data[0].elements.filter(element => (element.group === 'nodes'));
+//         const endIndex = Math.min(ELEM_NUM_PER_GROUP*(group+1), nodes.length);
+//         for (let i = ELEM_NUM_PER_GROUP*group; i < endIndex; i++) {
+//           const handle = nodes[i].data.handle;
 
-          ({data, err} = await supabase.from('records').select('records').eq('handle', handle));
+//           ({data, error} = await supabase.from('records').select('records').eq('handle', handle));
 
-          if (data.length === 1) {
-            const result = await analyzeRecords(data[0].records);
-            ({data, err} = await supabase.from('elements').upsert({handle: handle, result_analyze_records: result, updated_at: new Date()}).select());
-            if (err) console.error("Error", err);
+//           if (data.length === 1) {
+//             const records = data[0].records;
+//             const result = await analyzeRecords(records);
+//             ({data, error} = await supabase.from('records').upsert({
+//               handle: handle,
+//               records: records,
+//               result_analyze: result,
+//               updated_at: new Date()
+//             }).select());
+//             if (error) console.error("Error", err);
 
-            // console.log(`[INNGEST] ANALYZE G${group}: Successfully analyze: ${handle}`);
-          }
-        }
-        console.log(`[INNGEST] ANALYZE G${group}: exec time was ${timeLogger.tac()} [sec]: ${handle}`);
+//             // console.log(`[INNGEST] ANALYZE G${group}: Successfully analyze: ${handle}`);
+//           }
+//         }
+//         console.log(`[INNGEST] ANALYZE G${group}: exec time was ${timeLogger.tac()} [sec]: ${handle}`);
 
-        return { success: true };
-      } else {
-        console.warn(`[INNGEST] ANALYZE: Cannot get elements from DB: ${handle}`, e);
-      }
-    }
-  );
-}
+//         return { success: true };
+//       } else {
+//         console.warn(`[INNGEST] ANALYZE G${group}: Cannot get elements from DB: ${handle}`, e);
+//       }
+//     }
+//   );
+// }
+
+export const analyzeRecordsFunction = inngest.createFunction(
+  { id: `Analysis Records About A Handle` },
+  { event: `hirogaru/updateDb.analyzeRecords` },
+  async ({event}) => {
+    const { handle, records } = event.data;
+
+    const result = await analyzeRecords(records);
+    const {data, error} = await supabase.from('records').upsert({
+      handle: handle,
+      records: records,
+      result_analyze: result,
+      updated_at: new Date()
+    }).select();
+    if (error) console.error("Error", error);
+  }
+);

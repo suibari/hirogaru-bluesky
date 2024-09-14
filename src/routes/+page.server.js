@@ -46,8 +46,6 @@ export const actions = {
         inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } }),
         inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G0', data: { handle } }),
         inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G1', data: { handle } }),
-        inngest.send({ name: 'hirogaru/updateDb.analyzeRecords.G0', data: { handle } }),
-        inngest.send({ name: 'hirogaru/updateDb.analyzeRecords.G1', data: { handle } }),
       ]);
       console.log("[INFO] Inngest event sent.");
 

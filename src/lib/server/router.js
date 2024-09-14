@@ -74,7 +74,8 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
   const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
 
-  // ProfにDBから取得した最新ポストいいねがあればセットする
+  // Profにレコード解析データをセットする
+  
   // const {data, err} = await supabase.from('records').select(); // 取得済み全ユーザのポストいいね取得
   // for (let i=0; i<NUM_ANALYSIS; i++) {
   //   const actorTgt = slicedAllWithProf[i];
@@ -213,7 +214,7 @@ export async function verifyUserAndPostBsky(sessionId, text, imgBlob) {
   }
 }
 
-export async function getLatestPostsAndLikesAndSetDb(handle) {
+export async function getLatestPostsAndLikes(handle) {
   let response;
 
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
@@ -234,12 +235,10 @@ export async function getLatestPostsAndLikesAndSetDb(handle) {
   });
   const likeRecords = response.records;
 
-  // DBにセット
   const records = {
     posts: postRecords,
     likes: likeRecords,
   }
   
-  const {data, err} = await supabase.from('records').upsert({ handle: handle, records: records, updated_at: new Date() }).select();
-  if (err) console.error("Error", err);
+  return records;
 }
