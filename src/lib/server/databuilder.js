@@ -197,9 +197,10 @@ export async function imageUrlToBase64(imageUrl) {
   }
 }
 
-export async function analyseRecords(records, actor) {
+export async function analyzeRecords(records) {
   const WORDFREQ_SLICE_NUM = 3;
 
+  const result = {};
   const allRecords = [...records.posts, ...records.likes];
 
   // 活動ヒートマップ
@@ -216,7 +217,7 @@ export async function analyseRecords(records, actor) {
       histgram[hourKey] = 1;
     }
   });
-  actor.activeHistgram = histgram;
+  result.activeHistgram = histgram;
 
   // 平均活動間隔
   allRecords.sort((a, b) => new Date(a.value.createdAt) - new Date(b.value.createdAt));
@@ -231,12 +232,14 @@ export async function analyseRecords(records, actor) {
     intervalsCount++;
   }
   const averageIntervalInSeconds = intervalsCount > 0 ? totalInterval / intervalsCount / 1000 : 0;
-  actor.averageInterval = averageIntervalInSeconds;
+  result.averageInterval = averageIntervalInSeconds;
 
   // 最終活動時間
   const lastActionTime = allRecords.length > 0 ? new Date(allRecords[allRecords.length - 1].value.createdAt) : null;
-  actor.lastActionTime = lastActionTime;
+  result.lastActionTime = lastActionTime;
 
   // 頻出単語分析
-  actor.wordFreqMap = await getNounFrequencies(records.posts, WORDFREQ_SLICE_NUM);
+  result.wordFreqMap = await getNounFrequencies(records.posts, WORDFREQ_SLICE_NUM);
+
+  return result;
 }

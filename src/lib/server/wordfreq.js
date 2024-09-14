@@ -6,17 +6,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import {exec} from 'child_process';
-exec('ls ./node_modules/kuromoji -lah', (err, stdout, stderr) => {
-  console.log(`[DEBUG] stdout: ${stdout}`);
-});
-
 // Kuromoji tokenizerのビルダー
 const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : resolve(__dirname, '../../../../node_modules/kuromoji/dict') ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
- * テキストの配列から名詞の頻出数をカウントする関数
+ * テキストの配列から名詞の頻出TOP3を返す関数
  */
 export async function getNounFrequencies(posts, sliceNum) {
   return new Promise((resolve, reject) => {
