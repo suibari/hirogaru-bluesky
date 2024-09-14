@@ -12,7 +12,7 @@ exec('ls ./node_modules/kuromoji -lah', (err, stdout, stderr) => {
 });
 
 // Kuromoji tokenizerのビルダー
-const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : resolve(__dirname, 'node_modules/kuromoji/dict') ;
+const dicPath = (NODE_ENV === 'development') ? "node_modules/kuromoji/dict" : resolve(__dirname, '../../../../node_modules/kuromoji/dict') ;
 const tokenizerBuilder = kuromoji.builder({ dicPath: dicPath });
 
 /**
