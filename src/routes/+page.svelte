@@ -91,8 +91,6 @@
       if ((event) && (event.currentTarget)) {
         body = new FormData(event.currentTarget);
 
-        // ローカルストレージに保存
-        localStorage.setItem("handle", body.get('handle'));
       } else {
         // formで呼ばれたわけではない、eventにhandleが設定されているはず
         body = new FormData();
@@ -114,6 +112,9 @@
             snackbarSuccess.open();
           }
           runConcentric(elements);
+
+          // ローカルストレージに保存
+          localStorage.setItem("handle", body.get('handle'));
 
           // 裏でinngestに更新リクエスト
           const response = await fetch('?/update', {

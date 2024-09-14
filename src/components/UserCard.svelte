@@ -92,14 +92,14 @@
     <div id="cardinfo-container">
       <div style="display: flex; justify-content: center;">
         {#if tappedNode.data('lastActionTime')}
-          <div class="last-action-time" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 10px; gap: 5px;">
+          <div class="last-action-time" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px; gap: 5px;">
             <h6 class="full">Last<br>Active:</h6>
             <h6 class="short">Last:</h6>
             <h4>{lastActionTimeText}</h4>
           </div>
         {/if}
         {#if tappedNode.data('createdAt')}
-          <div class="time-on-bsky" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 10px; gap: 5px;">
+          <div class="time-on-bsky" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px; gap: 5px;">
             <h6 class="full">Days on<br>Bluesky:</h6>
             <h6 class="short">Days:</h6>
             <h4>{timeOnBskyText}</h4>
@@ -107,16 +107,16 @@
         {/if}
       </div>
       {#if tappedNode.data('averageInterval')}
-        <div class="average_interval" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px 5px; gap: 5px;">
+        <div class="average_interval" style="display: flex; align-items:flex-end; justify-content: center; margin-bottom: 10px; gap: 5px;">
           <h6>Avg-Act<br>Interval:</h6>
           <h4>{Math.round(tappedNode.data('averageInterval')/60)}</h4><h4 style="font-size: small">[m/act]</h4>
         </div>
       {/if}
       {#if tappedNode.data('wordFreqMap')}
         <h6 class="word-freq-map" style="margin-left: 10px;">Favorite words:</h6>
-        <div style="display: flex; justify-content: center; gap: 10px;">
+        <div style="display: flex; justify-content: center; margin-bottom: 10px; gap: 10px;">
           <h5>#{tappedNode.data('wordFreqMap')[0]}</h5>
-          <h5 class="full">#{tappedNode.data('wordFreqMap')[1]}</h5>
+          <h5>#{tappedNode.data('wordFreqMap')[1]}</h5>
           <h5 class="full">#{tappedNode.data('wordFreqMap')[2]}</h5>
         </div>
       {/if}
