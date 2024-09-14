@@ -52,16 +52,8 @@ export function getPostsLikesAndUpdateDbFunction(group) {
           try {
             const records = await getLatestPostsAndLikes(handleAround);
 
-            // ポスト解析イベントを駆動
-            // await inngest.send({ name: 'hirogaru/updateDb.analyzeRecords', data: { handle: handleAround, records } });
-            const result = await analyzeRecords(records);
-            const {data, error} = await supabase.from('records').upsert({
-              handle: handleAround,
-              records: records,
-              result_analyze: result,
-              updated_at: new Date()
-            }).select();
-            if (error) console.error("Error", error);
+            // ポスト解析イベントを駆動: マルチスレッドで走らせないと60sに間に合わない
+            await inngest.send({ name: 'hirogaru/updateDb.analyzeRecords', data: { handle: handleAround, records } });
 
           } catch (e) {
             console.error(`[INNGEST] RECORDS G${group}: Failed to get posts and likes: ${handleAround}`, e);

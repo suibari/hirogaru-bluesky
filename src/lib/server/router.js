@@ -20,7 +20,7 @@ export async function getData(handle) {
 
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
     let isFirstTime = false;
-    const {data, err} = await supabase.from('elements').select('elements').eq('handle', handle);
+    let {data, error} = await supabase.from('elements').select('elements').eq('handle', handle);
 
     if (data.length === 0) {
       // データがないので同期処理で待って最低限のデータを渡す
@@ -28,6 +28,20 @@ export async function getData(handle) {
       isFirstTime = true;
     } else {
       elements = data[0].elements;
+      const nodes = elements.filter(element => (element.group === 'nodes'));
+      
+      // 解析データセット
+      ({data, error} = await supabase.from('records').select()); // 取得済み全ユーザのポストいいね取得
+      for (let i = 0; i < nodes.length; i++){
+        const nodeTgt = nodes[i];
+        const rowTgt = data.find(row => row.handle === nodeTgt.data.handle);
+        if (rowTgt && rowTgt.result_analyze) {
+          nodeTgt.data.activeHistgram = rowTgt.result_analyze.activeHistgram;
+          nodeTgt.data.averageInterval = rowTgt.result_analyze.averageInterval;
+          nodeTgt.data.lastActionTime = rowTgt.result_analyze.lastActionTime;
+          nodeTgt.data.wordFreqMap = rowTgt.result_analyze.wordFreqMap;
+        }
+      }
     }
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
@@ -75,6 +89,12 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
 
   // Profにレコード解析データをセットする
+  // const {data, error} = await supabase.from('records').select(); // 取得済み全ユーザのポストいいね取得
+  // for (let i = 0; i < NUM_ANALYSIS; i++){
+  //   const actorTgt = slicedAllWithProf[i];
+  //   const rowTgt = data.find(row => row.handle === actorTgt.handle);
+  //   actorTgt.resultAnalyze = rowTgt.result_analyze;
+  // }
   
   // const {data, err} = await supabase.from('records').select(); // 取得済み全ユーザのポストいいね取得
   // for (let i=0; i<NUM_ANALYSIS; i++) {

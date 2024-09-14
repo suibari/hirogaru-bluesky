@@ -87,11 +87,7 @@ async function pushActorToNodes(actor, elements, level) {
       replyFromCenter: actor.replyCount||0,
       likeFromCenter: actor.likeCount||0,
       following: actor.following,
-      activeHistgram: actor.activeHistgram,
-      averageInterval: actor.averageInterval,
-      lastActionTime: actor.lastActionTime,
       createdAt: actor.createdAt,
-      wordFreqMap: actor.wordFreqMap,
     },
     group: 'nodes',
   });
