@@ -64,7 +64,7 @@ export function getPostsLikesAndUpdateDbFunction(group) {
         console.log(`[INNGEST] RECORDS G${group}: exec time was ${timeLogger.tac()} [sec]: ${handleCenter}`);
         return { success: true };
       } else {
-        console.warn(`[INNGEST] RECORDS G${group}: Cannot get elements from DB: ${handleCenter}`, e);
+        console.warn(`[INNGEST] RECORDS G${group}: Cannot get elements from DB: ${handleCenter}`);
       }
     }
   );
