@@ -31,15 +31,15 @@ export async function getData(handle) {
       const nodes = elements.filter(element => (element.group === 'nodes'));
       
       // 解析データセット
-      ({data, error} = await supabase.from('records').select()); // 取得済み全ユーザのポストいいね取得
-      for (let i = 0; i < nodes.length; i++){
+      for (let i = 0; i < NUM_ANALYSIS; i++){
         const nodeTgt = nodes[i];
-        const rowTgt = data.find(row => row.handle === nodeTgt.data.handle);
-        if (rowTgt && rowTgt.result_analyze) {
-          nodeTgt.data.activeHistgram = rowTgt.result_analyze.activeHistgram;
-          nodeTgt.data.averageInterval = rowTgt.result_analyze.averageInterval;
-          nodeTgt.data.lastActionTime = rowTgt.result_analyze.lastActionTime;
-          nodeTgt.data.wordFreqMap = rowTgt.result_analyze.wordFreqMap;
+
+        ({data, error} = await supabase.from('records').select('result_analyze').eq('handle', nodeTgt.data.handle)); // 指定ユーザのポストいいね取得
+        if (data.length === 1) {
+          nodeTgt.data.activeHistgram = data[0].result_analyze.activeHistgram;
+          nodeTgt.data.averageInterval = data[0].result_analyze.averageInterval;
+          nodeTgt.data.lastActionTime = data[0].result_analyze.lastActionTime;
+          nodeTgt.data.wordFreqMap = data[0].result_analyze.wordFreqMap;
         }
       }
     }
