@@ -81,6 +81,13 @@
       snackbarWarningRunning.open();
 
     } else {
+      // Google Analytics にイベントを送信
+      gtag('event', 'generate_graph', {
+        'event_category': 'button_click',
+        'event_label': 'Generate Button',
+        'value': 1 // 任意の値。必要に応じて変更可能
+      });
+
       let body;
 
       isNeverRun = false;
@@ -182,6 +189,13 @@
     isRunning = true;
     isLoginModalOpen = false;
 
+    // Google Analytics にイベントを送信
+    gtag('event', 'login', {
+      'event_category': 'button_click',
+      'event_label': 'Login Button',
+      'value': 1 // 任意の値。必要に応じて変更可能
+    });
+
     const body = new FormData(event.currentTarget);
 
     const response = await fetch('?/login', {
@@ -274,6 +288,13 @@
 
   // タップハンドラ
   function tapNode(event) {
+    // Google Analytics にイベントを送信
+    gtag('event', 'tap_node', {
+      'event_category': 'tap_node',
+      'event_label': 'Tap Node',
+      'value': 1 // 任意の値。必要に応じて変更可能
+    });
+
     tappedNode = event.detail;
 
     // パーティクル発生
@@ -353,6 +374,13 @@
       snackbarWarningPosting.open();
 
     } else {
+      // Google Analytics にイベントを送信
+      gtag('event', 'share', {
+        'event_category': 'share_button',
+        'event_label': 'Share Button',
+        'value': 1 // 任意の値。必要に応じて変更可能
+      });
+
       let blob;
 
       isRunning = true;
@@ -369,6 +397,28 @@
       isClickShare = true;
       isRunning = false;
     };
+  }
+
+  $: {
+    if (selectedRadius) {
+      // Google Analytics にイベントを送信
+      gtag('event', 'select_radius', {
+        'event_category': 'select_box_change',
+        'event_label': 'Select Box',
+        'value': 1 // 任意の値。必要に応じて変更可能
+      });
+    }
+  }
+
+  $: {
+    if (isClickHelp) {
+      // Google Analytics にイベントを送信
+      gtag('event', 'help', {
+        'event_category': 'help_button',
+        'event_label': 'Help Button',
+        'value': 1 // 任意の値。必要に応じて変更可能
+      });
+    }
   }
 </script>
 
