@@ -13,7 +13,7 @@ const SCORE_REPLY = 10;
 const SCORE_LIKE = 1;
 const MAX_RADIUS = 10;
 const NUM_ANALYSIS = 37;
-const PERCENT_PREPARE_ELEMENT = 80;
+const PERCENT_PREPARE_ELEMENT = 90;
 
 export async function getData(handle, progressCallback) {
   try {

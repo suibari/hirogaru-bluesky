@@ -1,0 +1,4 @@
+/* コンポーネントへのデザインのみ適用しベースはSMUIを使いたいのでこうしてみる */
+/* @import "tailwindcss/base"; */
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";

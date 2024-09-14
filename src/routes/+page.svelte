@@ -139,6 +139,7 @@
             body: body,
           });
 
+          progressGenerate = 0;
           isGenerating = false;
           eventSource.close();
         }
@@ -524,20 +525,21 @@
   </div>
 {/if}
 <!-- プログレスバー -->
-<!-- {#if (isGenerating)} -->
-<Progressbar
-  progress={progressGenerate}
-  animate
-  precision={2}
-  labelOutside="相関図を作っています..."
-  labelInside
-  tweenDuration={1500}
-  easing={sineOut}
-  size="h-6"
-  labelInsideClass="bg-blue-600 text-blue-100 text-base font-medium text-center p-1 leading-none rounded-full"
-  class="mb-8"
-/>
-<!-- {/if} -->
+{#if (isGenerating)}
+  <div id="progressbar">
+    <div style="color: white; margin-bottom: 5px;">相関図を作成しています...</div>
+    <Progressbar
+      progress={progressGenerate}
+      animate
+      labelInside
+      tweenDuration={400}
+      easing={sineOut}
+      size="h-6"
+      labelInsideClass="bg-white text-gray text-base font-medium text-center p-1 leading-none rounded-full"
+      class="mb-8"
+    />
+  </div>
+{/if}
 
 <!-- シェアボタン -->
 <div id="shareContainer">
@@ -711,6 +713,14 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 3;
+  }
+  #progressbar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70vw;
     z-index: 3;
   }
   #shareContainer {

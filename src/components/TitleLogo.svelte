@@ -1,7 +1,7 @@
 <div id="titleContainer">
   <div id="title">ひろがるBluesky!</div>
   <div id="subtitle">
-    <div>左上にBlueskyのハンドル名を入力して、</div>
+    <div>左上にBlueskyのハンドル名<span style="font-size: small">(@は不要)</span>を入力して、</div>
     <div>無限に広がる相関図をつくろう</div>
     <div>利用にログインやインストールは必要ありません</div>
     <div>わからないことがあれば右下のヘルプをどうぞ</div>
