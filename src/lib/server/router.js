@@ -14,6 +14,7 @@ const SCORE_LIKE = 1;
 const MAX_RADIUS = 10;
 const NUM_ANALYSIS = 37;
 const PERCENT_PREPARE_ELEMENT = 90;
+const ONE_HOUR_IN_MS = 60 * 60 * 1000;
 
 export async function getData(handle, progressCallback) {
   try {
@@ -21,7 +22,8 @@ export async function getData(handle, progressCallback) {
 
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
     let isFirstTime = false;
-    let {data, error} = await supabase.from('elements').select('elements').eq('handle', handle);
+    let isExecBgProcess = false;
+    let {data, error} = await supabase.from('elements').select('elements, updated_at').eq('handle', handle);
 
     if (data.length === 0) {
       // データがないので同期処理で待って最低限のデータを渡す
@@ -32,9 +34,17 @@ export async function getData(handle, progressCallback) {
       if (progressCallback) progressCallback(PERCENT_PREPARE_ELEMENT);
     } else {
       elements = data[0].elements;
-      const nodes = elements.filter(element => (element.group === 'nodes'));
-      
+
+      // バックグラウンド処理開始判定
+      const updatedAt = new Date(data[0].updated_at);
+      const currentTime = new Date();
+      const timeDiff = currentTime - updatedAt;
+      if (timeDiff > ONE_HOUR_IN_MS) {
+        isExecBgProcess = true;
+      }
+
       // 解析データセット
+      const nodes = elements.filter(element => (element.group === 'nodes'));
       for (let i = 0; i < NUM_ANALYSIS; i++){
         const nodeTgt = nodes[i];
 
@@ -63,7 +73,7 @@ export async function getData(handle, progressCallback) {
     if (progressCallback) progressCallback(100);
     
     // console.log(elements.length, isFirstTime);
-    return {elements: elements, isFirstTime: isFirstTime};
+    return {elements, isFirstTime, isExecBgProcess};
 
   } catch(e) {
     throw e;

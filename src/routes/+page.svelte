@@ -25,6 +25,8 @@
   import ChangeLog from "../components/ChangeLog.svelte";
   import TitleLogo from "../components/TitleLogo.svelte";
   import ShareModal from '../components/ShareModal.svelte';
+  // stylesheets
+  import './+page.css';
 
   // export let form; // これがないとform actionを受け取れない
   let isNeverRun = true;
@@ -124,8 +126,12 @@
         } else if (data.success) {
           elements = data.elements;
           const isFirstTime = data.isFirstTime;
+          const isExecBgProcess = data.isExecBgProcess;
           if (isFirstTime) {
-            successMessage = "初回実行なので取得データ数を減らして実行します。数分後にデータ更新されますので、また実行してみてください!";
+            successMessage = "初回実行なので取得データ数を減らしています。1分後には最新データが取得できているはずなので、また実行してみてください";
+            snackbarSuccess.open();
+          } else if (isExecBgProcess) {
+            successMessage = "バックグラウンドで最新データを取得しています。1分後には最新データが取得できているはずなので、また実行してみてください";
             snackbarSuccess.open();
           }
           runConcentric(elements);
@@ -134,10 +140,10 @@
           localStorage.setItem("handle", body.get('handle'));
 
           // 裏でinngestに更新リクエスト
-          const response = fetch('?/update', {
-            method: 'POST',
-            body: body,
-          });
+          // const response = fetch('?/update', {
+          //   method: 'POST',
+          //   body: body,
+          // });
 
           progressGenerate = 0;
           isGenerating = false;
@@ -481,7 +487,7 @@
   </Actions>
 </Snackbar>
 <!-- 初回実行の通知 -->
-<Snackbar bind:this={snackbarSuccess}>
+<Snackbar bind:this={snackbarSuccess} class="success">
   <Label>{successMessage}</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
@@ -650,117 +656,3 @@
     </form>
   </Content>
 </Dialog>
-
-<style>
-  .form-container {
-    position: fixed;
-    width: fit-content;
-    margin-top: 16px;
-    margin-left: 8px;
-    z-index: 5;
-  }
-  .form-container form {
-    position: relative;
-    z-index: 1;
-  }
-  .suggestions-box {
-    position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
-    width: 100%;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 10;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  .suggestions-box ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .suggestions-box li {
-    padding-left: 5px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-  }
-  .suggestions-box li:hover {
-    background-color: #f0f0f0;
-  }
-  #selectRadius {
-    position: fixed;
-    display: flex;
-    align-items: center;
-    margin-top: 50px;
-    margin-left: 0px;
-    color: white;
-    z-index: 1;
-  }
-  #selectRadius > .icon {
-    pointer-events: none;
-  }
-  @media screen and (max-width: 600px) {
-    form button {
-      margin-top: 10px;
-      display: block;
-    }
-
-    #selectRadius {
-      margin-top: 90px;
-    }
-  }
-  #loadingSpinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 3;
-  }
-  #progressbar {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70vw;
-    z-index: 3;
-  }
-  #shareContainer {
-    position: fixed;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  #loginButton, #logoutButton, #shareButton {
-    display: flex;
-    align-items: center;
-    color: white;
-  }
-  
-  #helpButton {
-    position: fixed;
-    bottom: 8px;
-    right: 8px;
-    width: 50px;
-    height: 50px;
-    color: white;
-    cursor: pointer;
-  }
-  #helpModal {
-    z-index: 10;
-  }
-  /* ログインフォームのスタイル */
-  .login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .login-form label {
-    font-weight: bold;
-  }
-  .login-form input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-</style>

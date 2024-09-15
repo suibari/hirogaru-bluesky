@@ -1,45 +1,9 @@
 import { NODE_ENV } from '$env/static/private';
 import { getData, doSearchActors, createSession, deleteSession, verifyUserAndPostBsky } from '$lib/server/router.js';
 import { error } from '@sveltejs/kit';
-import { inngest } from '$lib/inngest/inngest.js';
 import { verifyUser } from '../lib/server/router.js';
 
 export const actions = {
-  // generate: async ({request}) => {
-  //   try {
-  //     const data = await request.formData();
-  //     const handle = data.get('handle');
-  //     console.log(`[INFO] receive query from client. handle: ${data.get('handle')}.`);
-
-  //     const stream = new ReadableStream({
-  //       async start(controller) {
-
-  //         // 進捗をクライアントに送信する関数
-  //         const sendProgress = (progress) => {
-  //           controller.enqueue(`data: ${JSON.stringify({progress})}\n\n`);
-  //         }
-
-  //         const {elements, isFirstTime} = await getData(handle, sendProgress);
-  //         console.log("[INFO] send data to client. total elements: "+elements.length);
-
-  //         controller.enqueue(`data: ${JSON.stringify({ success: true, elements: elements, isFirstTime: isFirstTime })}\n\n`);
-  //         controller.close();
-  //       }
-  //     });
-
-  //     return new Response(stream, {
-  //       headers: {
-  //         'Content-Type': 'text/event-stream',
-  //         'Cache-Control': 'no-cache',
-  //         'Connection': 'keep-alive',
-  //       },
-  //     });
-  //   } catch (e) {
-  //     console.error("[ERROR] An error occured: ", e);
-  //     error(500, { message: e.error });
-  //   }
-  // },
-
   post: async ({ request, cookies }) => {
     try {
       const data = await request.formData();
@@ -53,27 +17,6 @@ export const actions = {
       console.error("[ERROR] An error occured: ", e);
       error(500, { message: e.error });
     } 
-  },
-
-  update: async ({ request }) => {
-    try {
-      const data = await request.formData();
-      const handle = data.get('handle');
-      console.log(`[INFO] updating DB for handle: ${handle}`);
-
-      // Inngestトリガー
-      await Promise.all([
-        inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } }),
-        inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G0', data: { handle } }),
-        inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G1', data: { handle } }),
-      ]);
-      console.log("[INFO] Inngest event sent.");
-
-      return { success: true, message: "Update successful" };
-    } catch (e) {
-      console.error("[ERROR] An error occurred: ", e);
-      throw error(500, { message: e.message });
-    }
   },
 
   search: async ({ request }) => {

@@ -1003,10 +1003,10 @@
     "@smui/common" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/button@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/button/-/button-7.0.0-beta.18.tgz"
-  integrity sha512-7RRrM49qRuLQazwOblGSqW/KPyzGI6zyH/nezzcEgItnz33rtRx7uRQUNUsknroPE2lGSx2wbuWxQz+ZIkSiPQ==
+"@smui/button@^7.0.0", "@smui/button@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/button/-/button-7.0.0.tgz"
+  integrity sha512-T1WK03HlOecrufoO4Z/W1dXC/R+VLqrwmBcIVQwqN0TiwUdHDfeCa1TjrqroLn9eJUe73T/O3Abh9b2Nttz77g==
   dependencies:
     "@material/button" "^14.0.0"
     "@material/elevation" "^14.0.0"
@@ -1014,9 +1014,9 @@
     "@material/ripple" "^14.0.0"
     "@material/shape" "^14.0.0"
     "@material/theme" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    "@smui/ripple" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    "@smui/ripple" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/card@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1135,16 +1135,16 @@
     "@smui/common" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/icon-button@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/icon-button/-/icon-button-7.0.0-beta.18.tgz"
-  integrity sha512-wLrUUdukOr78NKiRK9N6L3FJXvCpzY6DeZij9C4KlIhvrakeiCjWLEUtHYlIsdQfCE5PZkqGmOUAPWj3lEu0Ug==
+"@smui/icon-button@^7.0.0", "@smui/icon-button@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/icon-button/-/icon-button-7.0.0.tgz"
+  integrity sha512-SlcmGTW027X44O2QERC5fCZB1zLDsy9k5Cn+ohM0woSFNV3pIlrWtCyYFr1ariRiT8NTF1ScMdW70y8YgK9ikA==
   dependencies:
     "@material/density" "^14.0.0"
     "@material/icon-button" "^14.0.0"
-    "@smui/common" "^7.0.0-beta.18"
-    "@smui/ripple" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/common" "^7.0.0"
+    "@smui/ripple" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/image-list@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -1302,19 +1302,19 @@
     "@smui/ripple" "^7.0.0-beta.18"
     svelte2tsx "^0.6.27"
 
-"@smui/snackbar@^7.0.0-beta.18":
-  version "7.0.0-beta.18"
-  resolved "https://registry.npmjs.org/@smui/snackbar/-/snackbar-7.0.0-beta.18.tgz"
-  integrity sha512-dOLnUJb7jAbJv8P/ty2Tva5bgsPZgu5grImOTaUL1x8Ua9gBXjiITCg2MqJIDdrpCydlHLSCWBUtTdaLvbnLBw==
+"@smui/snackbar@^7.0.0", "@smui/snackbar@^7.0.0-beta.18":
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/@smui/snackbar/-/snackbar-7.0.0.tgz"
+  integrity sha512-01XcqJJhpOx1szlWfV5Eex+cZOPP4HkFz7MefsC33NOS68eWoNEre6rEsKw6XEeYnbKHv6wNbyowX4c8eRKncg==
   dependencies:
     "@material/dom" "^14.0.0"
     "@material/feature-targeting" "^14.0.0"
     "@material/snackbar" "^14.0.0"
-    "@smui/button" "^7.0.0-beta.18"
-    "@smui/common" "^7.0.0-beta.18"
-    "@smui/icon-button" "^7.0.0-beta.18"
-    "@smui/ripple" "^7.0.0-beta.18"
-    svelte2tsx "^0.6.27"
+    "@smui/button" "^7.0.0"
+    "@smui/common" "^7.0.0"
+    "@smui/icon-button" "^7.0.0"
+    "@smui/ripple" "^7.0.0"
+    svelte2tsx "^0.7.8"
 
 "@smui/switch@^7.0.0-beta.18":
   version "7.0.0-beta.18"
@@ -3610,9 +3610,9 @@ svelte2tsx@^0.6.27:
     pascal-case "^3.1.1"
 
 svelte2tsx@^0.7.8:
-  version "0.7.18"
-  resolved "https://registry.npmjs.org/svelte2tsx/-/svelte2tsx-0.7.18.tgz"
-  integrity sha512-PCOhH7uQaV472ZvNAcnkvShjFRMMkKUc/eNJImQMH9T4CyHeQpdatedFrEjaMCsweFb/oo3a6bv4qtdfaCPw8g==
+  version "0.7.19"
+  resolved "https://registry.npmjs.org/svelte2tsx/-/svelte2tsx-0.7.19.tgz"
+  integrity sha512-PME/9mILn9wOihtk2dxu9tmf2+B9X6oWuqYPJRKSjqU4wq3Pc6+fOuYV7T3H+QF5afmA1oDobfXC6dzmK9NAVw==
   dependencies:
     dedent-js "^1.0.1"
     pascal-case "^3.1.1"
