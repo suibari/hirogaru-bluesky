@@ -13,8 +13,11 @@ const SCORE_REPLY = 10;
 const SCORE_LIKE = 1;
 const MAX_RADIUS = 10;
 const NUM_ANALYSIS = 37;
-const PERCENT_PREPARE_ELEMENT = 90;
+const PERCENT_CALC_ENGAGEMENT = 30;
+const PERCENT_PREPARE_ELEMENT = 60;
+const PERCENT_BASE64_CONVERT = 100;
 const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+const RETRY_COUNT_GET_ELEM = 3;
 
 export async function getData(handle, progressCallback) {
   try {
@@ -27,11 +30,10 @@ export async function getData(handle, progressCallback) {
 
     if (data.length === 0) {
       // データがないので同期処理で待って最低限のデータを渡す
-      elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false);
+      elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false, progressCallback);
       isFirstTime = true;
+      isExecBgProcess = true;
 
-      // 進捗
-      if (progressCallback) progressCallback(PERCENT_PREPARE_ELEMENT);
     } else {
       elements = data[0].elements;
 
@@ -42,31 +44,41 @@ export async function getData(handle, progressCallback) {
       if (timeDiff > ONE_HOUR_IN_MS) {
         isExecBgProcess = true;
       }
+    }
 
-      // 解析データセット
-      const nodes = elements.filter(element => (element.group === 'nodes'));
-      for (let i = 0; i < NUM_ANALYSIS; i++){
-        const nodeTgt = nodes[i];
+    // 解析データセット
+    const nodes = elements.filter(element => (element.group === 'nodes'));
+    const handles = nodes.map(node => node.data.handle);
+    ({data, error} = await supabase.from('records').select('handle, result_analyze').in('handle', handles)); // 周辺ユーザの解析データ取得
+    if (data.length > 0) {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
 
-        ({data, error} = await supabase.from('records').select('result_analyze').eq('handle', nodeTgt.data.handle)); // 指定ユーザのポストいいね取得
-        if (data.length === 1) {
-          nodeTgt.data.activeHistgram = data[0].result_analyze.activeHistgram;
-          nodeTgt.data.averageInterval = data[0].result_analyze.averageInterval;
-          nodeTgt.data.lastActionTime = data[0].result_analyze.lastActionTime;
-          nodeTgt.data.wordFreqMap = data[0].result_analyze.wordFreqMap;
+        const match = data.find(row => row.handle === node.data.handle);
+        if (match) {
+          node.data.activeHistgram = match.result_analyze.activeHistgram;
+          node.data.averageInterval = match.result_analyze.averageInterval;
+          node.data.lastActionTime = match.result_analyze.lastActionTime;
+          node.data.wordFreqMap = match.result_analyze.wordFreqMap;
         }
-
+        
         // 進捗をiに応じて加算
-        const progress = Math.floor(((i+1) / NUM_ANALYSIS) * PERCENT_PREPARE_ELEMENT);
+        const progress = Math.floor(((i+1) / nodes.length) * PERCENT_PREPARE_ELEMENT);
         if (progressCallback) progressCallback(progress);
       }
     }
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
-    await Promise.all(elements.map(async elem => {
-      if (elem.group === 'nodes') {
-        elem.data.img = await imageUrlToBase64(elem.data.img);
-      }
+    // 指定したミリ秒だけ待つ関数
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    // imageUrlToBase64を10msおきに実行する
+    await Promise.all(nodes.map(async (node, index) => {
+      await delay(index*10);
+      node.data.img = await imageUrlToBase64(node.data.img);
+      
+      // 進捗をiに応じて加算
+      const progress = Math.floor(((index+1) / nodes.length) * (PERCENT_BASE64_CONVERT - PERCENT_PREPARE_ELEMENT) + PERCENT_PREPARE_ELEMENT);
+      if (progressCallback) progressCallback(progress);
     }));
 
     // 処理完了 (100%進捗)
@@ -80,50 +92,69 @@ export async function getData(handle, progressCallback) {
   }
 }
 
-export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, setDbEn) {
+export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, setDbEn, progressCallback) {
   const timeLogger = new TimeLogger();
   timeLogger.tic();
 
-  await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
+  // 再試行回数
+  let attempts = 0;
 
-  let response;
-  response = await agent.getProfile({actor: handle});
-  const myselfWithProf = response.data;
+  while (attempts < RETRY_COUNT_GET_ELEM) {
+    try {
+      attempts++;
+      await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
-  // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
-  let friendsWithProf = await agent.getInvolvedEngagements(handle, threshold_tl, threshold_like, SCORE_REPLY, SCORE_LIKE);
+      let response;
+      response = await agent.getProfile({actor: handle});
+      const myselfWithProf = response.data;
 
-  // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
-  let didArray;
-  if (friendsWithProf.length < THRESHOLD_NODES) {
-    response = await agent.getFollows({actor: handle, limit: 50});
-    const follows = response.data.follows;
-    didArray = follows.map(follow => follow.did);
-    const mutualWithProf = await agent.getConcatProfiles(didArray);
-    friendsWithProf = friendsWithProf.concat(mutualWithProf);
-  };
+      // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
+      let friendsWithProf = await agent.getInvolvedEngagements(handle, threshold_tl, threshold_like, SCORE_REPLY, SCORE_LIKE);
 
-  // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
-  const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
+      // 進捗
+      if (progressCallback) progressCallback(PERCENT_CALC_ENGAGEMENT);
 
-  // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
-  const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
+      // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
+      let didArray;
+      if (friendsWithProf.length < THRESHOLD_NODES) {
+        response = await agent.getFollows({actor: handle, limit: 50});
+        const follows = response.data.follows;
+        didArray = follows.map(follow => follow.did);
+        const mutualWithProf = await agent.getConcatProfiles(didArray);
+        friendsWithProf = friendsWithProf.concat(mutualWithProf);
+      }
 
-  // node, edge取得
-  let elements = await getElements(slicedAllWithProf);
+      // 重複ノード削除: getElementsより先にやらないとnodesがTHRESHOLD_NODESより少なくなる
+      const allWithProf = removeDuplicatesNodes(myselfWithProf, friendsWithProf);
 
-  // 不要エッジ除去
-  removeInvalidLinks(elements);
+      // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
+      const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS - 1) * ((MAX_RADIUS - 1) + 1));
 
-  // DBセット
-  if (setDbEn) {
-    const {data, err} = await supabase.from('elements').upsert({ handle: handle, elements: elements, updated_at: new Date() }).select();
-    if (err) console.error("Error", err);
+      // node, edge取得
+      let elements = await getElements(slicedAllWithProf);
+
+      // 不要エッジ除去
+      removeInvalidLinks(elements);
+
+      // DBセット
+      if (setDbEn) {
+        const { data, err } = await supabase.from('elements').upsert({ handle: handle, elements: elements, updated_at: new Date() }).select();
+        if (err) console.error("Error", err);
+      }
+
+      // 進捗
+      if (progressCallback) progressCallback(PERCENT_PREPARE_ELEMENT);
+
+      console.log(`[WORKER] exec time was ${timeLogger.tac()} [sec]: ${handle}`);
+
+      return elements;
+    } catch (error) {
+      console.error(`Attempt ${attempts} failed: ${error}`);
+      if (attempts >= RETRY_COUNT_GET_ELEM) {
+        throw new Error('Max retry attempts reached');
+      }
+    }
   }
-
-  console.log(`[WORKER] exec time was ${timeLogger.tac()} [sec]: ${handle}`);
-
-  return elements;
 }
 
 export async function doSearchActors(query) {

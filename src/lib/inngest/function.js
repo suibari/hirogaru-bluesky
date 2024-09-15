@@ -20,6 +20,11 @@ export const getElementsAndUpdateDbFunction = inngest.createFunction(
     try {
       await getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
       console.log(`[INNGEST] ELEM: Successfully updated DB for elements: ${handle}`);
+
+      // ポスト収集イベントを駆動: elementを更新した後でないと、誰のポストを集めるかわからない
+      await inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G0', data: { handle } });
+      await inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G1', data: { handle } });
+
       return { success: true };
     } catch (e) {
       console.error(`[INNGEST] ELEM: Failed to update DB for elements: ${handle}`, e);

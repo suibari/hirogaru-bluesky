@@ -20,11 +20,7 @@ export const GET = async ({ url }) => {
 
         // Inngestトリガー
         if (isExecBgProcess) {
-          await Promise.all([
-            inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } }),
-            inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G0', data: { handle } }),
-            inngest.send({ name: 'hirogaru/updateDb.postsAndLikes.G1', data: { handle } }),
-          ]);
+          await inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } });
           console.log("[INFO] Inngest event sent.");
         }
 

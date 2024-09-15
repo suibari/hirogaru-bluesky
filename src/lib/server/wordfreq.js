@@ -3,7 +3,7 @@ import kuromoji from 'kuromoji';
 import path, { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
-const EXCLUDE_WORDS = ["こと", "これ", "さん", "ちゃん", "くん", "自分", "おれ", "よう"];
+const EXCLUDE_WORDS = ["こと", "これ", "さん", "ちゃん", "くん", "自分", "おれ", "よう", "今日", "明日", "本日", "ここ", "ところ", ];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

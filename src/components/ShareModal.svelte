@@ -174,21 +174,21 @@
 </Dialog>
 
 <!-- 汎用エラー -->
-<Snackbar bind:this={snackbarErrorFetch}>
+<Snackbar bind:this={snackbarErrorFetch} class="error">
   <Label>エラーが発生しました: {errorMessage}</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
 </Snackbar>
 <!-- 汎用成功 -->
-<Snackbar bind:this={snackbarSuccess}>
+<Snackbar bind:this={snackbarSuccess} class="success">
   <Label>{successMessage}</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
 </Snackbar>
 <!-- ポスト中 -->
-<Snackbar bind:this={snackbarWarningPosting}>
+<Snackbar bind:this={snackbarWarningPosting} class="warning">
   <Label>ポスト処理中です</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>

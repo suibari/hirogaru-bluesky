@@ -205,7 +205,7 @@ export async function analyzeRecords(records) {
     const utcDate = new Date(record.value.createdAt);
     const jstDate = new Date(utcDate.getTime() + 9*60*60*1000);
 
-    const hourKey =jstDate.getHours();
+    const hourKey = jstDate.getUTCHours();
 
     if (histgram[hourKey]) {
       histgram[hourKey]++;

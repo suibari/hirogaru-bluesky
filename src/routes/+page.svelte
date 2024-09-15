@@ -128,10 +128,10 @@
           const isFirstTime = data.isFirstTime;
           const isExecBgProcess = data.isExecBgProcess;
           if (isFirstTime) {
-            successMessage = "初回実行なので取得データ数を減らしています。1分後には最新データが取得できているはずなので、また実行してみてください";
+            successMessage = "初回実行なので取得データ数を減らしています。2分後には最新データが取得できているはずなので、また実行してみてください";
             snackbarSuccess.open();
           } else if (isExecBgProcess) {
-            successMessage = "バックグラウンドで最新データを取得しています。1分後には最新データが取得できているはずなので、また実行してみてください";
+            successMessage = "バックグラウンドで最新データを取得しています。2分後には最新データが取得できているはずなので、また実行してみてください";
             snackbarSuccess.open();
           }
           runConcentric(elements);
