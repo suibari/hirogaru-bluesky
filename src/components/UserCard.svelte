@@ -75,7 +75,7 @@
   <Card>
     <div class="avatar">
       <PrimaryAction on:click={window.open(`https://bsky.app/profile/${tappedNode.data('handle')}`, "_blank")}>
-        <Media class="card-media" aspectRatio="square" style="background-image: {tappedNode.data('img')}">
+        <Media class="card-media" aspectRatio="16x9" style="background-image: {tappedNode.data('img')}">
           <div class="cardtext-bg">
             <div class="cardtext-container">
               <h3 class="cardtext">

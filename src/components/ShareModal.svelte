@@ -10,6 +10,7 @@
   export let isLoggedIn;
   export let isPosting = false;
   export let srcGraph = '';
+  export let isLoginModalOpen;
   let isShowTimeStamp, isShowLogo = true;
   let snackbarSuccess, snackbarErrorFetch, snackbarWarningPosting;
   let successMessage, errorMessage = '';
@@ -160,6 +161,14 @@
         <li>画像を右クリックかロングタップでコピーしてください</li>
         <li><a href="https://bsky.app/intent/compose?text=%23%E3%81%B2%E3%82%8D%E3%81%8C%E3%82%8BBluesky%0D%0Ahttps%3A%2F%2Fhirogaru-bluesky.vercel.app%2F%0D%0A" target="_blank">こちら</a>をクリックして、開いたポスト画面に画像をペーストしてシェア！</li>
       </ol>
+      <div style="font-size: small; margin-top: -10px;">
+        ※
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="javascript:void(0)" style="cursor: pointer;" on:click={() => isLoginModalOpen = true}>
+          ログイン
+        </a>
+        すると、ボタン1回でBlueskyに投稿できるようになります。ぜひ試してみてください!
+      </div>
     {/if}
   </Content>
 </Dialog>

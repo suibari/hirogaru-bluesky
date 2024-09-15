@@ -2,7 +2,10 @@ import { getData } from '$lib/server/router.js';
 import { inngest } from '$lib/inngest/inngest.js';
 
 export const GET = async ({ url }) => {
-  const handle = url.searchParams.get('handle');
+  const receivedHandle = url.searchParams.get('handle');
+
+  // エスケープ処理
+  const handle = receivedHandle.replace(/[@＠]/g, '');
   
   const stream = new ReadableStream({
     async start(controller) {

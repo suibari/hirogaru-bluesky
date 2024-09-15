@@ -109,21 +109,6 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
   // あまりに大きい相関図を送ると通信料がえげつないのでMAX_RADIUS段でクリップする
   const slicedAllWithProf = allWithProf.slice(0, 1 + 3 * (MAX_RADIUS-1) * ((MAX_RADIUS-1) + 1));
 
-  // Profにレコード解析データをセットする
-  // const {data, error} = await supabase.from('records').select(); // 取得済み全ユーザのポストいいね取得
-  // for (let i = 0; i < NUM_ANALYSIS; i++){
-  //   const actorTgt = slicedAllWithProf[i];
-  //   const rowTgt = data.find(row => row.handle === actorTgt.handle);
-  //   actorTgt.resultAnalyze = rowTgt.result_analyze;
-  // }
-  
-  // const {data, err} = await supabase.from('records').select(); // 取得済み全ユーザのポストいいね取得
-  // for (let i=0; i<NUM_ANALYSIS; i++) {
-  //   const actorTgt = slicedAllWithProf[i];
-  //   const dataSrc = data.find(d => d.handle === actorTgt.handle);
-  //   await analyseRecords(dataSrc.records, actorTgt);
-  // }
-
   // node, edge取得
   let elements = await getElements(slicedAllWithProf);
 

@@ -480,7 +480,7 @@
 </div>
 
 <!-- フェッチエラー -->
-<Snackbar bind:this={snackbarErrorFetch}>
+<Snackbar bind:this={snackbarErrorFetch} class="error">
   <Label>エラーが発生しました: {errorMessage}</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
@@ -533,7 +533,7 @@
 <!-- プログレスバー -->
 {#if (isGenerating)}
   <div id="progressbar">
-    <div style="color: white; margin-bottom: 5px;">相関図を作成しています...</div>
+    <div style="margin-bottom: 5px;">相関図を作成しています...</div>
     <Progressbar
       progress={progressGenerate}
       animate
@@ -541,7 +541,7 @@
       tweenDuration={400}
       easing={sineOut}
       size="h-6"
-      labelInsideClass="bg-white text-gray text-base font-medium text-center p-1 leading-none rounded-full"
+      labelInsideClass="bg-emerald-600 text-gray text-base font-medium text-center p-1 leading-none rounded-full"
       class="mb-8"
     />
   </div>
@@ -577,24 +577,25 @@
   bind:isLoggedIn={isLoggedIn}
   bind:isRunning={isRunning}
   bind:isPosting={isPosting}
+  bind:isLoginModalOpen={isLoginModalOpen}
   srcGraph={srcGraph}
   on:stopRun={stopRun}
 />
 
 <!-- シェアエラー -->
-<Snackbar bind:this={snackbarWarningRunning}>
+<Snackbar bind:this={snackbarWarningRunning} class="warning">
   <Label>グラフ生成中です</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
 </Snackbar>
-<Snackbar bind:this={snackbarWarningNeverRun}>
+<Snackbar bind:this={snackbarWarningNeverRun} class="warning">
   <Label>相関図を生成してください</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>
   </Actions>
 </Snackbar>
-<Snackbar bind:this={snackbarWarningPosting}>
+<Snackbar bind:this={snackbarWarningPosting} class="warning">
   <Label>ポスト中です</Label>
   <Actions>
     <IconButton class="material-icons" title="Dismiss">close</IconButton>

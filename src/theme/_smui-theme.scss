@@ -34,3 +34,15 @@ a:visited {
     theme-color.accessible-ink-color(color-palette.$green-500)
   );
 }
+.mdc-snackbar.warning {
+  @include snackbar.fill-color(color-palette.$orange-500);
+  @include snackbar.label-ink-color(
+    theme-color.accessible-ink-color(color-palette.$orange-500)
+  );
+}
+.mdc-snackbar.error {
+  @include snackbar.fill-color(color-palette.$red-500);
+  @include snackbar.label-ink-color(
+    theme-color.accessible-ink-color(color-palette.$red-500)
+  );
+}
