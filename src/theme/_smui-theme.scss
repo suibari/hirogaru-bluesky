@@ -11,6 +11,11 @@
   $error: color-palette.$red-900
 );
 
+@use '@smui/snackbar/style' as smui-snackbar;
+@use '@material/snackbar/mixins' as snackbar;
+@use '@material/theme/color-palette';
+@use '@material/theme/theme-color';
+
 html,
 body {
   background-color: theme.$surface;
@@ -23,11 +28,6 @@ a {
 a:visited {
   color: color.scale(#40b3ff, $lightness: -35%);
 }
-
-@use '@smui/snackbar/style' as smui-snackbar;
-@use '@material/snackbar/mixins' as snackbar;
-@use '@material/theme/color-palette';
-@use '@material/theme/theme-color';
 
 .mdc-snackbar.success {
   @include snackbar.fill-color(color-palette.$green-500);
