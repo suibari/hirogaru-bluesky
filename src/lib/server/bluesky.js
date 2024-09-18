@@ -121,7 +121,7 @@ export class MyBlueskyer extends Blueskyer {
               identifier: identifier,
               password: password
             });
-            const {err} = await supabase.from('tokens').update({ access_jwt: response.data.accessJwt }).eq('handle', identifier);
+            const {err} = await supabase.from('tokens').update({ access_jwt: response.data.accessJwt, updated_at: new Date() }).eq('handle', identifier);
             console.log("[INFO] token was expired, so refleshed the session.");
           }
         });

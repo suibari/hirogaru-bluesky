@@ -113,7 +113,7 @@
         </div>
       {/if}
       {#if tappedNode.data('wordFreqMap')}
-        <h6 class="word-freq-map" style="margin-left: 10px;">Favorite words:</h6>
+        <h6 class="word-freq-map" style="margin-left: 10px;">Recent Mood:</h6>
         <div style="display: flex; justify-content: center; margin-bottom: 10px; gap: 10px;">
           <h5>#{tappedNode.data('wordFreqMap')[0]}</h5>
           <h5>#{tappedNode.data('wordFreqMap')[1]}</h5>
@@ -125,7 +125,7 @@
       {/if}
       {#if tappedNode.data('level') !== 0}
         <div id="replylike">
-          <h6>To you:</h6>
+          <h6>From you:</h6>
           <div class="icon">
             <IconButton class="material-icons">reply</IconButton>
           </div>
