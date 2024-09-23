@@ -2,7 +2,6 @@
   import { onMount, setContext } from 'svelte'
   import cytoscape from 'cytoscape'
   import GraphStylesConcentric from './GraphStylesConcentric.js'
-  import Gauge from './Gauge.svelte';
   import { createEventDispatcher } from 'svelte';
   export let selectedRadius;
   const dispatch = createEventDispatcher();
@@ -12,7 +11,6 @@
   let tappedNode = null;
   let edgeToPartner;
   let edgeFromPartner;
-  let isGauge = false;
   let formerNodeWidth, formerNodeHeight;  
   
   setContext('graphSharedState', {
@@ -49,8 +47,6 @@
   // 同心円グラフ描画
   // ---------------------
   export function runConcentric(elements, isNodeStable) {
-    isGauge = false;
-
     if (!isNodeStable) {
       cyInstance.elements().remove();
     }
@@ -122,77 +118,6 @@
   }
 
   // ---------------------
-  // 関係図描画
-  // ---------------------
-  export function runGrid(partnerElements, partnerNode) {
-    isGauge = false;
-    cyInstance.removeListener('mouseover', 'node');
-    cyInstance.removeListener('mouseout', 'node');
-
-    // 中心ノード取得
-    let centerNode = cyInstance.nodes().filter(node => {
-      return node.data('level') === 5;
-    });
-
-    // 相手から自分のedge取得(まずオブジェクトを取得し、その次にedgeプロトタイプを取得)
-    let edgeFromPartnerObj = partnerElements.filter(d => {
-      return (d.group === 'edges') && (d.data.target === centerNode.id());
-    });
-    cyInstance.add(edgeFromPartnerObj);
-    edgeFromPartner = cyInstance.edges().filter(function(edge) {
-      return edge.data('source') === partnerNode.id() && edge.data('target') === centerNode.id();
-    });
-
-    // 自分から相手のedge取得
-    edgeToPartner = cyInstance.edges().filter(function(edge) {
-      return edge.data('source') === centerNode.id() && edge.data('target') === partnerNode.id();
-    });
-
-    // 自分と相手の間だけのedgeを表示、それ以外非表示
-    cyInstance.edges().forEach(edge => {
-      if (edge.source().id() === partnerNode.id() && edge.target().id() === centerNode.id()) {
-        edge.style('display', 'element'); // タップされたノードから中心ノードへのエッジ
-      } else if (edge.source().id() === centerNode.id() && edge.target().id() === partnerNode.id()) {
-        edge.style('display', 'element'); // 中心ノードからタップされたノードへのエッジ
-      } else {
-        edge.style('display', 'none'); // それ以外のエッジは非表示
-      }
-    });
-
-    // タップノードと中心ノード以外のnode削除
-    cyInstance.nodes().forEach(node => {
-      if (node.id() !== partnerNode.id() && node.id() !== centerNode.id()) {
-        node.remove();
-      }
-    });
-
-    // nodeサイズ設定
-    //   こっちの書き方じゃないとmouseover/outイベントと競合するみたい…
-    cyInstance.nodes().forEach(node => {
-      node.style({
-        width: '150px',
-        height: '150px',
-      });
-    });
-    // cyInstance.style().selector('node').style({
-    //   'width': '150px',
-    //   'height': '150px',
-    // }).update(); // スタイルの更新
-
-    // レイアウト適用
-    cyInstance.layout({ 
-      name: 'grid',
-      padding: 100,
-    }).run();
-    dispatch('stopRun');
-
-    // ゲージ表示
-    isGauge = true;
-
-    dispatch('finishGrid');
-  }
-
-  // ---------------------
   // 画面キャプチャ
   // ---------------------
   export async function captureConcentric() {
@@ -210,35 +135,6 @@
     });
 
     return blob;
-  }
-
-  export async function captureGrid() {
-    // 背景色
-    const randomColor = generateRandomColor();
-
-    const graphContext = await cyInstance.png({
-      output: "base64uri",
-      bg: randomColor,
-      full: false,
-      maxWidth: 750,
-      maxHeight: 750,
-    });
-
-    const gauge = document.getElementById('gauge');
-    const gaugeContext = gauge.toDataURL();
-
-    return new Promise(async (resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      canvas.width = cyInstance.width();
-      canvas.height = cyInstance.height();
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(await createImage(graphContext), 0, 0, cyInstance.width(), cyInstance.height());
-      ctx.drawImage(await createImage(gaugeContext), cyInstance.width()/2 - 400/2, cyInstance.height()/2 - 400/2, 400, 400);
-
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/png');
-    });
   }
 
   // ランダムな背景色を生成する関数
@@ -274,10 +170,6 @@
     <slot></slot>
   {/if}
 </div>
-
-{#if isGauge}
-  <Gauge {edgeToPartner} {edgeFromPartner} />
-{/if}
 
 <style>
   .graph {

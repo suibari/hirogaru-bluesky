@@ -1,0 +1,11 @@
+{
+	"/": [
+		"src/routes/+page.server.js"
+	],
+	"/api/inngest": [
+		"src/routes/api/inngest/+server.js"
+	],
+	"/generate": [
+		"src/routes/generate/+server.js"
+	]
+}

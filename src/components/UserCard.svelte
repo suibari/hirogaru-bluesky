@@ -9,65 +9,10 @@
     ActionIcons,
   } from '@smui/card';
   import Button, { Label } from '@smui/button';
-  import { createEventDispatcher, onMount } from 'svelte';
   import IconButton from "@smui/icon-button";
-  import ActiveHistgram from './ActiveHistgram.svelte';
-  const dispatch = createEventDispatcher();
 
   export let tappedNode;
   export let handleSubmit;
-  let lastActionTimeText = '';
-  let timeOnBskyText = '';
-
-  onMount(() => {
-    function handleClickSocialAnalysis() {
-    console.log("clicked social analysis");
-    dispatch('doSocialAnalysis');
-    }
-  })
-
-  function getLastActionText(lastActionTime) {
-    const now = new Date();
-    const actionTime = new Date(lastActionTime);
-    const diffInMilliseconds = now - actionTime;
-    const diffInMinutes = Math.floor(diffInMilliseconds / 60000);
-    const diffInHours = Math.floor(diffInMilliseconds / (60000 * 60));
-    const diffInDays = Math.floor(diffInMilliseconds / (60000 * 60 * 24));
-    const diffInMonths = Math.floor(diffInDays / 30); // おおよそ1ヶ月を30日とする
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h`;
-    } else if (diffInDays < 30) {
-      return `${diffInDays}d`;
-    } else {
-      return `${diffInMonths}M`;
-    }
-  }
-
-  $: {
-    if (tappedNode && tappedNode.data('lastActionTime')) {
-      lastActionTimeText = getLastActionText(tappedNode.data('lastActionTime'));
-    }
-  }
-
-  function calculateDaysSince(utcString) {
-    const pastDate = new Date(utcString);
-    
-    const currentDate = new Date();
-    const diffInMilliseconds = currentDate - pastDate;
-    const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
-  
-    return diffInDays;
-  }
-
-  $: {
-    if (tappedNode && tappedNode.data('createdAt')) {
-      timeOnBskyText = calculateDaysSince(tappedNode.data('createdAt'));
-    }
-  }
-
 </script>
 
 <!-- {#if tappedNode} -->
@@ -90,39 +35,7 @@
       </PrimaryAction>
     </div>
     <div id="cardinfo-container">
-      <div style="display: flex; justify-content: center;">
-        {#if tappedNode.data('lastActionTime')}
-          <div class="last-action-time" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px; gap: 5px;">
-            <h6 class="full">Last<br>Active:</h6>
-            <h6 class="short">Last:</h6>
-            <h4>{lastActionTimeText}</h4>
-          </div>
-        {/if}
-        {#if tappedNode.data('createdAt')}
-          <div class="time-on-bsky" style="display: flex; align-items:flex-end; justify-content: center; margin: 5px; gap: 5px;">
-            <h6 class="full">Days on<br>Bluesky:</h6>
-            <h6 class="short">Days:</h6>
-            <h4>{timeOnBskyText}</h4>
-          </div>
-        {/if}
-      </div>
-      {#if tappedNode.data('averageInterval')}
-        <div class="average_interval" style="display: flex; align-items:flex-end; justify-content: center; margin-bottom: 10px; gap: 5px;">
-          <h6>Avg-Act<br>Interval:</h6>
-          <h4>{Math.round(tappedNode.data('averageInterval')/60)}</h4><h4 style="font-size: small">[m/act]</h4>
-        </div>
-      {/if}
-      {#if tappedNode.data('wordFreqMap')}
-        <h6 class="word-freq-map" style="margin-left: 10px;">Recent Mood:</h6>
-        <div style="display: flex; justify-content: center; margin-bottom: 10px; gap: 10px;">
-          <h5>#{tappedNode.data('wordFreqMap')[0]}</h5>
-          <h5>#{tappedNode.data('wordFreqMap')[1]}</h5>
-          <h5 class="full">#{tappedNode.data('wordFreqMap')[2]}</h5>
-        </div>
-      {/if}
-      {#if tappedNode.data('activeHistgram')}
-        <ActiveHistgram {tappedNode}/>
-      {/if}
+      <p style="text-align: center; margin-top: 5px; margin-bottom: 0px;">ポスト分析は<a href="https://blu-lyzer.vercel.app/" target="_blank">Blu-lyzer</a>で!</p>
       {#if tappedNode.data('level') !== 0}
         <div id="replylike">
           <h6>From you:</h6>
@@ -199,29 +112,9 @@
     flex-shrink: 0;
     margin-right: 20px;
   }
-  .last-action-time h6.short {
-    display: none;
-  }
-  .time-on-bsky h6.short {
-    display: none;
-  }
   @media screen and (max-width: 600px) {
     .card-container {
       width: 200px;
-    }
-
-    .last-action-time h6.short {
-      display: inline;
-    }
-    .time-on-bsky h6.short {
-      display: inline;
-    }
-    .full {
-      display: none;
-    }
-
-    .word-freq-map {
-      display: none;
     }
 
     #replylike h6 {
