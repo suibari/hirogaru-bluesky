@@ -2,9 +2,9 @@ import { getElementsAndUpdateDbFunction, getPostsLikesAndUpdateDbFunction, analy
 
 export const functions = [
   getElementsAndUpdateDbFunction,
-  getPostsLikesAndUpdateDbFunction(0), // elements  [0] ~ [18]
-  getPostsLikesAndUpdateDbFunction(1), //          [19] ~ [37]
-  analyzeRecordsFunction,
+  // getPostsLikesAndUpdateDbFunction(0), // elements  [0] ~ [18]
+  // getPostsLikesAndUpdateDbFunction(1), //          [19] ~ [37]
+  // analyzeRecordsFunction,
 ];
 
 export { inngest } from './inngest'

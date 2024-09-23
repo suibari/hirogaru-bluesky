@@ -1,3 +1,7 @@
+<h5>v1.0.3</h5>
+  <ul>
+    <li>分析機能を<a href="https://blu-lyzer.vercel.app/" target="_blank">Blu-lyzer</a>に移管</li>
+  </ul>
 <h5>v1.0.2</h5>
   <ul>
     <li>ユーザカードの英語を修正</li>
