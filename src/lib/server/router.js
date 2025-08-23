@@ -48,25 +48,6 @@ export async function getData(handle, progressCallback) {
 
     // 解析データセット
     const nodes = elements.filter(element => (element.group === 'nodes'));
-    const handles = nodes.map(node => node.data.handle);
-    ({data, error} = await supabase.from('records').select('handle, result_analyze').in('handle', handles)); // 周辺ユーザの解析データ取得
-    if (data.length > 0) {
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-
-        const match = data.find(row => row.handle === node.data.handle);
-        if (match) {
-          node.data.activeHistgram = match.result_analyze.activeHistgram;
-          node.data.averageInterval = match.result_analyze.averageInterval;
-          node.data.lastActionTime = match.result_analyze.lastActionTime;
-          node.data.wordFreqMap = match.result_analyze.wordFreqMap;
-        }
-        
-        // 進捗をiに応じて加算
-        const progress = Math.floor(((i+1) / nodes.length) * PERCENT_PREPARE_ELEMENT);
-        if (progressCallback) progressCallback(progress);
-      }
-    }
 
     // DBには画像URLを入れているので、クライアント送信前にそれをbase64URIに変換
     // 指定したミリ秒だけ待つ関数
