@@ -19,7 +19,7 @@ export const GET = async ({ url }) => {
         console.log("[INFO] send data to client. total elements: " + elements.length);
 
         // Inngestトリガー
-        if (isExecBgProcess) {
+        if ((isExecBgProcess) || process.env.NODE_ENV !== 'production') {
           await inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } });
           console.log("[INFO] Inngest event sent.");
         }

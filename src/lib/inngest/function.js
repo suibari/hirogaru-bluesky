@@ -1,77 +1,104 @@
 import { inngest } from './inngest';
-import { getElementsAndSetDb, getLatestPostsAndLikes } from '$lib/server/router';
-import { analyzeRecords } from '$lib/server/databuilder';
+import { getElementsAndSetDb } from '$lib/server/router'; // getLatestPostsAndLikes と analyzeRecords は不要になったため削除
 import { TimeLogger } from '$lib/server/logger';
 import { supabase } from '$lib/server/supabase';
 
-const THRESHOLD_TL_MAX = 4000;
-const THRESHOLD_LIKES_MAX = 1000;
-const ELEM_NUM_PER_GROUP = 20;
+const THRESHOLD_TL_MAX = 1000;
+const THRESHOLD_LIKES_MAX = 500;
+// const ELEM_NUM_PER_GROUP = 20; // この定数は新しい関数では使用しないためコメントアウト
 
-// Inngestの関数を定義
-export const getElementsAndUpdateDbFunction = inngest.createFunction(
-  { id: 'Update Database By Elements' },  // ワークフローの名前
-  { event: 'hirogaru/updateDb.elements' },         // トリガーされるイベント名
+// 単一ユーザーに対してgetElementsAndSetDbを実行するInngest関数
+// 各ユーザーの処理時間を計測し、個別のInngestイベントとして実行する
+export const processSingleUserWithGetElementsFunction = inngest.createFunction(
+  { id: 'Process Single User With GetElementsAndSetDb' }, // ワークフローの名前
+  { event: 'hirogaru/process.singleUser' }, // トリガーされるイベント名
   async ({ event }) => {
-    const { handle } = event.data;
+    const timeLogger = new TimeLogger();
+    timeLogger.tic();
 
-    console.log(`[INNGEST] ELEM: Executing update elements: ${handle}`);
+    const { userHandle } = event.data; // 処理対象のユーザーハンドルを取得
+
+    console.log(`[INNGEST] SINGLE_USER: Executing getElementsAndSetDb for handle: ${userHandle}`);
 
     try {
-      await getElementsAndSetDb(handle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
-      console.log(`[INNGEST] ELEM: Successfully updated DB for elements: ${handle}`);
-
-      return { success: true };
+      // 各ユーザーに対してgetElementsAndSetDbを実行
+      await getElementsAndSetDb(userHandle, THRESHOLD_TL_MAX, THRESHOLD_LIKES_MAX, true);
+      const executionTime = timeLogger.tac();
+      console.log(`[INNGEST] SINGLE_USER: Successfully executed getElementsAndSetDb for ${userHandle}. Time: ${executionTime} [sec]`);
+      return { success: true, handle: userHandle, time: executionTime };
     } catch (e) {
-      console.error(`[INNGEST] ELEM: Failed to update DB for elements: ${handle}`, e);
-      return { success: false, error: e.message };
+      const executionTime = timeLogger.tac();
+      console.error(`[INNGEST] SINGLE_USER: Failed to execute getElementsAndSetDb for user ${userHandle}. Time: ${executionTime} [sec]`, e);
+      return { success: false, handle: userHandle, error: e.message, time: executionTime };
     }
   }
 );
 
-/*
-export function getPostsLikesAndUpdateDbFunction(group) {
-  return inngest.createFunction(
-    { id: `Update Database By Posts And Likes: G${group}` },
-    { event: `hirogaru/updateDb.postsAndLikes.G${group}`},
-    async ({event}) => {
-      const timeLogger = new TimeLogger();
-      timeLogger.tic();
+// トップ50ユーザーに対して個別のInngest関数を呼び出し、並列処理を行うためのInngest関数
+// Vercelの60秒制限に対応するため、各ユーザーの処理を個別のInngestイベントとして実行する
+export const getElementsAndUpdateDbFunction = inngest.createFunction(
+  { id: 'Dispatch User Processing' }, // ワークフローの名前
+  { event: 'hirogaru/updateDb.elements' }, // トリガーされるイベント名
+  async ({ event }) => {
+    const timeLogger = new TimeLogger();
+    timeLogger.tic();
 
-      const { handle: handleCenter } = event.data;
+    const { handle } = event.data; // ルートユーザーのハンドルを取得
 
-      console.log(`[INNGEST] RECORDS G${group}: Executing get posts and likes: ${handleCenter}`);
-      
-      const {data, err} = await supabase.from('elements').select('elements').eq('handle', handleCenter);
-      
-      if (data.length === 1) {
-        const nodes = data[0].elements.filter(element => (element.group === 'nodes'));
-        const endIndex = Math.min(ELEM_NUM_PER_GROUP*(group+1), nodes.length);
-        for (let i = ELEM_NUM_PER_GROUP*group; i < endIndex; i++) {
-          const handleAround = nodes[i].data.handle;
-          // console.log(`[INNGEST] RECORDS G${group}: get posts and likes: ${nodes[i].data.handle}`);
+    console.log(`[INNGEST] DISPATCHER: Executing for handle: ${handle}`);
 
-          try {
-            const records = await getLatestPostsAndLikes(handleAround);
+    // Supabaseから要素データを取得
+    const { data, error } = await supabase.from('elements').select('elements').eq('handle', handle);
 
-            // ポスト解析イベントを駆動: マルチスレッドで走らせないと60sに間に合わない
-            await inngest.send({ name: 'hirogaru/updateDb.analyzeRecords', data: { handle: handleAround, records } });
-
-          } catch (e) {
-            console.error(`[INNGEST] RECORDS G${group}: Failed to get posts and likes: ${handleAround}`, e);
-            return { success: false, error: e.message };
-          }
-        }
-
-        console.log(`[INNGEST] RECORDS G${group}: exec time was ${timeLogger.tac()} [sec]: ${handleCenter}`);
-        return { success: true };
-      } else {
-        console.warn(`[INNGEST] RECORDS G${group}: Cannot get elements from DB: ${handleCenter}`);
-      }
+    if (error) {
+      console.error(`[INNGEST] DISPATCHER: Supabase error fetching elements for ${handle}:`, error);
+      return { success: false, error: error.message };
     }
-  );
-}
 
+    if (!data || data.length === 0) {
+      console.warn(`[INNGEST] DISPATCHER: No elements found in DB for handle: ${handle}`);
+      return { success: true, message: 'No elements found' };
+    }
+
+    // 'nodes' グループの要素をフィルタリング
+    const nodes = data[0].elements.filter(element => (element.group === 'nodes'));
+
+    // トップ50ユーザーまでを処理対象とする
+    const usersToProcess = nodes.slice(0, 50);
+
+    if (usersToProcess.length === 0) {
+      console.log(`[INNGEST] DISPATCHER: No 'nodes' found for handle: ${handle}`);
+      return { success: true, message: 'No nodes found to process' };
+    }
+
+    console.log(`[INNGEST] DISPATCHER: Found ${nodes.length} nodes, dispatching processing for top ${usersToProcess.length} for handle: ${handle}`);
+
+    // 各ユーザーに対して個別のInngest関数を呼び出すイベントを送信
+    const sendPromises = usersToProcess.map(async (user) => {
+      const userHandle = user.data.handle;
+      console.log(`[INNGEST] DISPATCHER: Dispatching processSingleUser for ${userHandle}`);
+
+      try {
+        // 新しいInngest関数を呼び出すイベントを送信
+        await inngest.send({ name: 'hirogaru/process.singleUser', data: { userHandle: userHandle } });
+        console.log(`[INNGEST] DISPATCHER: Dispatched processSingleUser for ${userHandle}`);
+        return { handle: userHandle, status: 'dispatched' };
+      } catch (e) {
+        console.error(`[INNGEST] DISPATCHER: Failed to dispatch processSingleUser for ${userHandle}:`, e);
+        return { handle: userHandle, status: 'dispatch_failed', error: e.message };
+      }
+    });
+
+    // 全ての送信処理が終わるのを待つ
+    await Promise.all(sendPromises);
+
+    console.log(`[INNGEST] DISPATCHER: Finished dispatching for handle: ${handle}. Execution time: ${timeLogger.tac()} [sec]`);
+    return { success: true, dispatchedCount: usersToProcess.length };
+  }
+);
+
+/*
+// レコード解析を実行するInngest関数 (コメントアウトされたままにする)
 export const analyzeRecordsFunction = inngest.createFunction(
   { id: `Analysis Records About A Handle` },
   { event: `hirogaru/updateDb.analyzeRecords` },
