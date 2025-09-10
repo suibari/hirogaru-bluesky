@@ -35,7 +35,7 @@
       </PrimaryAction>
     </div>
     <div id="cardinfo-container">
-      <p style="text-align: center; margin-top: 5px; margin-bottom: 0px;">ポスト分析は<a href="https://blu-lyzer.suibari.com/" target="_blank">Blu-lyzer</a>で!</p>
+      <p style="text-align: center; margin-top: 5px; margin-bottom: 0px;">ポスト分析は<a href={`https://blu-lyzer.suibari.com/stats/${tappedNode.data('handle')}`} target="_blank">Blu-lyzer</a>で!</p>
       {#if tappedNode.data('level') !== 0}
         <div id="replylike">
           <h6>From you:</h6>

@@ -5,7 +5,6 @@ import { supabase } from '$lib/server/supabase';
 
 const THRESHOLD_TL_MAX = 1000;
 const THRESHOLD_LIKES_MAX = 500;
-// const ELEM_NUM_PER_GROUP = 20; // この定数は新しい関数では使用しないためコメントアウト
 
 // 単一ユーザーに対してgetElementsAndSetDbを実行するInngest関数
 // 各ユーザーの処理時間を計測し、個別のInngestイベントとして実行する
