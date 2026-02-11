@@ -11,6 +11,12 @@ async function dbFetch(path, options = {}) {
   headers.set('CF-Access-Client-Secret', CF_CLIENT_SECRET);
   headers.set('Content-Type', 'application/json');
 
+  // Content-Profileヘッダーの設定: 必要
+  const profile = headers.get('Accept-Profile');
+  if (profile && !headers.has('Content-Profile')) {
+    headers.set('Content-Profile', profile);
+  }
+
   const response = await fetch(url, { ...options, headers });
 
   if (!response.ok) {
@@ -18,9 +24,10 @@ async function dbFetch(path, options = {}) {
   }
 
   // 204 No Content（Update/Deleteなど）の場合はnullを返す
-  if (response.status === 204) return null;
+  if (response.status === 204 || response.status === 201) return null;
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 /**

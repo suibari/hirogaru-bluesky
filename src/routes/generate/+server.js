@@ -6,7 +6,7 @@ export const GET = async ({ url }) => {
 
   // エスケープ処理
   const handle = receivedHandle.replace(/[@＠]/g, '');
-  
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -20,7 +20,13 @@ export const GET = async ({ url }) => {
 
         // Inngestトリガー
         if ((isExecBgProcess) || process.env.NODE_ENV !== 'production') {
-          await inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } });
+          if (isFirstTime) {
+            // 初回ユーザーはデータを作成して保存する
+            await inngest.send({ name: 'hirogaru/process.singleUser', data: { userHandle: handle } });
+          } else {
+            // 既存ユーザーはネイバーの更新などをティスパッチ
+            await inngest.send({ name: 'hirogaru/updateDb.elements', data: { handle } });
+          }
           console.log("[INFO] Inngest event sent.");
         }
 

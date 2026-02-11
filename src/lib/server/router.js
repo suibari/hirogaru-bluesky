@@ -127,11 +127,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
 
       // DBセット
       if (setDbEn) {
-        try {
-          await db.upsertElement(handle, elements);
-        } catch (err) {
-          console.error("Error", err);
-        }
+        await db.upsertElement(handle, elements);
       }
 
       // 進捗
