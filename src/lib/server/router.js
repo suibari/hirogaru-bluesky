@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import { MyBlueskyer } from '$lib/server/bluesky.js';
 import { getElements, removeDuplicatesNodes, removeInvalidLinks, imageUrlToBase64, analyseRecords } from '$lib/server/databuilder.js';
 import { TimeLogger, ExecutionLogger } from '$lib/server/logger.js';
-import { supabase } from './supabase';
+import { db } from '$lib/server/postgres.js';
 const agent = new MyBlueskyer();
 
 const THRESHOLD_NODES = 36
@@ -26,9 +26,17 @@ export async function getData(handle, progressCallback) {
     // DBにデータがあればそれを出しつつ裏で更新、なければデータ収集しセット
     let isFirstTime = false;
     let isExecBgProcess = false;
-    let {data, error} = await supabase.from('elements').select('elements, updated_at').eq('handle', handle);
 
-    if (data.length === 0) {
+    let data = [];
+    try {
+      data = await db.getElements(handle);
+    } catch (e) {
+      console.error(e);
+      // エラー時は空配列として扱う（既存ロジックに合わせるため）
+      data = [];
+    }
+
+    if (!data || data.length === 0) {
       // データがないので同期処理で待って最低限のデータを渡す
       elements = await getElementsAndSetDb(handle, THRESHOLD_TL_TMP, THRESHOLD_LIKES_TMP, false, progressCallback);
       isFirstTime = true;
@@ -54,21 +62,21 @@ export async function getData(handle, progressCallback) {
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     // imageUrlToBase64を10msおきに実行する
     await Promise.all(nodes.map(async (node, index) => {
-      await delay(index*10);
+      await delay(index * 10);
       node.data.img = await imageUrlToBase64(node.data.img);
-      
+
       // 進捗をiに応じて加算
-      const progress = Math.floor(((index+1) / nodes.length) * (PERCENT_BASE64_CONVERT - PERCENT_PREPARE_ELEMENT) + PERCENT_PREPARE_ELEMENT);
+      const progress = Math.floor(((index + 1) / nodes.length) * (PERCENT_BASE64_CONVERT - PERCENT_PREPARE_ELEMENT) + PERCENT_PREPARE_ELEMENT);
       if (progressCallback) progressCallback(progress);
     }));
 
     // 処理完了 (100%進捗)
     if (progressCallback) progressCallback(100);
-    
-    // console.log(elements.length, isFirstTime);
-    return {elements, isFirstTime, isExecBgProcess};
 
-  } catch(e) {
+    // console.log(elements.length, isFirstTime);
+    return { elements, isFirstTime, isExecBgProcess };
+
+  } catch (e) {
     throw e;
   }
 }
@@ -86,7 +94,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
       await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
       let response;
-      response = await agent.getProfile({actor: handle});
+      response = await agent.getProfile({ actor: handle });
       const myselfWithProf = response.data;
 
       // 自分のタイムラインTHRESHOLD_TL件および自分のいいねTHRESHOLD_LIKES件を取得
@@ -98,7 +106,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
       // 要素数がTHRESHOLD_NODESに満たなければ、相互フォロー追加
       let didArray;
       if (friendsWithProf.length < THRESHOLD_NODES) {
-        response = await agent.getFollows({actor: handle, limit: 50});
+        response = await agent.getFollows({ actor: handle, limit: 50 });
         const follows = response.data.follows;
         didArray = follows.map(follow => follow.did);
         const mutualWithProf = await agent.getConcatProfiles(didArray);
@@ -119,8 +127,11 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
 
       // DBセット
       if (setDbEn) {
-        const { data, err } = await supabase.from('elements').upsert({ handle: handle, elements: elements, updated_at: new Date() }).select();
-        if (err) console.error("Error", err);
+        try {
+          await db.upsertElement(handle, elements);
+        } catch (err) {
+          console.error("Error", err);
+        }
       }
 
       // 進捗
@@ -139,7 +150,7 @@ export async function getElementsAndSetDb(handle, threshold_tl, threshold_like, 
 }
 
 export async function doSearchActors(query) {
-  const params = {q: query};
+  const params = { q: query };
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
   const response = await agent.searchActors(params);
   const actors = response.data.actors;
@@ -172,16 +183,21 @@ export async function createSession(handle, password) {
       // セッション有効期限を設定
       const expirarion = new Date();
       expirarion.setFullYear(expirarion.getFullYear() + 1); // 1年後
-      
-      const {err} = await supabase.from('sessions').insert({
-        session_id: sessionId,
-        user_info: {
-          handle: handle,
-          iv_with_encrypted: ivWithEncrypted,
-          expirarion: expirarion.getTime(),
-        },
-      });
-      
+
+      try {
+        await db.createSession({
+          session_id: sessionId,
+          user_info: {
+            handle: handle,
+            iv_with_encrypted: ivWithEncrypted,
+            expirarion: expirarion.getTime(),
+          },
+        });
+      } catch (err) {
+        console.error("Error creating session", err);
+        return null; // エラー時はnullを返す
+      }
+
       return sessionId;
     } else {
       return null;
@@ -193,12 +209,14 @@ export async function createSession(handle, password) {
 
 export async function deleteSession(sessionId) {
   try {
-    const response = await supabase.from('sessions').delete().eq('session_id', sessionId).select();
-    
-    if (response.status === 200) {
-      console.log(`[INFO] Deleted session ID: ${response.data[0].sessionId}, ${response.data[0].handle}`);
+    // 削除前のデータが必要な場合はdeleteSessionが返す値を利用可能
+    // ここでは成功したかどうかだけわかればよいので、エラーが出なければOKとする
+    const data = await db.deleteSession(sessionId);
+    if (data && data.length > 0) {
+      console.log(`[INFO] Deleted session ID: ${data[0].session_id}, ${data[0].user_info.handle}`);
       return true;
     } else {
+      // 既にない場合など
       return false;
     }
   } catch (e) {
@@ -209,15 +227,22 @@ export async function deleteSession(sessionId) {
 export async function verifyUser(sessionId) {
   try {
     // DBからハンドル名と暗号化パスワード取得
-    const {data, err} = await supabase.from('sessions').select('user_info').eq('session_id', sessionId);
-    if (data.length === 1) {
+    let data = [];
+    try {
+      data = await db.getSession(sessionId);
+    } catch (e) {
+      console.error(e);
+      return { success: false };
+    }
+
+    if (data && data.length === 1) {
       const userInfo = data[0].user_info;
       if (userInfo && new Date() < new Date(userInfo.expirarion)) {
         return { success: true, handle: userInfo.handle, ivWithEncrypted: userInfo.iv_with_encrypted };
       } else {
         // セッションIDはあるが、期限切れなので削除
-        const response = await supabase.from('sessions').delete().eq('session_id', sessionId).select();
-        console.log(`[INFO] Deleted session ID: ${response.data[0].sessionId}, ${response.data[0].handle}`);
+        await db.deleteSession(sessionId); // エラーハンドリングは省略
+        console.log(`[INFO] Deleted expired session ID: ${sessionId}`);
         return { success: false };
       }
     } else {
@@ -258,7 +283,7 @@ export async function getLatestPostsAndLikes(handle) {
   await agent.createOrRefleshSession(BSKY_IDENTIFIER, BSKY_APP_PASSWORD);
 
   // ポスト100件取得
-  response = await agent.listRecords({repo: handle, collection: "app.bsky.feed.post", limit: 100}).catch(e => {
+  response = await agent.listRecords({ repo: handle, collection: "app.bsky.feed.post", limit: 100 }).catch(e => {
     console.error(e);
     console.warn(`[WARN] fetch error handle: ${handle}, so set empty object`);
     return { records: [] };
@@ -266,7 +291,7 @@ export async function getLatestPostsAndLikes(handle) {
   const postRecords = response.records;
 
   // いいね100件取得
-  response = await agent.listRecords({repo: handle, collection: "app.bsky.feed.like", limit: 100}).catch(e => {
+  response = await agent.listRecords({ repo: handle, collection: "app.bsky.feed.like", limit: 100 }).catch(e => {
     console.error(e);
     console.warn(`[WARN] fetch error handle: ${handle}, so set empty object`);
     return { records: [] };
@@ -277,6 +302,6 @@ export async function getLatestPostsAndLikes(handle) {
     posts: postRecords,
     likes: likeRecords,
   }
-  
+
   return records;
 }

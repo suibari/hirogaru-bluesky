@@ -1,18 +1,18 @@
 import { Blueskyer } from "blueskyer";
-import { supabase } from "./supabase";
+import { db } from "./postgres";
 import atproto from '@atproto/api';
 const { RichText } = atproto;
 
 export class MyBlueskyer extends Blueskyer {
-    /**
-   * 指定されたユーザが返信・いいねした数から、各ユーザに対するエンゲージメントのスコアを取得、上位順に並べたProfile配列を返す
-   * @param {string} handle - ハンドル名
-   * @param {int} threshold_tl - 取得するfeed数
-   * @param {int} threshold_like - 取得するいいね数
-   * @param {int} SCORE_REPLY - リプライで加点するエンゲージメントスコア
-   * @param {int} SCORE_LIKE - いいねで加点するエンゲージメントスコア
-   * @returns
-   */
+  /**
+ * 指定されたユーザが返信・いいねした数から、各ユーザに対するエンゲージメントのスコアを取得、上位順に並べたProfile配列を返す
+ * @param {string} handle - ハンドル名
+ * @param {int} threshold_tl - 取得するfeed数
+ * @param {int} threshold_like - 取得するいいね数
+ * @param {int} SCORE_REPLY - リプライで加点するエンゲージメントスコア
+ * @param {int} SCORE_LIKE - いいねで加点するエンゲージメントスコア
+ * @returns
+ */
   async getInvolvedEngagements(handle, threshold_tl, threshold_like, SCORE_REPLY, SCORE_LIKE) {
     let didLike = [];
     let resultArray = [];
@@ -29,7 +29,7 @@ export class MyBlueskyer extends Blueskyer {
         };
       };
       // console.log("[INFO] got " + didLike.length + " likes by " + handle);
-    
+
       // 誰に対してリプライしたかをカウント
       for (const [index, feed] of Object.entries(feeds)) {
         if (feed.reply) {
@@ -46,7 +46,7 @@ export class MyBlueskyer extends Blueskyer {
                 };
               };
               if (!flagFound) {
-                resultArray.push({did: replyTo, score: SCORE_REPLY, replyCount: 1});
+                resultArray.push({ did: replyTo, score: SCORE_REPLY, replyCount: 1 });
               };
             };
           };
@@ -68,7 +68,7 @@ export class MyBlueskyer extends Blueskyer {
           };
         };
         if (!flagFound) {
-          resultArray.push({did: did, score: SCORE_LIKE, likeCount: 1});
+          resultArray.push({ did: did, score: SCORE_LIKE, likeCount: 1 });
         };
       };
       // scoreで降順ソート
@@ -100,16 +100,26 @@ export class MyBlueskyer extends Blueskyer {
    * 元のライブラリをオーバーライドしVercel KVに値を保存
    */
   async createOrRefleshSession(identifier, password) {
-    const {data, err} = await supabase.from('tokens').select('access_jwt').eq('handle', identifier);
-    
+    let data = [];
+    try {
+      data = await db.getToken(identifier);
+    } catch (e) {
+      console.error(e);
+      // エラー時はセッションなしとみなして新規作成へ
+    }
+
     if (data.length === 0) {
       // 初回起動時にaccsessJwt取得
       const response = await this.login({
         identifier: identifier,
         password: password
       });
-      const {err} = await supabase.from('tokens').insert({ handle: identifier, access_jwt: response.data.accessJwt });
-      console.log("[INFO] created new session.");
+      try {
+        await db.upsertToken(identifier, { access_jwt: response.data.accessJwt });
+        console.log("[INFO] created new session.");
+      } catch (e) {
+        console.error("Failed to upsert token", e);
+      }
     } else {
       // DBから取ってきた値をインスタンスにセット
       this.api.setHeader('Authorization', `Bearer ${data[0].access_jwt}`);
@@ -121,8 +131,12 @@ export class MyBlueskyer extends Blueskyer {
               identifier: identifier,
               password: password
             });
-            const {err} = await supabase.from('tokens').update({ access_jwt: response.data.accessJwt, updated_at: new Date() }).eq('handle', identifier);
-            console.log("[INFO] token was expired, so refleshed the session.");
+            try {
+              await db.upsertToken(identifier, { access_jwt: response.data.accessJwt, updated_at: new Date() });
+              console.log("[INFO] token was expired, so refleshed the session.");
+            } catch (e) {
+              console.error("Failed to update token", e);
+            }
           }
         });
       } catch (e) {
@@ -142,7 +156,7 @@ export class MyBlueskyer extends Blueskyer {
     );
 
     // リッチテキスト変換
-    const rt = new RichText({text: text});
+    const rt = new RichText({ text: text });
     await rt.detectFacets(this);
 
     // 投稿

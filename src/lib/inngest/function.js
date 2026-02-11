@@ -1,7 +1,7 @@
 import { inngest } from './inngest';
 import { getElementsAndSetDb } from '$lib/server/router'; // getLatestPostsAndLikes と analyzeRecords は不要になったため削除
 import { TimeLogger } from '$lib/server/logger';
-import { supabase } from '$lib/server/supabase';
+import { db } from '$lib/server/postgres';
 
 const THRESHOLD_TL_MAX = 1000;
 const THRESHOLD_LIKES_MAX = 500;
@@ -46,12 +46,13 @@ export const getElementsAndUpdateDbFunction = inngest.createFunction(
 
     console.log(`[INNGEST] DISPATCHER: Executing for handle: ${handle}`);
 
-    // Supabaseから要素データを取得
-    const { data, error } = await supabase.from('elements').select('elements').eq('handle', handle);
-
-    if (error) {
-      console.error(`[INNGEST] DISPATCHER: Supabase error fetching elements for ${handle}:`, error);
-      return { success: false, error: error.message };
+    // DBから要素データを取得
+    let data = [];
+    try {
+      data = await db.getElements(handle);
+    } catch (e) {
+      console.error(`[INNGEST] DISPATCHER: DB error fetching elements for ${handle}:`, e);
+      return { success: false, error: e.message };
     }
 
     if (!data || data.length === 0) {
