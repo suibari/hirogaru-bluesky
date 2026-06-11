@@ -3,13 +3,28 @@ import { getElementsAndSetDb } from '$lib/server/router'; // getLatestPostsAndLi
 import { TimeLogger } from '$lib/server/logger';
 import { db } from '$lib/server/postgres';
 
+const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+const MAX_DISPATCH_COUNT = 20; // カスケード扇形展開を抑制するための上限
+
 const THRESHOLD_TL_MAX = 1000;
 const THRESHOLD_LIKES_MAX = 500;
 
 // 単一ユーザーに対してgetElementsAndSetDbを実行するInngest関数
 // 各ユーザーの処理時間を計測し、個別のInngestイベントとして実行する
 export const processSingleUserWithGetElementsFunction = inngest.createFunction(
-  { id: 'Process Single User With GetElementsAndSetDb' }, // ワークフローの名前
+  {
+    id: 'Process Single User With GetElementsAndSetDb',
+    // handleごとに1時間1回のみ実行（超過分はキューに積み次の時間枠で処理）
+    throttle: {
+      key: 'event.data.userHandle',
+      limit: 1,
+      period: '1h',
+    },
+    // 全handle合計で同時実行数を制限しDBへの負荷を抑制
+    concurrency: {
+      limit: 10,
+    },
+  },
   { event: 'hirogaru/process.singleUser' }, // トリガーされるイベント名
   async ({ event }) => {
     const timeLogger = new TimeLogger();
@@ -63,15 +78,36 @@ export const getElementsAndUpdateDbFunction = inngest.createFunction(
     // 'nodes' グループの要素をフィルタリング
     const nodes = data[0].elements.filter(element => (element.group === 'nodes'));
 
-    // トップ50ユーザーまでを処理対象とする
-    const usersToProcess = nodes.slice(0, 50);
+    // カスケード抑制のためディスパッチ上限をMAX_DISPATCH_COUNTに制限
+    const candidateUsers = nodes.slice(0, MAX_DISPATCH_COUNT);
 
-    if (usersToProcess.length === 0) {
+    if (candidateUsers.length === 0) {
       console.log(`[INNGEST] DISPATCHER: No 'nodes' found for handle: ${handle}`);
       return { success: true, message: 'No nodes found to process' };
     }
 
-    console.log(`[INNGEST] DISPATCHER: Found ${nodes.length} nodes, dispatching processing for top ${usersToProcess.length} for handle: ${handle}`);
+    // 既に新鮮なデータがある隣接ユーザーはスキップして不要なDB書き込みを回避
+    const candidateHandles = candidateUsers.map(u => u.data.handle);
+    let freshSet = new Set();
+    try {
+      const rows = await db.getElementsUpdatedAt(candidateHandles);
+      const now = Date.now();
+      for (const row of rows ?? []) {
+        if (now - new Date(row.updated_at).getTime() < ONE_HOUR_IN_MS) {
+          freshSet.add(row.handle);
+        }
+      }
+    } catch (e) {
+      console.warn('[INNGEST] DISPATCHER: staleness check failed, dispatching all:', e);
+    }
+    const usersToProcess = candidateUsers.filter(u => !freshSet.has(u.data.handle));
+
+    if (usersToProcess.length === 0) {
+      console.log(`[INNGEST] DISPATCHER: All top ${candidateUsers.length} nodes are fresh, skipping dispatch for handle: ${handle}`);
+      return { success: true, message: 'All nodes are fresh' };
+    }
+
+    console.log(`[INNGEST] DISPATCHER: Found ${nodes.length} nodes, dispatching processing for ${usersToProcess.length}/${candidateUsers.length} stale nodes for handle: ${handle}`);
 
     // 各ユーザーに対して個別のInngest関数を呼び出すイベントを送信
     const sendPromises = usersToProcess.map(async (user) => {

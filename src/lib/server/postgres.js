@@ -114,5 +114,14 @@ export const db = {
         'Accept-Profile': 'hirogaru'
       }
     });
-  }
+  },
+
+  // 複数handleのupdated_atを一括取得（鮮度チェック用）
+  getElementsUpdatedAt: async (handles) => {
+    const handleList = handles.map(h => `"${h}"`).join(',');
+    return await dbFetch(
+      `/elements?handle=in.(${handleList})&select=handle,updated_at`,
+      { headers: { 'Accept-Profile': 'hirogaru' } }
+    );
+  },
 };
